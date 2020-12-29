@@ -792,33 +792,17 @@ func (c *Config) persistentPostRunRootE(cmd *cobra.Command, args []string) error
 }
 
 func (c *Config) persistentPreRunRootE(cmd *cobra.Command, args []string) error {
-	// FIXME factor out config check
-
 	var err error
 	c.normalizedConfigFile, err = chezmoi.NewOSPath(c.configFile).Normalize(c.normalizedHomeDir)
 	if err != nil {
 		return err
 	}
 
-	v := viper.New()
-	v.SetConfigFile(c.normalizedConfigFile)
-	v.SetFs(vfsafero.NewAferoFS(c.fs))
-	configErr := v.ReadInConfig()
-	if os.IsNotExist(configErr) {
-		configErr = nil
-	} else {
-		if configErr == nil {
-			configErr = v.Unmarshal(c)
-		}
-		if configErr == nil {
-			configErr = c.validateData()
-		}
-	}
-	if configErr != nil {
+	if err := c.readConfig(); err != nil {
 		if !boolAnnotation(cmd, doesNotRequireValidConfig) {
-			return fmt.Errorf("invalid config: %s: %w", c.configFile, configErr)
+			return fmt.Errorf("invalid config: %s: %w", c.configFile, err)
 		}
-		cmd.Printf("warning: %s: %v\n", c.configFile, configErr)
+		cmd.Printf("warning: %s: %v\n", c.configFile, err)
 	}
 
 	if c.Color == "" || strings.ToLower(c.Color) == "auto" {
@@ -1003,6 +987,25 @@ func (c *Config) prompt(s, choices string) (byte, error) {
 			return line[0], nil
 		}
 	}
+}
+
+func (c *Config) readConfig() error {
+	v := viper.New()
+	v.SetConfigFile(c.normalizedConfigFile)
+	v.SetFs(vfsafero.NewAferoFS(c.fs))
+	switch err := v.ReadInConfig(); {
+	case os.IsNotExist(err):
+		return nil
+	case err != nil:
+		return err
+	}
+	if err := v.Unmarshal(c); err != nil {
+		return err
+	}
+	if err := c.validateData(); err != nil {
+		return err
+	}
+	return nil
 }
 
 func (c *Config) run(dir, name string, args []string) error {

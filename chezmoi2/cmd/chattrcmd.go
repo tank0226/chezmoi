@@ -74,7 +74,7 @@ func (c *Config) newChattrCmd() *cobra.Command {
 }
 
 func (c *Config) runChattrCmd(cmd *cobra.Command, args []string, sourceState *chezmoi.SourceState) error {
-	// FIXME should the core functionality of chattr move to chezmoi.SourceState?
+	// LATER should the core functionality of chattr move to chezmoi.SourceState?
 
 	am, err := parseAttrModifier(args[0])
 	if err != nil {
