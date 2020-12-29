@@ -34,7 +34,7 @@ func TestDumpSystem(t *testing.T) {
 			WithSystem(NewRealSystem(fs)),
 		)
 		require.NoError(t, s.Read())
-		require.NoError(t, s.Evaluate())
+		require.NoError(t, s.evaluateAll())
 
 		dumpSystem := NewDumpSystem()
 		persistentState := NewMockPersistentState()

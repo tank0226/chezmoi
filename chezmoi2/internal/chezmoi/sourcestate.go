@@ -391,25 +391,6 @@ func (s *SourceState) Entry(targetName string) (SourceStateEntry, bool) {
 	return sourceStateEntry, ok
 }
 
-// Evaluate evaluates every target state entry in s.
-func (s *SourceState) Evaluate() error {
-	// FIXME do we need to add KeepGoing?
-	for _, targetName := range s.AllTargetNames() {
-		sourceStateEntry := s.entries[targetName]
-		if err := sourceStateEntry.Evaluate(); err != nil {
-			return err
-		}
-		targetStateEntry, err := sourceStateEntry.TargetStateEntry()
-		if err != nil {
-			return err
-		}
-		if err := targetStateEntry.Evaluate(); err != nil {
-			return err
-		}
-	}
-	return nil
-}
-
 // ExecuteTemplateData returns the result of executing template data.
 func (s *SourceState) ExecuteTemplateData(name string, data []byte) ([]byte, error) {
 	tmpl, err := template.New(name).

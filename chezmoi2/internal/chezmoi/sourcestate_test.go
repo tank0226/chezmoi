@@ -309,7 +309,7 @@ func TestSourceStateAdd(t *testing.T) {
 					WithSystem(system),
 				)
 				require.NoError(t, s.Read())
-				require.NoError(t, s.Evaluate())
+				require.NoError(t, s.evaluateAll())
 
 				destPathInfos := make(map[string]os.FileInfo)
 				for _, destPath := range tc.destPaths {
@@ -536,7 +536,7 @@ func TestSourceStateApplyAll(t *testing.T) {
 				sourceStateOptions = append(sourceStateOptions, tc.sourceStateOptions...)
 				s := NewSourceState(sourceStateOptions...)
 				require.NoError(t, s.Read())
-				require.NoError(t, s.Evaluate())
+				require.NoError(t, s.evaluateAll())
 				require.NoError(t, s.applyAll(system, persistentState, "/home/user", ApplyOptions{
 					Umask: GetUmask(),
 				}))
@@ -1023,10 +1023,10 @@ func TestSourceStateRead(t *testing.T) {
 					return
 				}
 				require.NoError(t, err)
-				require.NoError(t, s.Evaluate())
+				require.NoError(t, s.evaluateAll())
 				tc.expectedSourceState.destDir = "/home/user"
 				tc.expectedSourceState.sourceDir = "/home/user/.local/share/chezmoi"
-				require.NoError(t, tc.expectedSourceState.Evaluate())
+				require.NoError(t, tc.expectedSourceState.evaluateAll())
 				s.system = nil
 				assert.Equal(t, tc.expectedSourceState, s)
 			})
@@ -1084,6 +1084,24 @@ func TestSourceStateSortedTargetNames(t *testing.T) {
 			})
 		})
 	}
+}
+
+// evaluateAll evaluates every target state entry in s.
+func (s *SourceState) evaluateAll() error {
+	for _, targetName := range s.AllTargetNames() {
+		sourceStateEntry := s.entries[targetName]
+		if err := sourceStateEntry.Evaluate(); err != nil {
+			return err
+		}
+		targetStateEntry, err := sourceStateEntry.TargetStateEntry()
+		if err != nil {
+			return err
+		}
+		if err := targetStateEntry.Evaluate(); err != nil {
+			return err
+		}
+	}
+	return nil
 }
 
 func withEntries(sourceEntries map[string]SourceStateEntry) SourceStateOption {
