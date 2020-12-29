@@ -54,7 +54,10 @@ func TrimDirPrefix(p, dir string) (string, error) {
 	case !path.IsAbs(p):
 		return "", fmt.Errorf("%s: not an absolute path", p)
 	case !strings.HasPrefix(p, dir+"/"):
-		return "", fmt.Errorf("%s: does not have dir prefix %s", p, dir)
+		return "", &notInDirError{
+			path: p,
+			dir:  dir,
+		}
 	default:
 		return p[len(dir)+1:], nil
 	}

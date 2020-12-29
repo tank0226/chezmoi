@@ -83,6 +83,15 @@ func (e *duplicateTargetError) Error() string {
 	return fmt.Sprintf("%s: duplicate target (%s)", e.targetName, strings.Join(e.sourcePaths, ", "))
 }
 
+type notInDirError struct {
+	path string
+	dir  string
+}
+
+func (e *notInDirError) Error() string {
+	return fmt.Sprintf("%s: not in %s", e.path, e.dir)
+}
+
 type unsupportedFileTypeError struct {
 	path string
 	mode os.FileMode

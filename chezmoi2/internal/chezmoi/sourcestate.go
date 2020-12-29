@@ -250,8 +250,7 @@ func (s *SourceState) Add(sourceSystem System, persistentState PersistentState, 
 // its parents which are not already known.
 func (s *SourceState) AddDestPathInfos(destPathInfos map[string]os.FileInfo, lstater Lstater, destPath string, info os.FileInfo) error {
 	if _, err := TrimDirPrefix(destPath, s.destDir); err != nil {
-		// return err // FIXME
-		return fmt.Errorf("%s: outside destination directory (%s)", destPath, s.destDir)
+		return err
 	}
 
 	if _, ok := destPathInfos[destPath]; ok {
