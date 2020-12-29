@@ -1,0 +1,23 @@
+mkhomedir golden
+mksourcedir
+
+# test that chezmoi status lists all files to be added
+chezmoi status
+cmp stdout golden/status
+
+stop # FIXME IAMHERE
+
+# test that chezmoi status is empty after apply
+chezmoi apply --force
+chezmoi status --debug
+! stdout .
+
+-- golden/status --
+ A .bashrc
+ A .binary
+ A .exists
+ A .gitconfig
+ A .hushlogin
+ A .ssh
+ A .ssh/config
+ A .symlink

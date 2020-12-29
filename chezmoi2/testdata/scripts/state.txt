@@ -1,0 +1,21 @@
+# test that the persistent state is only created on demand
+chezmoi state dump
+stdout scriptOnce
+! exists $CHEZMOICONFIGDIR/chezmoistate.boltdb
+
+[windows] stop 'file locking is broken on windows' # FIXME
+
+# test that chezmoi apply updates the persistent state
+chezmoi apply --force
+exists $CHEZMOICONFIGDIR/chezmoistate.boltdb
+
+# test that the persistent state records that unique_script was run
+chezmoi state dump
+stdout a8076d3d28d21e02012b20eaf7dbf75409a6277134439025f282e368e3305abf
+
+# test that chezmoi state reset removes the persistent state
+chezmoi --force state reset
+! exists $CHEZMOICONFIGDIR/chezmoistate.boltdb
+
+-- home/user/.local/share/chezmoi/run_once_unique_script --
+#!/bin/sh
