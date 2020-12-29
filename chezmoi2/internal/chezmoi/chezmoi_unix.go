@@ -5,6 +5,7 @@ package chezmoi
 import (
 	"fmt"
 	"os"
+	"path"
 	"path/filepath"
 	"strings"
 	"syscall"
@@ -46,15 +47,17 @@ func SetUmask(newUmask os.FileMode) {
 	syscall.Umask(int(umask))
 }
 
-// TrimDirPrefix returns path with the directory prefix dir stripped. path must
+// TrimDirPrefix returns path p with the directory prefix dir stripped. path must
 // be an absolute path with forward slashes.
-func TrimDirPrefix(path, dir string) (string, error) {
-	// FIXME add absSlash check
-	prefix := dir + "/"
-	if !strings.HasPrefix(path, prefix) {
-		return "", fmt.Errorf("%q dpes not have dir prefix %q", path, dir)
+func TrimDirPrefix(p, dir string) (string, error) {
+	switch {
+	case !path.IsAbs(p):
+		return "", fmt.Errorf("%s: not an absolute path", p)
+	case !strings.HasPrefix(p, dir+"/"):
+		return "", fmt.Errorf("%s: does not have dir prefix %s", p, dir)
+	default:
+		return p[len(dir)+1:], nil
 	}
-	return path[len(prefix):], nil
 }
 
 // isExecutable returns if info is executable.

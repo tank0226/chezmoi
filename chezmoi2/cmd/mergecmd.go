@@ -63,7 +63,7 @@ func (c *Config) runMergeCmd(cmd *cobra.Command, args []string, sourceState *che
 		}
 		targetStateFile, ok := targetStateEntry.(*chezmoi.TargetStateFile)
 		if !ok {
-			// FIXME consider handling symlinks?
+			// LATER consider handling symlinks?
 			return fmt.Errorf("%s: not a file", targetName)
 		}
 		contents, err := targetStateFile.Contents()
