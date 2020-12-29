@@ -5,9 +5,26 @@ mksourcedir
 chezmoi status
 cmp stdout golden/status
 
+# test that chezmoi status omits applied files
+chezmoi apply --force $HOME${/}.bashrc
+chezmoi status
+cmp stdout golden/status-except-dot-bashrc
+
 # test that chezmoi status is empty after apply
 chezmoi apply --force
-chezmoi status --debug
+chezmoi status
+! stdout .
+
+[short] stop
+
+# test that chezmoi status identifies files that have been modified in the destination directory
+edit $HOME/.bashrc
+chezmoi status
+cmp stdout golden/status-modified-bashrc
+
+# test that chezmoi status does not emit status for equivalent modifications
+edit $CHEZMOISOURCEDIR/dot_bashrc
+chezmoi status
 ! stdout .
 
 -- golden/status --
@@ -19,3 +36,13 @@ chezmoi status --debug
  A .ssh
  A .ssh/config
  A .symlink
+-- golden/status-except-dot-bashrc --
+ A .binary
+ A .exists
+ A .gitconfig
+ A .hushlogin
+ A .ssh
+ A .ssh/config
+ A .symlink
+-- golden/status-modified-bashrc --
+MM .bashrc

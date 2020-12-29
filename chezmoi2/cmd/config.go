@@ -459,8 +459,10 @@ func (c *Config) destPathInfos(sourceState *chezmoi.SourceState, args []string, 
 }
 
 func (c *Config) doPurge(purgeOptions *purgeOptions) error {
-	if err := c.persistentState.Close(); err != nil {
-		return err
+	if c.persistentState != nil {
+		if err := c.persistentState.Close(); err != nil {
+			return err
+		}
 	}
 
 	absSlashPersistentStateFile, err := c.persistentStateFile().Normalize(c.normalizedHomeDir)
@@ -745,8 +747,10 @@ func (c *Config) normalizedDestPath(arg *chezmoi.OSPath) (string, error) {
 }
 
 func (c *Config) persistentPostRunRootE(cmd *cobra.Command, args []string) error {
-	if err := c.persistentState.Close(); err != nil {
-		return err
+	if c.persistentState != nil {
+		if err := c.persistentState.Close(); err != nil {
+			return err
+		}
 	}
 
 	if boolAnnotation(cmd, modifiesConfigFile) {
@@ -886,13 +890,15 @@ func (c *Config) persistentPreRunRootE(cmd *cobra.Command, args []string) error 
 			return err
 		}
 	default:
-		c.persistentState = chezmoi.UnusedPersistentState{}
+		c.persistentState = nil
+	}
+	if c.debug && c.persistentState != nil {
+		c.persistentState = chezmoi.NewDebugPersistentState(c.persistentState, c.logger)
 	}
 
 	c.baseSystem = chezmoi.NewRealSystem(c.fs)
 	if c.debug {
 		c.baseSystem = chezmoi.NewDebugSystem(c.baseSystem, c.logger)
-		c.persistentState = chezmoi.NewDebugPersistentState(c.persistentState, c.logger)
 	}
 
 	c.sourceSystem = c.baseSystem

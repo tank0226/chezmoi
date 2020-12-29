@@ -104,7 +104,6 @@ func TestTargetStateEntryApplyAndEqual(t *testing.T) {
 		t.Run(fmt.Sprintf("target_%s_actual_%s", tc.TargetStateKey, tc.ActualDestDirStateKey), func(t *testing.T) {
 			targetState := targetStates[tc.TargetStateKey]
 			actualState := actualStates[tc.ActualDestDirStateKey]
-			persistentState := NewUnusedPersistentState()
 
 			chezmoitest.WithTestFS(t, actualState, func(fs vfs.FS) {
 				s := NewRealSystem(fs)
@@ -114,7 +113,7 @@ func TestTargetStateEntryApplyAndEqual(t *testing.T) {
 				require.NoError(t, err)
 
 				// Apply the target state entry.
-				require.NoError(t, targetState.Apply(s, persistentState, actualStateEntry, GetUmask()))
+				require.NoError(t, targetState.Apply(s, nil, actualStateEntry, GetUmask()))
 
 				// Verify that the actual state entry matches the desired
 				// state.
