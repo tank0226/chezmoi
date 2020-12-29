@@ -1,4 +1,4 @@
-[windows] stop # FIXME AFAICT go-git does not support file:// URLs on windows
+[windows] stop # go-git does not support file:// URLs on windows
 
 mkhomedir golden
 chmod 755 golden/git
