@@ -1,6 +1,8 @@
 package chezmoi
 
-import "encoding/hex"
+import (
+	"encoding/hex"
+)
 
 // A hexBytes is a []byte which is marhsaled as a hex string.
 type hexBytes []byte

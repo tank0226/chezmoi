@@ -5,8 +5,6 @@ mksourcedir
 chezmoi status
 cmp stdout golden/status
 
-stop # FIXME IAMHERE
-
 # test that chezmoi status is empty after apply
 chezmoi apply --force
 chezmoi status --debug

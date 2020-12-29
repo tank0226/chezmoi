@@ -1,6 +1,8 @@
 package chezmoi
 
-import "github.com/rs/zerolog"
+import (
+	"github.com/rs/zerolog"
+)
 
 // A DebugPersistentState wraps a PersistentState and logs to a log.Logger.
 type DebugPersistentState struct {

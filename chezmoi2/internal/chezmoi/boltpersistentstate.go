@@ -66,7 +66,7 @@ func (b *BoltPersistentState) CopyTo(p PersistentState) error {
 	return b.db.View(func(tx *bbolt.Tx) error {
 		return tx.ForEach(func(bucket []byte, b *bbolt.Bucket) error {
 			return b.ForEach(func(key, value []byte) error {
-				return p.Set(bucket, key, value)
+				return p.Set(copyByteSlice(bucket), copyByteSlice(key), copyByteSlice(value))
 			})
 		})
 	})

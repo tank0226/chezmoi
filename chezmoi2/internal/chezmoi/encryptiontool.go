@@ -1,6 +1,8 @@
 package chezmoi
 
-import "io/ioutil"
+import (
+	"io/ioutil"
+)
 
 // A CleanupFunc cleans up.
 type CleanupFunc func() error

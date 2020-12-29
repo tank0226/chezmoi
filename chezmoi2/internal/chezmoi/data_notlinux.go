@@ -2,7 +2,9 @@
 
 package chezmoi
 
-import "github.com/twpayne/go-vfs"
+import (
+	"github.com/twpayne/go-vfs"
+)
 
 // KernelInfo returns nothing on non-Linux systems.
 func KernelInfo(fs vfs.FS) (map[string]string, error) {

@@ -1,6 +1,8 @@
 package chezmoi
 
-import "errors"
+import (
+	"errors"
+)
 
 var errClosed = errors.New("closed")
 
