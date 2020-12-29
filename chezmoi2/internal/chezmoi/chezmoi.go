@@ -13,9 +13,8 @@ var (
 	// DefaultTemplateOptions are the default template options.
 	DefaultTemplateOptions = []string{"missingkey=error"}
 
-	// DestEntryStateBucket is the bucket for recording the state of entries in
-	// the destination state.
-	DestEntryStateBucket = []byte("destEntryState")
+	// EntryStateBucket is the bucket for recording the entry states.
+	EntryStateBucket = []byte("entryState")
 
 	// ScriptOnceStateBucket is the bucket for recording the state of run once
 	// scripts.

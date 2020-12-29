@@ -953,6 +953,7 @@ func (c *Config) preApply(targetName string, targetEntryState, lastWrittenEntryS
 	case lastWrittenEntryState.Equivalent(actualEntryState, c.Umask.FileMode()):
 		return nil
 	}
+	// LATER add merge option
 	switch choice, err := c.prompt(fmt.Sprintf("%s has changed since chezmoi last wrote it, overwrite", targetName), "ynqa"); {
 	case err != nil:
 		return err
