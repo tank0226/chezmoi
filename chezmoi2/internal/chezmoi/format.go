@@ -1,7 +1,6 @@
 package chezmoi
 
 import (
-	"bytes"
 	"encoding/json"
 	"strings"
 
@@ -34,7 +33,7 @@ var Formats = map[string]Format{
 
 // Decode implements Format.Decode.
 func (jsonFormat) Decode(data []byte, value interface{}) error {
-	return json.NewDecoder(bytes.NewBuffer(data)).Decode(value)
+	return json.Unmarshal(data, value)
 }
 
 // Marshal implements Format.Marshal.
@@ -59,7 +58,7 @@ func (jsonFormat) Unmarshal(data []byte) (interface{}, error) {
 
 // Decode implements Format.Decode.
 func (tomlFormat) Decode(data []byte, value interface{}) error {
-	return toml.NewDecoder(bytes.NewBuffer(data)).Decode(value)
+	return toml.Unmarshal(data, value)
 }
 
 // Marshal implements Format.Marshal.
@@ -78,7 +77,7 @@ func (tomlFormat) Unmarshal(data []byte) (interface{}, error) {
 
 // Decode implements Format.Decode.
 func (yamlFormat) Decode(data []byte, value interface{}) error {
-	return yaml.NewDecoder(bytes.NewBuffer(data)).Decode(value)
+	return yaml.Unmarshal(data, value)
 }
 
 // Marshal implements Format.Marshal.
