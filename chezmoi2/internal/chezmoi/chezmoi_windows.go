@@ -21,7 +21,7 @@ func ExpandTilde(path, homeDir string) string {
 
 // GetUmask returns the umask.
 func GetUmask() os.FileMode {
-	return os.FileMode(0)
+	return os.ModePerm
 }
 
 // NormalizePath returns path normalized. On Windows, normalized paths are

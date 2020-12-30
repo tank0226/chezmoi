@@ -2,7 +2,7 @@
 
 mksourcedir
 
-[windows] unix2dos golden/archive
+[windows] unix2dos golden/archive-tar
 
 chezmoi archive --output=archive.tar
 exec tar -tf archive.tar
