@@ -234,7 +234,7 @@ func cmdMkSourceDir(ts *testscript.TestScript, neg bool, args []string) {
 			"dot_absent":            "",
 			"empty_dot_hushlogin":   "",
 			"executable_dot_binary": "#!/bin/sh\n",
-			"exists_dot_exists":     "",
+			"exists_dot_exists":     "# contents of .exists\n",
 			"dot_bashrc":            "# contents of .bashrc\n",
 			"dot_gitconfig.tmpl": "" +
 				"[core]\n" +

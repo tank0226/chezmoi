@@ -131,6 +131,7 @@ type AddOptions struct {
 	Empty        bool
 	Encrypt      bool
 	Exact        bool
+	Exists       bool
 	Include      *IncludeSet
 	Template     bool
 	umask        os.FileMode
@@ -899,12 +900,16 @@ func (s *SourceState) sourceStateEntry(actualStateEntry ActualStateEntry, destPa
 	case *ActualStateFile:
 		fileAttr := FileAttr{
 			Name:       info.Name(),
-			Type:       SourceFileTypeFile,
 			Empty:      options.Empty,
 			Encrypted:  options.Encrypt,
 			Executable: isExecutable(info),
 			Private:    isPrivate(info),
 			Template:   options.Template || options.AutoTemplate,
+		}
+		if options.Exists {
+			fileAttr.Type = SourceFileTypePresent
+		} else {
+			fileAttr.Type = SourceFileTypeFile
 		}
 		contents, err := actualStateEntry.Contents()
 		if err != nil {

@@ -35,8 +35,6 @@ cmp $CHEZMOISOURCEDIR/symlink_dot_ssh_config golden/symlink_dot_ssh_config
 chezmoi add $HOME${/}.ssh
 cmp $CHEZMOISOURCEDIR/private_dot_ssh/config $HOME/.ssh/config
 
-stop # FIXME
-
 chezmoi add --exists $HOME${/}.exists
 cmp $CHEZMOISOURCEDIR/exists_dot_exists golden/exists_dot_exists
 

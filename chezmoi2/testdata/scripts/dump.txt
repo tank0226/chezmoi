@@ -35,7 +35,7 @@ stderr 'not in source state'
   ".exists": {
     "type": "file",
     "name": ".exists",
-    "contents": "",
+    "contents": "# contents of .exists\n",
     "perm": 438
   },
   ".gitconfig": {
@@ -114,7 +114,8 @@ stderr 'not in source state'
 .exists:
     type: file
     name: .exists
-    contents: ""
+    contents: |
+        # contents of .exists
     perm: 438
 .gitconfig:
     type: file
