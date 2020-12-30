@@ -30,6 +30,8 @@ General:
 - `chezmoi apply` no longer overwrites by default
 - `chezmoi init --one-shot`
 - new type `--exists`
+- `chezmoi archive --format=zip`
+- `pre_` and `post_` script attributes change script order, scripts now run during
 
 {{ range (gitHubKeys "twpayne") -}}
 {{ .Key }}
