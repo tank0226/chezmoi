@@ -6,6 +6,7 @@ import (
 	"io/ioutil"
 	"os"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -41,7 +42,7 @@ func TestZIPSystem(t *testing.T) {
 		require.NoError(t, s.evaluateAll())
 
 		b := &bytes.Buffer{}
-		zipSystem := NewZIPSystem(b)
+		zipSystem := NewZIPSystem(b, time.Now().UTC())
 		persistentState := NewMockPersistentState()
 		require.NoError(t, s.applyAll(zipSystem, persistentState, "", ApplyOptions{}))
 		require.NoError(t, zipSystem.Close())

@@ -3,6 +3,7 @@ package cmd
 import (
 	"archive/tar"
 	"compress/gzip"
+	"fmt"
 	"os"
 	"os/user"
 	"strconv"
@@ -15,6 +16,7 @@ import (
 )
 
 type archiveCmdConfig struct {
+	format    string
 	gzip      bool
 	include   *chezmoi.IncludeSet
 	recursive bool
@@ -33,6 +35,7 @@ func (c *Config) newArchiveCmd() *cobra.Command {
 	}
 
 	flags := archiveCmd.Flags()
+	flags.StringVar(&c.archive.format, "format", "tar", "format (tar or zip)")
 	flags.BoolVarP(&c.archive.gzip, "gzip", "z", c.archive.gzip, "compress the output with gzip")
 	flags.VarP(c.archive.include, "include", "i", "include entry types")
 	flags.BoolVarP(&c.archive.recursive, "recursive", "r", c.archive.recursive, "recursive")
@@ -41,22 +44,33 @@ func (c *Config) newArchiveCmd() *cobra.Command {
 }
 
 func (c *Config) runArchiveCmd(cmd *cobra.Command, args []string) error {
-	archive := strings.Builder{}
-	tarSystem := chezmoi.NewTARSystem(&archive, tarHeaderTemplate())
-	if err := c.applyArgs(tarSystem, "", args, c.archive.include, c.archive.recursive, os.ModePerm, nil); err != nil {
+	output := strings.Builder{}
+	var archiveSystem interface {
+		chezmoi.System
+		Close() error
+	}
+	switch c.archive.format {
+	case "tar":
+		archiveSystem = chezmoi.NewTARSystem(&output, tarHeaderTemplate())
+	case "zip":
+		archiveSystem = chezmoi.NewZIPSystem(&output, time.Now())
+	default:
+		return fmt.Errorf("%s: invalid format", c.archive.format)
+	}
+	if err := c.applyArgs(archiveSystem, "", args, c.archive.include, c.archive.recursive, os.ModePerm, nil); err != nil {
 		return err
 	}
-	if err := tarSystem.Close(); err != nil {
+	if err := archiveSystem.Close(); err != nil {
 		return err
 	}
 
-	if !c.archive.gzip {
-		return c.writeOutputString(archive.String())
+	if c.archive.format == "zip" || !c.archive.gzip {
+		return c.writeOutputString(output.String())
 	}
 
 	gzippedArchive := strings.Builder{}
 	w := gzip.NewWriter(&gzippedArchive)
-	if _, err := w.Write([]byte(archive.String())); err != nil {
+	if _, err := w.Write([]byte(output.String())); err != nil {
 		return err
 	}
 	if err := w.Close(); err != nil {
