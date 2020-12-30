@@ -29,6 +29,7 @@ General:
 - `chezmoi status`
 - `chezmoi apply` no longer overwrites by default
 - `chezmoi init --one-shot`
+- new type `--exists`
 
 {{ range (gitHubKeys "twpayne") -}}
 {{ .Key }}
