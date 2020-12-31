@@ -186,7 +186,7 @@ func cmdMkGitConfig(ts *testscript.TestScript, neg bool, args []string) {
 	ts.Check(os.MkdirAll(filepath.Dir(path), 0o777))
 	ts.Check(ioutil.WriteFile(path, []byte(chezmoitest.JoinLines(
 		`[core]`,
-		`  autcrlf = false`,
+		`  autocrlf = false`,
 		`[user]`,
 		`  name = User`,
 		`  email = user@example.com`,
