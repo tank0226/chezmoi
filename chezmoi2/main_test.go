@@ -20,6 +20,7 @@ import (
 
 	"github.com/twpayne/chezmoi/chezmoi2/cmd"
 	"github.com/twpayne/chezmoi/chezmoi2/internal/chezmoi"
+	"github.com/twpayne/chezmoi/chezmoi2/internal/chezmoitest"
 )
 
 // umask is the umask used in tests. The umask applies to the process and so
@@ -352,7 +353,7 @@ func setup(env *testscript.Env) error {
 			// end of each file.
 			"editor": &vfst.File{
 				Perm: 0o755,
-				Contents: []byte(strings.Join([]string{
+				Contents: []byte(chezmoitest.JoinLines(
 					`#!/bin/sh`,
 					``,
 					`for name in $*; do`,
@@ -362,17 +363,17 @@ func setup(env *testscript.Env) error {
 					`        echo "# edited" >> $name`,
 					`    fi`,
 					`done`,
-				}, "\n")),
+				)),
 			},
 			// shell is a non-interactive script that appends the directory in
 			// which it was launched to $WORK/shell.log.
 			"shell": &vfst.File{
 				Perm: 0o755,
-				Contents: []byte(strings.Join([]string{
-					"#!/bin/sh",
-					"",
-					"echo $PWD >> '" + filepath.Join(env.WorkDir, "shell.log") + "'",
-				}, "\n")),
+				Contents: []byte(chezmoitest.JoinLines(
+					`#!/bin/sh`,
+					``,
+					`echo $PWD >> '`+filepath.Join(env.WorkDir, "shell.log")+`'`,
+				)),
 			},
 		}
 	}
