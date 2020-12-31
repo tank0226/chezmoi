@@ -7,105 +7,83 @@ chezmoi diff
 ! stdout .
 
 # test that chezmoi diff generates a diff when a file is added to the source state
-cp golden/dot_inputrc $CHEZMOISOURCEDIR/dot_inputrc
+cp golden/dot_newfile $CHEZMOISOURCEDIR/dot_newfile
 chezmoi diff
-cmp stdout golden/add-file-diff
-rm $CHEZMOISOURCEDIR/dot_inputrc
-
-[short] stop
+cmp stdout golden/add-newfile-diff
+rm $CHEZMOISOURCEDIR/dot_newfile
 
 # test that chezmoi diff generates a diff when a file is edited
-edit $HOME/.bashrc
+edit $HOME/.file
 chezmoi diff
 cmp stdout golden/modify-file-diff
-chezmoi diff --color=on
-cmp stdout golden/modify-file-diff-color
-cp golden/.bashrc $HOME
+chezmoi apply --force $HOME${/}.file
 
 # test that chezmoi diff generates a diff when a file is removed from the destination directory
-rm $HOME/.bashrc
+rm $HOME/.file
 chezmoi diff
 cmp stdout golden/remove-file-diff
-cp golden/.bashrc $HOME
+chezmoi apply --force $HOME${/}.file
 
 # test that chezmoi diff generates a diff when a directory is removed from the destination directory
-rm $HOME/.ssh
-chezmoi diff
+rm $HOME/.dir
+chezmoi diff --recursive=false $HOME${/}.dir
 cmp stdout golden/remove-dir-diff
-mkdir $HOME/.ssh
-chmod 700 $HOME/.ssh
-cp golden/.ssh/config $HOME/.ssh/config
+chezmoi apply --force $HOME${/}.dir
 
 # FIXME remove test
 
 [windows] stop 'remaining tests use file modes'
 
 # test that chezmoi diff generates a diff when a file's permissions are changed
-chmod 777 $HOME/.bashrc
+chmod 777 $HOME/.file
 chezmoi diff
 cmp stdout golden/chmod-file-diff
-chmod 666 $HOME/.bashrc
+chezmoi apply --force $HOME${/}.file
 
 # test that chezmoi diff generates a diff when a dir's permissions are changed
 # FIXME show changes to permissions in diff
-chmod 755 $HOME/.ssh
+chmod 700 $HOME/.dir
 chezmoi diff
 cmp stdout golden/chmod-dir-diff
-chmod 700 $HOME/.ssh
+chezmoi apply --force --recursive=false $HOME${/}.dir
 
--- golden/add-file-diff --
-diff --git a/.inputrc b/.inputrc
+-- golden/add-newfile-diff --
+diff --git a/.newfile b/.newfile
 old mode 0
 new mode 100644
-index e69de29bb2d1d6434b8b29ae775ad8c2e48c5391..3e8778ee8061d7afb917f3d5f1ee17580dc96c99
---- a/.inputrc
-+++ b/.inputrc
+index e69de29bb2d1d6434b8b29ae775ad8c2e48c5391..06e05235fdd12fd5c367b6d629fef94536c85525
+--- a/.newfile
++++ b/.newfile
 @@ -0,0 +1 @@
-+# contents of .inputrc
++# contents of .newfile
 -- golden/modify-file-diff --
-diff --git a/.bashrc b/.bashrc
-index e9a9fc3629d099c17bce71f43c2b5c773ed3ba45..13faef3591002a9d38fe869ca0e205ca472fac73 100644
---- a/.bashrc
-+++ b/.bashrc
+diff --git a/.file b/.file
+index 5d2730a8850a2db479af83de87cc8345437aef06..8a52cb9ce9551221716a53786ad74104c5902362 100644
+--- a/.file
++++ b/.file
 @@ -1,2 +1 @@
- # contents of .bashrc
+ # contents of .file
 -# edited
--- golden/modify-file-diff-color --
-[1mdiff --git a/.bashrc b/.bashrc
-index e9a9fc3629d099c17bce71f43c2b5c773ed3ba45..13faef3591002a9d38fe869ca0e205ca472fac73 100644
---- a/.bashrc
-+++ b/.bashrc[m
-[36m@@ -1,2 +1 @@[m
- # contents of .bashrc
-[31m-# edited[m
 -- golden/remove-file-diff --
-diff --git a/.bashrc b/.bashrc
+diff --git a/.file b/.file
 old mode 0
 new mode 100644
-index e69de29bb2d1d6434b8b29ae775ad8c2e48c5391..13faef3591002a9d38fe869ca0e205ca472fac73
---- a/.bashrc
-+++ b/.bashrc
+index e69de29bb2d1d6434b8b29ae775ad8c2e48c5391..8a52cb9ce9551221716a53786ad74104c5902362
+--- a/.file
++++ b/.file
 @@ -0,0 +1 @@
-+# contents of .bashrc
++# contents of .file
 -- golden/remove-dir-diff --
-diff --git a/.ssh b/.ssh
+diff --git a/.dir b/.dir
 new file mode 40000
 index 0000000000000000000000000000000000000000..0000000000000000000000000000000000000000
 --- /dev/null
-+++ b/.ssh
-diff --git a/.ssh/config b/.ssh/config
-old mode 0
-new mode 100644
-index e69de29bb2d1d6434b8b29ae775ad8c2e48c5391..24222eaee40f73342b927474372b1632a65cef01
---- a/.ssh/config
-+++ b/.ssh/config
-@@ -0,0 +1 @@
-+# contents of .ssh/config
++++ b/.dir
 -- golden/chmod-file-diff --
-diff --git a/.bashrc b/.bashrc
+diff --git a/.file b/.file
 old mode 100755
 new mode 100644
 -- golden/chmod-dir-diff --
-diff --git a/.ssh b/.ssh
--- golden/dot_inputrc --
-# contents of .inputrc
+diff --git a/.dir b/.dir
+-- golden/dot_newfile --
+# contents of .newfile

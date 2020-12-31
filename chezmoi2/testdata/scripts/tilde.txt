@@ -1,10 +1,8 @@
 mkhomedir
 mksourcedir
 
-chezmoi source-path ~/.bashrc
-stdout $CHEZMOISOURCEDIR/dot_bashrc
-
-[short] stop
+chezmoi source-path ~/.file
+stdout $CHEZMOISOURCEDIR/dot_file
 
 ! chezmoi source-path ~
 stderr 'not in destination directory'

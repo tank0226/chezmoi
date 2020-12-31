@@ -4,8 +4,6 @@
 chezmoi execute-template '{{ (bitwarden "item" "example.com").login.password }}'
 stdout password-value
 
-[short] stop
-
 chezmoi execute-template '{{ (bitwardenFields "item" "example.com").Hidden.value }}'
 stdout hidden-value
 

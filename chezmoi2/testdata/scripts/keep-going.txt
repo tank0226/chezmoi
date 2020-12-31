@@ -1,7 +1,5 @@
 mkhomedir
 
-[short] stop
-
 # test that chezmoi diff without --keep-going fails when there is an error
 ! chezmoi diff
 

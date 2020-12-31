@@ -2,8 +2,6 @@
 chezmoi execute-template '{{ "arg-template" }}'
 stdout arg-template
 
-[short] stop
-
 # test reading from stdin
 stdin golden/stdin.tmpl
 chezmoi execute-template
@@ -51,8 +49,8 @@ stdout 1
 stderr 'invalid syntax'
 
 # test --init --promptString
-chezmoi execute-template --init --promptString email=you@example.com '{{ promptString "email" }}'
-stdout 'you@example.com'
+chezmoi execute-template --init --promptString email=user@example.com '{{ promptString "email" }}'
+stdout 'user@example.com'
 
 -- golden/stdin.tmpl --
 {{ "stdin-template" }}

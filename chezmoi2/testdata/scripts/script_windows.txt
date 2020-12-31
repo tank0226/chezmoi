@@ -3,8 +3,6 @@
 chezmoi apply --force
 stdout evidence
 
-[short] stop
-
 chezmoi dump
 cmp stdout golden/dump.json
 

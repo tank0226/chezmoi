@@ -1,3 +1,5 @@
+# FIXME add more tests
+
 mkhomedir golden
 mksourcedir
 
@@ -6,43 +8,47 @@ chezmoi status
 cmp stdout golden/status
 
 # test that chezmoi status omits applied files
-chezmoi apply --force $HOME${/}.bashrc
+chezmoi apply --force $HOME${/}.file
 chezmoi status
-cmp stdout golden/status-except-dot-bashrc
+cmp stdout golden/status-except-dot-file
 
 # test that chezmoi status is empty after apply
 chezmoi apply --force
 chezmoi status
 ! stdout .
 
-[short] stop
-
 # test that chezmoi status identifies files that have been modified in the destination directory
-edit $HOME/.bashrc
+edit $HOME/.file
 chezmoi status
-cmp stdout golden/status-modified-bashrc
+cmp stdout golden/status-modified-file
 
 # test that chezmoi status does not emit status for equivalent modifications
-edit $CHEZMOISOURCEDIR/dot_bashrc
+edit $CHEZMOISOURCEDIR/dot_file
 chezmoi status
 ! stdout .
 
 -- golden/status --
- A .bashrc
- A .binary
+ A .dir
+ A .dir/file
+ A .dir/subdir
+ A .dir/subdir/file
+ A .empty
+ A .executable
  A .exists
- A .gitconfig
- A .hushlogin
- A .ssh
- A .ssh/config
+ A .file
+ A .private
  A .symlink
--- golden/status-except-dot-bashrc --
- A .binary
+ A .template
+-- golden/status-except-dot-file --
+ A .dir
+ A .dir/file
+ A .dir/subdir
+ A .dir/subdir/file
+ A .empty
+ A .executable
  A .exists
- A .gitconfig
- A .hushlogin
- A .ssh
- A .ssh/config
+ A .private
  A .symlink
--- golden/status-modified-bashrc --
-MM .bashrc
+ A .template
+-- golden/status-modified-file --
+MM .file

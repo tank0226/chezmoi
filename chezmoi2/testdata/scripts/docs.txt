@@ -1,8 +1,6 @@
 chezmoi docs
 stdout 'chezmoi Reference Manual'
 
-[short] stop
-
 chezmoi docs faq
 stdout 'chezmoi Frequently Asked Questions'
 

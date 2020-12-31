@@ -4,8 +4,6 @@
 chezmoi apply --force
 cmpenv stdout golden/apply
 
-[short] stop
-
 chezmoi dump
 cmp stdout golden/dump
 

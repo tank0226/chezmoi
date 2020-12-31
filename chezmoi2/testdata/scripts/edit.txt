@@ -1,15 +1,13 @@
 mkhomedir
 mksourcedir
 
-chezmoi edit $HOME${/}.bashrc
-grep -count=1 '# edited' $CHEZMOISOURCEDIR/dot_bashrc
-! grep '# edited' $HOME/.bashrc
+chezmoi edit $HOME${/}.file
+grep -count=1 '# edited' $CHEZMOISOURCEDIR/dot_file
+! grep '# edited' $HOME/.file
 
-[short] stop
-
-chezmoi edit --apply --force $HOME${/}.bashrc
-grep -count=2 '# edited' $CHEZMOISOURCEDIR/dot_bashrc
-grep -count=2 '# edited' $HOME/.bashrc
+chezmoi edit --apply --force $HOME${/}.file
+grep -count=2 '# edited' $CHEZMOISOURCEDIR/dot_file
+grep -count=2 '# edited' $HOME/.file
 
 chezmoi edit $HOME${/}.symlink
 grep -count=1 '# edited' $CHEZMOISOURCEDIR/symlink_dot_symlink
@@ -17,17 +15,19 @@ grep -count=1 '# edited' $CHEZMOISOURCEDIR/symlink_dot_symlink
 chezmoi edit -v $HOME${/}script
 grep -count=1 '# edited' $CHEZMOISOURCEDIR/run_script
 
-chezmoi edit $HOME${/}.bashrc $HOME${/}.symlink
-grep -count=3 '# edited' $CHEZMOISOURCEDIR/dot_bashrc
+chezmoi edit $HOME${/}.file $HOME${/}.symlink
+grep -count=3 '# edited' $CHEZMOISOURCEDIR/dot_file
 grep -count=2 '# edited' $CHEZMOISOURCEDIR/symlink_dot_symlink
 
 [windows] stop 'remaining tests need update to editor.cmd' # FIXME
+
 chezmoi edit
 exists $CHEZMOISOURCEDIR/.edited
 
 [windows] stop 'remaining tests use file modes'
-chezmoi edit $HOME${/}.ssh
-exists $CHEZMOISOURCEDIR/private_dot_ssh/.edited
+
+chezmoi edit $HOME${/}.dir
+exists $CHEZMOISOURCEDIR/dot_dir/.edited
 
 # FIXME --apply tests
 

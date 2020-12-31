@@ -3,8 +3,6 @@ chezmoi data
 stdout '"chezmoi":'
 stdout '"uniquekey": "uniqueValue"' # viper downcases uniqueKey
 
-[short] stop
-
 # test that chezmoi data --format=json includes data set in config file
 chezmoi data --format=json
 stdout '"chezmoi":'

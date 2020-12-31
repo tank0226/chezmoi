@@ -3,8 +3,6 @@ mksourcedir
 chezmoi managed
 cmpenv stdout golden/managed
 
-[short] stop
-
 chezmoi managed --include=all
 cmpenv stdout golden/managed-all
 
@@ -21,34 +19,43 @@ chezmoi managed --include=symlinks
 cmpenv stdout golden/managed-symlinks
 
 -- golden/managed --
-$HOMESLASH/.bashrc
-$HOMESLASH/.binary
+$HOMESLASH/.dir
+$HOMESLASH/.dir/file
+$HOMESLASH/.dir/subdir
+$HOMESLASH/.dir/subdir/file
+$HOMESLASH/.empty
+$HOMESLASH/.executable
 $HOMESLASH/.exists
-$HOMESLASH/.gitconfig
-$HOMESLASH/.hushlogin
-$HOMESLASH/.ssh
-$HOMESLASH/.ssh/config
+$HOMESLASH/.file
+$HOMESLASH/.private
 $HOMESLASH/.symlink
+$HOMESLASH/.template
 -- golden/managed-all --
 $HOMESLASH/.absent
-$HOMESLASH/.bashrc
-$HOMESLASH/.binary
+$HOMESLASH/.dir
+$HOMESLASH/.dir/file
+$HOMESLASH/.dir/subdir
+$HOMESLASH/.dir/subdir/file
+$HOMESLASH/.empty
+$HOMESLASH/.executable
 $HOMESLASH/.exists
-$HOMESLASH/.gitconfig
-$HOMESLASH/.hushlogin
-$HOMESLASH/.ssh
-$HOMESLASH/.ssh/config
+$HOMESLASH/.file
+$HOMESLASH/.private
 $HOMESLASH/.symlink
+$HOMESLASH/.template
 -- golden/managed-absent --
 $HOMESLASH/.absent
 -- golden/managed-dirs --
-$HOMESLASH/.ssh
+$HOMESLASH/.dir
+$HOMESLASH/.dir/subdir
 -- golden/managed-files --
-$HOMESLASH/.bashrc
-$HOMESLASH/.binary
+$HOMESLASH/.dir/file
+$HOMESLASH/.dir/subdir/file
+$HOMESLASH/.empty
+$HOMESLASH/.executable
 $HOMESLASH/.exists
-$HOMESLASH/.gitconfig
-$HOMESLASH/.hushlogin
-$HOMESLASH/.ssh/config
+$HOMESLASH/.file
+$HOMESLASH/.private
+$HOMESLASH/.template
 -- golden/managed-symlinks --
 $HOMESLASH/.symlink

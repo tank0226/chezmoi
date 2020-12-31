@@ -4,10 +4,8 @@ chmod 755 bin/vimdiff
 mkhomedir
 mksourcedir
 
-chezmoi merge $HOME${/}.bashrc
-stdout ^${HOME@R}/\.bashrc\s+${CHEZMOISOURCEDIR@R}/dot_bashrc\s+${WORK@R}/.*/\.bashrc$
-
-[short] stop
+chezmoi merge $HOME${/}.file
+stdout ^${HOME@R}/\.file\s+${CHEZMOISOURCEDIR@R}/dot_file\s+${WORK@R}/.*/\.file$
 
 # test that chezmoi merge falls back to a two-way merge when the template is invalid
 # FIXME the following test fails

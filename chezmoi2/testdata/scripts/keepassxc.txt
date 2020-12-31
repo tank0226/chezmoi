@@ -1,3 +1,5 @@
+# FIXME use execute-template instead of creating .netrc
+
 [!windows] chmod 755 bin/keepass-test
 [windows] unix2dos bin/keepass-test.cmd
 

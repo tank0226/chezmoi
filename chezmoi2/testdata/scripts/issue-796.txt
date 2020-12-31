@@ -1,6 +1,6 @@
 mkhomedir
 mksourcedir
 
-symlink $CHEZMOISOURCEDIR/dot_bashrc2 -> dot_bashrc
+symlink $CHEZMOISOURCEDIR/dot_file2 -> dot_file
 chezmoi apply --force
-cmp $HOME/.bashrc2 $HOME/.bashrc
+cmp $HOME/.file2 $HOME/.file

@@ -1,9 +1,7 @@
-[short] stop
-
 mksourcedir
 
 # test duplicate target detection
-cp $CHEZMOISOURCEDIR/dot_bashrc $CHEZMOISOURCEDIR/empty_dot_bashrc
+cp $CHEZMOISOURCEDIR/dot_file $CHEZMOISOURCEDIR/empty_dot_file
 ! chezmoi verify
 stderr 'duplicate target'
 

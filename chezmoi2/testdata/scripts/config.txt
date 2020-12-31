@@ -1,5 +1,3 @@
-[short] stop
-
 # test default config
 chezmoi data --format=yaml
 stdout 'sourceDir: .*/home/user/.local/share/chezmoi'

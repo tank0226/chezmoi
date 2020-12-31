@@ -51,6 +51,7 @@ func TestScript(t *testing.T) {
 			"cmpmod":         cmdCmpMod,
 			"edit":           cmdEdit,
 			"mkfile":         cmdMkFile,
+			"mkgitconfig":    cmdMkGitConfig,
 			"mkhomedir":      cmdMkHomeDir,
 			"mksourcedir":    cmdMkSourceDir,
 			"rmfinalnewline": cmdRmFinalNewline,
@@ -170,6 +171,28 @@ func cmdMkFile(ts *testscript.TestScript, neg bool, args []string) {
 	}
 }
 
+// cmdMkGitConfig makes a .gitconfig file in the home directory.
+func cmdMkGitConfig(ts *testscript.TestScript, neg bool, args []string) {
+	if neg {
+		ts.Fatalf("unsupported: ! mkgitconfig")
+	}
+	if len(args) > 1 {
+		ts.Fatalf(("usage: mkgitconfig [path]"))
+	}
+	path := filepath.Join(ts.Getenv("HOME"), ".gitconfig")
+	if len(args) > 0 {
+		path = ts.MkAbs(args[0])
+	}
+	ts.Check(os.MkdirAll(filepath.Dir(path), 0o777))
+	ts.Check(ioutil.WriteFile(path, []byte(chezmoitest.JoinLines(
+		`[core]`,
+		`  autcrlf = false`,
+		`[user]`,
+		`  name = User`,
+		`  email = user@example.com`,
+	)), 0o666))
+}
+
 // cmdMkHomeDir makes and populates a home directory.
 func cmdMkHomeDir(ts *testscript.TestScript, neg bool, args []string) {
 	if neg {
@@ -187,28 +210,25 @@ func cmdMkHomeDir(ts *testscript.TestScript, neg bool, args []string) {
 	ts.Check(err)
 	if err := newBuilder().Build(vfs.NewPathFS(vfs.OSFS, workDir), map[string]interface{}{
 		relPath: map[string]interface{}{
-			".bashrc": "# contents of .bashrc\n",
-			".binary": &vfst.File{
-				Perm:     0o777,
-				Contents: []byte("#!/bin/sh\n"),
-			},
-			".exists": "# contents of .exists\n",
-			".gitconfig": "" +
-				"[core]\n" +
-				"  autocrlf = false\n" +
-				"[user]\n" +
-				"  email = you@example.com\n" +
-				"  name = Your Name\n",
-			".hushlogin": "",
-			".ssh": &vfst.Dir{
-				Perm: 0o700,
-				Entries: map[string]interface{}{
-					"config": "# contents of .ssh/config\n",
+			".dir": map[string]interface{}{
+				"file": "# contents of .dir/file\n",
+				"subdir": map[string]interface{}{
+					"file": "# contents of .dir/subdir/file\n",
 				},
 			},
-			".symlink": &vfst.Symlink{
-				Target: ".bashrc",
+			".empty": "",
+			".executable": &vfst.File{
+				Perm:     0o777,
+				Contents: []byte("# contents of .executable\n"),
 			},
+			".exists": "# contents of .exists\n",
+			".file":   "# contents of .file\n",
+			".private": &vfst.File{
+				Perm:     0o600,
+				Contents: []byte("# contents of .private\n"),
+			},
+			".symlink":  &vfst.Symlink{Target: ".dir/subdir/file"},
+			".template": "key = value\n",
 		},
 	}); err != nil {
 		ts.Fatalf("mkhomedir: %v", err)
@@ -232,21 +252,22 @@ func cmdMkSourceDir(ts *testscript.TestScript, neg bool, args []string) {
 	ts.Check(err)
 	err = newBuilder().Build(vfs.NewPathFS(vfs.OSFS, workDir), map[string]interface{}{
 		relPath: map[string]interface{}{
-			"dot_absent":            "",
-			"empty_dot_hushlogin":   "",
-			"executable_dot_binary": "#!/bin/sh\n",
-			"exists_dot_exists":     "# contents of .exists\n",
-			"dot_bashrc":            "# contents of .bashrc\n",
-			"dot_gitconfig.tmpl": "" +
-				"[core]\n" +
-				"  autocrlf = false\n" +
-				"[user]\n" +
-				"  email = {{ \"you@example.com\" }}\n" +
-				"  name = Your Name\n",
-			"private_dot_ssh": map[string]interface{}{
-				"config": "# contents of .ssh/config\n",
+			"dot_absent": "",
+			"dot_dir": map[string]interface{}{
+				"file": "# contents of .dir/file\n",
+				"subdir": map[string]interface{}{
+					"file": "# contents of .dir/subdir/file\n",
+				},
 			},
-			"symlink_dot_symlink": ".bashrc\n",
+			"empty_dot_empty":           "",
+			"executable_dot_executable": "# contents of .executable\n",
+			"exists_dot_exists":         "# contents of .exists\n",
+			"dot_file":                  "# contents of .file\n",
+			"private_dot_private":       "# contents of .private\n",
+			"symlink_dot_symlink":       ".dir/subdir/file\n",
+			"dot_template.tmpl": chezmoitest.JoinLines(
+				`key = {{ "value" }}`,
+			),
 		},
 	})
 	if err != nil {
