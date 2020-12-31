@@ -428,7 +428,7 @@ func (s *SourceState) MinVersion() semver.Version {
 func (s *SourceState) MustEntry(targetName string) SourceStateEntry {
 	sourceStateEntry, ok := s.entries[targetName]
 	if !ok {
-		panic(fmt.Sprintf("%s: no source state entry", targetName))
+		panic(fmt.Sprintf("%s: not in source state", targetName))
 	}
 	return sourceStateEntry
 }
