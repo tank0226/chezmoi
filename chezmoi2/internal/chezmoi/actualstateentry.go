@@ -2,7 +2,6 @@ package chezmoi
 
 import (
 	"os"
-	"path/filepath"
 )
 
 // An ActualStateEntry represents the actual state of an entry in the
@@ -77,7 +76,7 @@ func NewActualStateEntry(s System, path string, info os.FileInfo, err error) (Ac
 					if err != nil {
 						return "", err
 					}
-					return filepath.ToSlash(linkname), nil
+					return linkname, nil
 				},
 			},
 		}, nil

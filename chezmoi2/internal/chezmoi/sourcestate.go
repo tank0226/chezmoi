@@ -8,7 +8,6 @@ import (
 	"fmt"
 	"os"
 	"path"
-	"path/filepath"
 	"sort"
 	"strings"
 	"text/template"
@@ -951,7 +950,7 @@ func (s *SourceState) sourceStateEntry(actualStateEntry ActualStateEntry, destPa
 		if err != nil {
 			return nil, err
 		}
-		contents := []byte(filepath.ToSlash(linkname))
+		contents := []byte(linkname)
 		if options.AutoTemplate {
 			contents = autoTemplate(contents, s.TemplateData())
 		}

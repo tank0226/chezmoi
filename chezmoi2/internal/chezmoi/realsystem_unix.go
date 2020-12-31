@@ -13,6 +13,22 @@ import (
 	"go.uber.org/multierr"
 )
 
+// An RealSystem is a System that writes to a filesystem and executes scripts.
+type RealSystem struct {
+	vfs.FS
+	devCache     map[string]uint // devCache maps directories to device numbers.
+	tempDirCache map[uint]string // tempDirCache maps device numbers to renameio temporary directories.
+}
+
+// NewRealSystem returns a System that acts on fs.
+func NewRealSystem(fs vfs.FS) *RealSystem {
+	return &RealSystem{
+		FS:           fs,
+		devCache:     make(map[string]uint),
+		tempDirCache: make(map[uint]string),
+	}
+}
+
 // WriteFile implements System.WriteFile.
 func (s *RealSystem) WriteFile(filename string, data []byte, perm os.FileMode) error {
 	// Special case: if writing to the real filesystem, use

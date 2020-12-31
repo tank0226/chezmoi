@@ -21,5 +21,4 @@ cmp $HOME/.dir/subdir/file golden/.dir/subdir/file
 rm $HOME/.symlink
 mkfile $HOME/.symlink
 chezmoi apply --force
-exec find $HOME
 cmp $HOME/.symlink golden/.symlink

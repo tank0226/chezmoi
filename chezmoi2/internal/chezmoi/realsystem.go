@@ -12,30 +12,6 @@ import (
 	"go.uber.org/multierr"
 )
 
-// An RealSystem is a System that writes to a filesystem and executes scripts.
-type RealSystem struct {
-	vfs.FS
-	devCache     map[string]uint // devCache maps directories to device numbers.
-	tempDirCache map[uint]string // tempDirCache maps device numbers to renameio temporary directories.
-}
-
-// NewRealSystem returns a System that acts on fs.
-func NewRealSystem(fs vfs.FS) *RealSystem {
-	return &RealSystem{
-		FS:           fs,
-		devCache:     make(map[string]uint),
-		tempDirCache: make(map[uint]string),
-	}
-}
-
-// Chmod implements System.Chmod.
-func (s *RealSystem) Chmod(name string, mode os.FileMode) error {
-	if runtime.GOOS == "windows" {
-		return nil
-	}
-	return s.FS.Chmod(name, mode)
-}
-
 // Glob implements System.Glob.
 func (s *RealSystem) Glob(pattern string) ([]string, error) {
 	return doublestar.GlobOS(doubleStarOS{FS: s}, pattern)
