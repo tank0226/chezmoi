@@ -57,7 +57,7 @@ func (s *DebugSystem) IdempotentCmdOutput(cmd *exec.Cmd) ([]byte, error) {
 	resultCh := make(chan result)
 	go func(resultCh chan<- result) {
 		defer close(resultCh)
-		start := time.Now()
+		start := time.Now().UTC()
 		output, err := s.system.IdempotentCmdOutput(cmd)
 		resultCh <- result{
 			startTime: start,
@@ -175,7 +175,7 @@ func (s *DebugSystem) RunCmd(cmd *exec.Cmd) error {
 	resultCh := make(chan result)
 	go func(resultCh chan<- result) {
 		defer close(resultCh)
-		start := time.Now()
+		start := time.Now().UTC()
 		err := s.system.RunCmd(cmd)
 		resultCh <- result{
 			startTime: start,
@@ -212,7 +212,7 @@ func (s *DebugSystem) RunScript(scriptname, dir string, data []byte) error {
 	resultCh := make(chan result)
 	go func(resultCh chan<- result) {
 		defer close(resultCh)
-		start := time.Now()
+		start := time.Now().UTC()
 		err := s.system.RunScript(scriptname, dir, data)
 		resultCh <- result{
 			startTime: start,

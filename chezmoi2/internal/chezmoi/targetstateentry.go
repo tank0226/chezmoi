@@ -56,8 +56,8 @@ type TargetStateSymlink struct {
 	*lazyLinkname
 }
 
-// A scriptOnceState records the state of a script that should only be run once.
-type scriptOnceState struct {
+// A scriptState records the state of a script that has been run.
+type scriptState struct {
 	Name  string    `json:"name" toml:"name" yaml:"name"`
 	RunAt time.Time `json:"runAt" toml:"runAt" yaml:"runAt"`
 }
@@ -267,47 +267,37 @@ func (t *TargetStateRenameDir) Evaluate() error {
 
 // Apply runs t.
 func (t *TargetStateScript) Apply(system System, persistentState PersistentState, actualStateEntry ActualStateEntry, umask os.FileMode) error {
-	var (
-		key        []byte
-		executedAt time.Time
-	)
+	contentsSHA256, err := t.ContentsSHA256()
+	if err != nil {
+		return err
+	}
+	key := []byte(hex.EncodeToString(contentsSHA256))
 	if t.once {
-		contentsSHA256, err := t.ContentsSHA256()
-		if err != nil {
-			return err
-		}
-		key = []byte(hex.EncodeToString(contentsSHA256))
-		switch scriptOnceState, err := persistentState.Get(ScriptOnceStateBucket, key); {
+		switch scriptState, err := persistentState.Get(ScriptStateBucket, key); {
 		case err != nil:
 			return err
-		case scriptOnceState != nil:
+		case scriptState != nil:
 			return nil
 		}
-		executedAt = time.Now()
 	}
 	contents, err := t.Contents()
 	if err != nil {
 		return err
 	}
-	if isEmpty(contents) {
-		return nil
+	runAt := time.Now().UTC()
+	if !isEmpty(contents) {
+		if err := system.RunScript(t.name, path.Dir(actualStateEntry.Path()), contents); err != nil {
+			return err
+		}
 	}
-	if err := system.RunScript(t.name, path.Dir(actualStateEntry.Path()), contents); err != nil {
+	value, err := json.Marshal(&scriptState{
+		Name:  t.name,
+		RunAt: runAt,
+	})
+	if err != nil {
 		return err
 	}
-	if t.once {
-		value, err := json.Marshal(&scriptOnceState{
-			Name:  t.name,
-			RunAt: executedAt,
-		})
-		if err != nil {
-			return err
-		}
-		if err := persistentState.Set(ScriptOnceStateBucket, key, value); err != nil {
-			return err
-		}
-	}
-	return nil
+	return persistentState.Set(ScriptStateBucket, key, value)
 }
 
 // EntryState returns t's entry state.

@@ -16,9 +16,9 @@ var (
 	// EntryStateBucket is the bucket for recording the entry states.
 	EntryStateBucket = []byte("entryState")
 
-	// ScriptOnceStateBucket is the bucket for recording the state of run once
+	// ScriptStateBucket is the bucket for recording the state of run once
 	// scripts.
-	ScriptOnceStateBucket = []byte("scriptOnce")
+	ScriptStateBucket = []byte("scriptState")
 
 	// Skip indicates that entry should be skipped.
 	Skip = filepath.SkipDir
@@ -110,19 +110,19 @@ func MustTrimDirPrefix(path, dir string) string {
 }
 
 // StateData returns the state data in bucket in s.
-func StateData(s PersistentState, bucket []byte) (interface{}, error) {
-	entryStateData := make(map[string]*EntryState)
+func StateData(s PersistentState, bucket []byte) (map[string]interface{}, error) {
+	result := make(map[string]interface{})
 	if err := s.ForEach(bucket, func(k, v []byte) error {
-		var es EntryState
-		if err := json.Unmarshal(v, &es); err != nil {
+		var value map[string]interface{}
+		if err := json.Unmarshal(v, &value); err != nil {
 			return err
 		}
-		entryStateData[string(k)] = &es
+		result[string(k)] = value
 		return nil
 	}); err != nil {
 		return nil, err
 	}
-	return entryStateData, nil
+	return result, nil
 }
 
 // SuspiciousSourceDirEntry returns true if base is a suspicous dir entry.

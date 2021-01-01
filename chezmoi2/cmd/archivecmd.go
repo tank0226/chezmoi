@@ -53,7 +53,7 @@ func (c *Config) runArchiveCmd(cmd *cobra.Command, args []string) error {
 	case "tar":
 		archiveSystem = chezmoi.NewTARSystem(&output, tarHeaderTemplate())
 	case "zip":
-		archiveSystem = chezmoi.NewZIPSystem(&output, time.Now())
+		archiveSystem = chezmoi.NewZIPSystem(&output, time.Now().UTC())
 	default:
 		return fmt.Errorf("%s: invalid format", c.archive.format)
 	}
@@ -99,7 +99,7 @@ func tarHeaderTemplate() tar.Header {
 		}
 	}
 
-	now := time.Now()
+	now := time.Now().UTC()
 	return tar.Header{
 		Uid:        uid,
 		Gid:        gid,

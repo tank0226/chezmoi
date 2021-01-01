@@ -35,7 +35,7 @@ func TestMain(m *testing.M) {
 			return cmd.Main(cmd.VersionInfo{
 				Version: "v2.0.0+test",
 				Commit:  "HEAD",
-				Date:    time.Now().Format(time.RFC3339),
+				Date:    time.Now().UTC().Format(time.RFC3339),
 				BuiltBy: "testscript",
 			}, os.Args[1:])
 		},
