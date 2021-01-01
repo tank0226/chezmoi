@@ -25,19 +25,21 @@ type Lstater interface {
 
 // A SourceState is a source state.
 type SourceState struct {
-	entries              map[string]SourceStateEntry
-	system               System
-	sourceDir            string
-	destDir              string
-	umask                os.FileMode
-	encryptionTool       EncryptionTool
-	ignore               *patternSet
-	minVersion           semver.Version
-	priorityTemplateData map[string]interface{}
-	templateData         map[string]interface{}
-	templateFuncs        template.FuncMap
-	templateOptions      []string
-	templates            map[string]*template.Template
+	entries                 map[string]SourceStateEntry
+	system                  System
+	sourceDir               string
+	destDir                 string
+	umask                   os.FileMode
+	encryptionTool          EncryptionTool
+	ignore                  *patternSet
+	minVersion              semver.Version
+	defaultTemplateDataFunc func() map[string]interface{}
+	templateData            map[string]interface{}
+	priorityTemplateData    map[string]interface{}
+	templateDataValue       map[string]interface{}
+	templateFuncs           template.FuncMap
+	templateOptions         []string
+	templates               map[string]*template.Template
 }
 
 // A SourceStateOption sets an option on a source state.
@@ -61,7 +63,6 @@ func WithEncryptionTool(encryptionTool EncryptionTool) SourceStateOption {
 func WithPriorityTemplateData(priorityTemplateData map[string]interface{}) SourceStateOption {
 	return func(s *SourceState) {
 		recursiveMerge(s.priorityTemplateData, priorityTemplateData)
-		recursiveMerge(s.templateData, s.priorityTemplateData)
 	}
 }
 
@@ -79,11 +80,10 @@ func WithSystem(system System) SourceStateOption {
 	}
 }
 
-// WithTemplateData adds template data.
-func WithTemplateData(templateData map[string]interface{}) SourceStateOption {
+// WithDefaultTemplateDataFunc sets the default template data function.
+func WithDefaultTemplateDataFunc(defaultTemplateDataFunc func() map[string]interface{}) SourceStateOption {
 	return func(s *SourceState) {
-		recursiveMerge(s.templateData, templateData)
-		recursiveMerge(s.templateData, s.priorityTemplateData)
+		s.defaultTemplateDataFunc = defaultTemplateDataFunc
 	}
 }
 
@@ -634,7 +634,16 @@ func (s *SourceState) TargetNames() []string {
 
 // TemplateData returns s's template data.
 func (s *SourceState) TemplateData() map[string]interface{} {
-	return s.templateData
+	if s.templateDataValue == nil {
+		s.templateDataValue = make(map[string]interface{})
+		if s.defaultTemplateDataFunc != nil {
+			recursiveMerge(s.templateDataValue, s.defaultTemplateDataFunc())
+			s.defaultTemplateDataFunc = nil
+		}
+		recursiveMerge(s.templateDataValue, s.templateData)
+		recursiveMerge(s.templateDataValue, s.priorityTemplateData)
+	}
+	return s.templateDataValue
 }
 
 // addPatterns executes the template at sourcePath, interprets the result as a
@@ -690,7 +699,6 @@ func (s *SourceState) addTemplateData(sourcePath string) error {
 		return fmt.Errorf("%s: %w", sourcePath, err)
 	}
 	recursiveMerge(s.templateData, templateData)
-	recursiveMerge(s.templateData, s.priorityTemplateData)
 	return nil
 }
 

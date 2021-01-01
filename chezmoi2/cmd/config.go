@@ -1056,11 +1056,11 @@ func (c *Config) sourcePaths(s *chezmoi.SourceState, args []string) ([]string, e
 
 func (c *Config) sourceState() (*chezmoi.SourceState, error) {
 	s := chezmoi.NewSourceState(
+		chezmoi.WithDefaultTemplateDataFunc(c.defaultTemplateData),
 		chezmoi.WithDestDir(c.normalizedDestDir),
 		chezmoi.WithPriorityTemplateData(c.Data),
 		chezmoi.WithSourceDir(c.normalizedSourceDir),
 		chezmoi.WithSystem(c.sourceSystem),
-		chezmoi.WithTemplateData(c.defaultTemplateData()),
 		chezmoi.WithTemplateFuncs(c.templateFuncs),
 		chezmoi.WithTemplateOptions(c.Template.Options),
 	)

@@ -439,7 +439,7 @@ func TestSourceStateApplyAll(t *testing.T) {
 				},
 			},
 			sourceStateOptions: []SourceStateOption{
-				WithTemplateData(map[string]interface{}{
+				withTemplateData(map[string]interface{}{
 					"email": "you@example.com",
 				}),
 			},
@@ -512,7 +512,7 @@ func TestSourceStateApplyAll(t *testing.T) {
 				},
 			},
 			sourceStateOptions: []SourceStateOption{
-				WithTemplateData(map[string]interface{}{
+				withTemplateData(map[string]interface{}{
 					"os": "linux",
 				}),
 			},
@@ -1028,6 +1028,7 @@ func TestSourceStateRead(t *testing.T) {
 				tc.expectedSourceState.sourceDir = "/home/user/.local/share/chezmoi"
 				require.NoError(t, tc.expectedSourceState.evaluateAll())
 				s.system = nil
+				s.templateDataValue = nil
 				assert.Equal(t, tc.expectedSourceState, s)
 			})
 		})
@@ -1119,6 +1120,13 @@ func withIgnore(ignore *patternSet) SourceStateOption {
 func withMinVersion(minVersion semver.Version) SourceStateOption {
 	return func(s *SourceState) {
 		s.minVersion = minVersion
+	}
+}
+
+// withTemplateData adds template data.
+func withTemplateData(templateData map[string]interface{}) SourceStateOption {
+	return func(s *SourceState) {
+		recursiveMerge(s.templateData, templateData)
 	}
 }
 
