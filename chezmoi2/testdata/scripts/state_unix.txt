@@ -1,3 +1,5 @@
+[windows] skip 'UNIX only'
+
 # test that the persistent state is only created on demand
 chezmoi state dump --format=yaml
 cmp stdout golden/dump

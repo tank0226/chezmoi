@@ -2,6 +2,7 @@ package cmd
 
 import (
 	"os"
+	"path/filepath"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -70,7 +71,7 @@ func TestApplyCmd(t *testing.T) {
 				),
 				vfst.TestPath("/home/user/.symlink",
 					vfst.TestModeType(os.ModeSymlink),
-					vfst.TestSymlinkTarget(".dir/subdir/file"),
+					vfst.TestSymlinkTarget(filepath.FromSlash(".dir/subdir/file")),
 				),
 				vfst.TestPath("/home/user/.template",
 					vfst.TestModeIsRegular,

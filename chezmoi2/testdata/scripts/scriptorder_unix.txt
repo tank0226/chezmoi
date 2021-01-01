@@ -1,4 +1,4 @@
-[!windows] stop 'UNIX only'
+[windows] skip 'UNIX only'
 
 # test that chezmoi apply runs scripts in the correct order
 symlink home/user/.local/share/chezmoi/run_first_00-first -> .script

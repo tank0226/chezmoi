@@ -208,7 +208,7 @@ func TestSourceStateAdd(t *testing.T) {
 			},
 		},
 		{
-			name: "executable",
+			name: "executable_unix",
 			destPaths: []string{
 				"/home/user/.executable",
 			},
@@ -217,6 +217,22 @@ func TestSourceStateAdd(t *testing.T) {
 			},
 			tests: []interface{}{
 				vfst.TestPath("/home/user/.local/share/chezmoi/executable_dot_executable",
+					vfst.TestModeIsRegular,
+					vfst.TestModePerm(0o666&^GetUmask()),
+					vfst.TestContentsString("# contents of .executable\n"),
+				),
+			},
+		},
+		{
+			name: "executable_windows",
+			destPaths: []string{
+				"/home/user/.executable",
+			},
+			addOptions: AddOptions{
+				Include: NewIncludeSet(IncludeAll),
+			},
+			tests: []interface{}{
+				vfst.TestPath("/home/user/.local/share/chezmoi/dot_executable",
 					vfst.TestModeIsRegular,
 					vfst.TestModePerm(0o666&^GetUmask()),
 					vfst.TestContentsString("# contents of .executable\n"),
@@ -352,18 +368,18 @@ func TestSourceStateAdd(t *testing.T) {
 		{
 			name: "symlink_windows",
 			destPaths: []string{
-				"/home/user/.symlink",
+				"/home/user/.symlink_windows",
 			},
 			addOptions: AddOptions{
 				Include: NewIncludeSet(IncludeAll),
 			},
 			extraRoot: map[string]interface{}{
 				"/home/user": map[string]interface{}{
-					".symlink": &vfst.Symlink{Target: ".dir\\subdir\\file"},
+					".symlink_windows": &vfst.Symlink{Target: ".dir\\subdir\\file"},
 				},
 			},
 			tests: []interface{}{
-				vfst.TestPath("/home/user/.local/share/chezmoi/symlink_dot_symlink",
+				vfst.TestPath("/home/user/.local/share/chezmoi/symlink_dot_symlink_windows",
 					vfst.TestModeIsRegular,
 					vfst.TestContentsString(".dir/subdir/file\n"),
 				),
@@ -460,11 +476,11 @@ func TestSourceStateAdd(t *testing.T) {
 					".template": "key = value\n",
 				},
 			}, func(fs vfs.FS) {
-				if tc.extraRoot != nil {
-					require.NoError(t, vfst.NewBuilder().Build(fs, tc.extraRoot))
-				}
 				system := NewRealSystem(fs)
 				persistentState := NewMockPersistentState()
+				if tc.extraRoot != nil {
+					require.NoError(t, vfst.NewBuilder().Build(system, tc.extraRoot))
+				}
 
 				s := NewSourceState(
 					WithDestDir("/home/user"),
