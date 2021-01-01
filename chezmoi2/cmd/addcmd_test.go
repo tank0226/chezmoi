@@ -19,64 +19,79 @@ func TestAddCmd(t *testing.T) {
 		tests []interface{}
 	}{
 		{
-			name: "add_file",
+			name: "dir_private_unix",
 			root: map[string]interface{}{
 				"/home/user": map[string]interface{}{
-					".bashrc": "# contents of .bashrc\n",
-				},
-			},
-			args: []string{"~/.bashrc"},
-			tests: []interface{}{
-				vfst.TestPath("/home/user/.local/share/chezmoi/dot_bashrc",
-					vfst.TestModeIsRegular,
-					vfst.TestModePerm(0o666&^chezmoi.GetUmask()),
-					vfst.TestContentsString("# contents of .bashrc\n"),
-				),
-			},
-		},
-		{
-			name: "add_binary_file_unix",
-			root: map[string]interface{}{
-				"/home/user": map[string]interface{}{
-					".binary": &vfst.File{
-						Perm:     0o777,
-						Contents: []byte("#!/bin/sh\n"),
+					".dir": &vfst.Dir{
+						Perm: 0o700,
+						Entries: map[string]interface{}{
+							"file": "# contents of .dir/file\n",
+						},
 					},
 				},
 			},
-			args: []string{"~/.binary"},
+			args: []string{"~/.dir"},
 			tests: []interface{}{
-				vfst.TestPath("/home/user/.local/share/chezmoi/executable_dot_binary",
+				vfst.TestPath("/home/user/.local/share/chezmoi/private_dot_dir",
+					vfst.TestIsDir,
+					vfst.TestModePerm(0o777&^chezmoi.GetUmask()),
+				),
+				vfst.TestPath("/home/user/.local/share/chezmoi/private_dot_dir/file",
 					vfst.TestModeIsRegular,
 					vfst.TestModePerm(0o666&^chezmoi.GetUmask()),
-					vfst.TestContentsString("#!/bin/sh\n"),
+					vfst.TestContentsString("# contents of .dir/file\n"),
 				),
 			},
 		},
 		{
-			name: "add_empty_file",
+			name: "dir_file_private_unix",
 			root: map[string]interface{}{
 				"/home/user": map[string]interface{}{
-					".hushlogin": "",
+					".dir": &vfst.Dir{
+						Perm: 0o700,
+						Entries: map[string]interface{}{
+							"file": "# contents of .dir/file\n",
+						},
+					},
 				},
 			},
-			args: []string{"~/.hushlogin"},
+			args: []string{"~/.dir/file"},
 			tests: []interface{}{
-				vfst.TestPath("/home/user/.local/share/chezmoi/empty_dot_hushlogin",
+				vfst.TestPath("/home/user/.local/share/chezmoi/private_dot_dir",
+					vfst.TestIsDir,
+					vfst.TestModePerm(0o777&^chezmoi.GetUmask()),
+				),
+				vfst.TestPath("/home/user/.local/share/chezmoi/private_dot_dir/file",
+					vfst.TestModeIsRegular,
+					vfst.TestModePerm(0o666&^chezmoi.GetUmask()),
+					vfst.TestContentsString("# contents of .dir/file\n"),
+				),
+			},
+		},
+		{
+			name: "empty",
+			root: map[string]interface{}{
+				"/home/user": map[string]interface{}{
+					".empty": "",
+				},
+			},
+			args: []string{"~/.empty"},
+			tests: []interface{}{
+				vfst.TestPath("/home/user/.local/share/chezmoi/empty_dot_empty",
 					vfst.TestDoesNotExist,
 				),
 			},
 		},
 		{
-			name: "add_empty_file_with_--empty",
+			name: "empty_with_--empty",
 			root: map[string]interface{}{
 				"/home/user": map[string]interface{}{
-					".hushlogin": "",
+					".empty": "",
 				},
 			},
-			args: []string{"--empty", "~/.hushlogin"},
+			args: []string{"--empty", "~/.empty"},
 			tests: []interface{}{
-				vfst.TestPath("/home/user/.local/share/chezmoi/empty_dot_hushlogin",
+				vfst.TestPath("/home/user/.local/share/chezmoi/empty_dot_empty",
 					vfst.TestModeIsRegular,
 					vfst.TestModePerm(0o666&^chezmoi.GetUmask()),
 					vfst.TestContents(nil),
@@ -84,11 +99,46 @@ func TestAddCmd(t *testing.T) {
 			},
 		},
 		{
-			name: "add_symlink",
+			name: "executable_unix",
+			root: map[string]interface{}{
+				"/home/user": map[string]interface{}{
+					".executable": &vfst.File{
+						Perm:     0o777,
+						Contents: []byte("#!/bin/sh\n"),
+					},
+				},
+			},
+			args: []string{"~/.executable"},
+			tests: []interface{}{
+				vfst.TestPath("/home/user/.local/share/chezmoi/executable_dot_executable",
+					vfst.TestModeIsRegular,
+					vfst.TestModePerm(0o666&^chezmoi.GetUmask()),
+					vfst.TestContentsString("#!/bin/sh\n"),
+				),
+			},
+		},
+		{
+			name: "file",
+			root: map[string]interface{}{
+				"/home/user": map[string]interface{}{
+					".file": "# contents of .file\n",
+				},
+			},
+			args: []string{"~/.file"},
+			tests: []interface{}{
+				vfst.TestPath("/home/user/.local/share/chezmoi/dot_file",
+					vfst.TestModeIsRegular,
+					vfst.TestModePerm(0o666&^chezmoi.GetUmask()),
+					vfst.TestContentsString("# contents of .file\n"),
+				),
+			},
+		},
+		{
+			name: "symlink",
 			root: map[string]interface{}{
 				"/home/user": map[string]interface{}{
 					".symlink": &vfst.Symlink{
-						Target: ".bashrc",
+						Target: ".dir/subdir/file",
 					},
 				},
 			},
@@ -97,12 +147,12 @@ func TestAddCmd(t *testing.T) {
 				vfst.TestPath("/home/user/.local/share/chezmoi/symlink_dot_symlink",
 					vfst.TestModeIsRegular,
 					vfst.TestModePerm(0o666&^chezmoi.GetUmask()),
-					vfst.TestContentsString(".bashrc\n"),
+					vfst.TestContentsString(".dir/subdir/file\n"),
 				),
 			},
 		},
 		{
-			name: "add_symlink--follow",
+			name: "symlink_with_--follow",
 			root: map[string]interface{}{
 				"/home/user": map[string]interface{}{
 					".file": "# contents of .file\n",
@@ -117,56 +167,6 @@ func TestAddCmd(t *testing.T) {
 					vfst.TestModeIsRegular,
 					vfst.TestModePerm(0o666&^chezmoi.GetUmask()),
 					vfst.TestContentsString("# contents of .file\n"),
-				),
-			},
-		},
-		{
-			name: "add_private_dir_unix",
-			root: map[string]interface{}{
-				"/home/user": map[string]interface{}{
-					".ssh": &vfst.Dir{
-						Perm: 0o700,
-						Entries: map[string]interface{}{
-							"config": "# contents of .ssh/config\n",
-						},
-					},
-				},
-			},
-			args: []string{"~/.ssh"},
-			tests: []interface{}{
-				vfst.TestPath("/home/user/.local/share/chezmoi/private_dot_ssh",
-					vfst.TestIsDir,
-					vfst.TestModePerm(0o777&^chezmoi.GetUmask()),
-				),
-				vfst.TestPath("/home/user/.local/share/chezmoi/private_dot_ssh/config",
-					vfst.TestModeIsRegular,
-					vfst.TestModePerm(0o666&^chezmoi.GetUmask()),
-					vfst.TestContentsString("# contents of .ssh/config\n"),
-				),
-			},
-		},
-		{
-			name: "add_file_in_private_dir_unix",
-			root: map[string]interface{}{
-				"/home/user": map[string]interface{}{
-					".ssh": &vfst.Dir{
-						Perm: 0o700,
-						Entries: map[string]interface{}{
-							"config": "# contents of .ssh/config\n",
-						},
-					},
-				},
-			},
-			args: []string{"~/.ssh/config"},
-			tests: []interface{}{
-				vfst.TestPath("/home/user/.local/share/chezmoi/private_dot_ssh",
-					vfst.TestIsDir,
-					vfst.TestModePerm(0o777&^chezmoi.GetUmask()),
-				),
-				vfst.TestPath("/home/user/.local/share/chezmoi/private_dot_ssh/config",
-					vfst.TestModeIsRegular,
-					vfst.TestModePerm(0o666&^chezmoi.GetUmask()),
-					vfst.TestContentsString("# contents of .ssh/config\n"),
 				),
 			},
 		},
