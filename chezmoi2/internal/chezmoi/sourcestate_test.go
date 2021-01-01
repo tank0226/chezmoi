@@ -190,26 +190,23 @@ func TestSourceStateAdd(t *testing.T) {
 				),
 			},
 		},
-		// FIXME enable following failing test
-		/*
-			{
-				name: "empty_with_empty",
-				destPaths: []string{
-					"/home/user/.empty",
-				},
-				addOptions: AddOptions{
-					Empty:   true,
-					Include: NewIncludeSet(IncludeAll),
-				},
-				tests: []interface{}{
-					vfst.TestPath("/home/user/.local/share/chezmoi/dot_empty",
-						vfst.TestModeIsRegular,
-						vfst.TestModePerm(0o666&^GetUmask()),
-						vfst.TestContents(nil),
-					),
-				},
+		{
+			name: "empty_with_empty",
+			destPaths: []string{
+				"/home/user/.empty",
 			},
-		*/
+			addOptions: AddOptions{
+				Empty:   true,
+				Include: NewIncludeSet(IncludeAll),
+			},
+			tests: []interface{}{
+				vfst.TestPath("/home/user/.local/share/chezmoi/empty_dot_empty",
+					vfst.TestModeIsRegular,
+					vfst.TestModePerm(0o666&^GetUmask()),
+					vfst.TestContents(nil),
+				),
+			},
+		},
 		{
 			name: "executable",
 			destPaths: []string{
