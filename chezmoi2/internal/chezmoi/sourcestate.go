@@ -34,9 +34,9 @@ type SourceState struct {
 	ignore                  *patternSet
 	minVersion              semver.Version
 	defaultTemplateDataFunc func() map[string]interface{}
-	templateData            map[string]interface{}
+	userTemplateData        map[string]interface{}
 	priorityTemplateData    map[string]interface{}
-	templateDataValue       map[string]interface{}
+	templateData            map[string]interface{}
 	templateFuncs           template.FuncMap
 	templateOptions         []string
 	templates               map[string]*template.Template
@@ -116,7 +116,7 @@ func NewSourceState(options ...SourceStateOption) *SourceState {
 		encryptionTool:       &nullEncryptionTool{},
 		ignore:               newPatternSet(),
 		priorityTemplateData: make(map[string]interface{}),
-		templateData:         make(map[string]interface{}),
+		userTemplateData:     make(map[string]interface{}),
 		templateOptions:      DefaultTemplateOptions,
 	}
 	for _, option := range options {
@@ -634,16 +634,16 @@ func (s *SourceState) TargetNames() []string {
 
 // TemplateData returns s's template data.
 func (s *SourceState) TemplateData() map[string]interface{} {
-	if s.templateDataValue == nil {
-		s.templateDataValue = make(map[string]interface{})
+	if s.templateData == nil {
+		s.templateData = make(map[string]interface{})
 		if s.defaultTemplateDataFunc != nil {
-			recursiveMerge(s.templateDataValue, s.defaultTemplateDataFunc())
+			recursiveMerge(s.templateData, s.defaultTemplateDataFunc())
 			s.defaultTemplateDataFunc = nil
 		}
-		recursiveMerge(s.templateDataValue, s.templateData)
-		recursiveMerge(s.templateDataValue, s.priorityTemplateData)
+		recursiveMerge(s.templateData, s.userTemplateData)
+		recursiveMerge(s.templateData, s.priorityTemplateData)
 	}
-	return s.templateDataValue
+	return s.templateData
 }
 
 // addPatterns executes the template at sourcePath, interprets the result as a
@@ -698,7 +698,7 @@ func (s *SourceState) addTemplateData(sourcePath string) error {
 	if err := format.Decode(data, &templateData); err != nil {
 		return fmt.Errorf("%s: %w", sourcePath, err)
 	}
-	recursiveMerge(s.templateData, templateData)
+	recursiveMerge(s.userTemplateData, templateData)
 	return nil
 }
 
