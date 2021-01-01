@@ -25,128 +25,156 @@ func TestSourceStateAdd(t *testing.T) {
 		{
 			name: "file",
 			destPaths: []string{
-				"/home/user/.bashrc",
+				"/home/user/.file",
 			},
 			addOptions: AddOptions{
 				Include: NewIncludeSet(IncludeAll),
 			},
 			tests: []interface{}{
-				vfst.TestPath("/home/user/.local/share/chezmoi/dot_bashrc",
+				vfst.TestPath("/home/user/.local/share/chezmoi/dot_file",
 					vfst.TestModeIsRegular,
 					vfst.TestModePerm(0o666&^GetUmask()),
-					vfst.TestContentsString("# contents of .bashrc\n"),
+					vfst.TestContentsString("# contents of .file\n"),
 				),
 			},
 		},
 		{
-			name: "file_in_dir_unix",
+			name: "file_in_dir",
 			destPaths: []string{
-				"/home/user/.ssh/config",
+				"/home/user/.dir/file",
 			},
 			addOptions: AddOptions{
 				Include: NewIncludeSet(IncludeAll),
 			},
 			extraRoot: map[string]interface{}{
-				"/home/user/.local/share/chezmoi/private_dot_ssh": &vfst.Dir{Perm: 0o777},
+				"/home/user/.local/share/chezmoi/dot_dir": &vfst.Dir{Perm: 0o777},
 			},
 			tests: []interface{}{
-				vfst.TestPath("/home/user/.local/share/chezmoi/private_dot_ssh/config",
+				vfst.TestPath("/home/user/.local/share/chezmoi/dot_dir/file",
 					vfst.TestModeIsRegular,
-					vfst.TestContentsString("# contents of .ssh/config\n"),
+					vfst.TestContentsString("# contents of .dir/file\n"),
 				),
 			},
 		},
 		{
-			name: "file_in_dir_windows",
+			name: "file_in_dir_subdir",
 			destPaths: []string{
-				"/home/user/.ssh/config",
+				"/home/user/.dir/subdir/file",
 			},
 			addOptions: AddOptions{
 				Include: NewIncludeSet(IncludeAll),
 			},
 			extraRoot: map[string]interface{}{
-				"/home/user/.local/share/chezmoi/dot_ssh": &vfst.Dir{Perm: 0o777},
+				"/home/user/.local/share/chezmoi/dot_dir/subdir": &vfst.Dir{Perm: 0o777},
 			},
 			tests: []interface{}{
-				vfst.TestPath("/home/user/.local/share/chezmoi/dot_ssh/config",
+				vfst.TestPath("/home/user/.local/share/chezmoi/dot_dir/subdir/file",
 					vfst.TestModeIsRegular,
-					vfst.TestContentsString("# contents of .ssh/config\n"),
+					vfst.TestContentsString("# contents of .dir/subdir/file\n"),
 				),
 			},
 		},
+		// FIXME enable following test which currently fails
+		/*
+			{
+				name: "file_in_dir_exact_subdir",
+				destPaths: []string{
+					"/home/user/.dir/subdir/file",
+				},
+				addOptions: AddOptions{
+					Include: NewIncludeSet(IncludeAll),
+				},
+				extraRoot: map[string]interface{}{
+					"/home/user/.local/share/chezmoi/dot_dir/exact_subdir": &vfst.Dir{Perm: 0o777},
+				},
+				tests: []interface{}{
+					vfst.TestPath("/home/user/.local/share/chezmoi/dot_dir/exact_subdir/file",
+						vfst.TestModeIsRegular,
+						vfst.TestContentsString("# contents of .dir/subdir/file\n"),
+					),
+				},
+			},
+		*/
 		{
 			name: "replace_file_contents",
 			destPaths: []string{
-				"/home/user/.bashrc",
+				"/home/user/.file",
 			},
 			addOptions: AddOptions{
 				Include: NewIncludeSet(IncludeAll),
 			},
 			extraRoot: map[string]interface{}{
-				"/home/user/.local/share/chezmoi/dot_bashrc": "# old contents of .bashrc\n",
+				"/home/user/.local/share/chezmoi/dot_file": "# old contents of .file\n",
 			},
 			tests: []interface{}{
-				vfst.TestPath("/home/user/.local/share/chezmoi/dot_bashrc",
+				vfst.TestPath("/home/user/.local/share/chezmoi/dot_file",
 					vfst.TestModeIsRegular,
 					vfst.TestModePerm(0o666&^GetUmask()),
-					vfst.TestContentsString("# contents of .bashrc\n"),
+					vfst.TestContentsString("# contents of .file\n"),
 				),
 			},
 		},
 		{
 			name: "change_file_attr",
 			destPaths: []string{
-				"/home/user/.bashrc",
+				"/home/user/.file",
 			},
 			addOptions: AddOptions{
 				Include: NewIncludeSet(IncludeAll),
 			},
 			extraRoot: map[string]interface{}{
-				"/home/user/.local/share/chezmoi/executable_dot_bashrc": "# contents of .bashrc\n",
+				"/home/user/.local/share/chezmoi/executable_dot_file": "# contents of .file\n",
 			},
 			tests: []interface{}{
-				vfst.TestPath("/home/user/.local/share/chezmoi/dot_bashrc",
+				vfst.TestPath("/home/user/.local/share/chezmoi/dot_file",
 					vfst.TestModeIsRegular,
 					vfst.TestModePerm(0o666&^GetUmask()),
-					vfst.TestContentsString("# contents of .bashrc\n"),
+					vfst.TestContentsString("# contents of .file\n"),
 				),
-				vfst.TestPath("/home/user/.local/share/chezmoi/executable_dot_bashrc",
+				vfst.TestPath("/home/user/.local/share/chezmoi/executable_dot_file",
 					vfst.TestDoesNotExist,
 				),
 			},
 		},
 		{
-			name: "dir_unix",
+			name: "dir",
 			destPaths: []string{
-				"/home/user/.ssh",
+				"/home/user/.dir",
 			},
 			addOptions: AddOptions{
 				Include: NewIncludeSet(IncludeAll),
 			},
 			tests: []interface{}{
-				vfst.TestPath("/home/user/.local/share/chezmoi/private_dot_ssh",
+				vfst.TestPath("/home/user/.local/share/chezmoi/dot_dir",
 					vfst.TestIsDir,
 					vfst.TestModePerm(0o777&^GetUmask()),
 				),
-				vfst.TestPath("/home/user/.local/share/chezmoi/private_dot_ssh/config",
+				vfst.TestPath("/home/user/.local/share/chezmoi/dot_dir/file",
+					vfst.TestDoesNotExist,
+				),
+				vfst.TestPath("/home/user/.local/share/chezmoi/dot_dir/subdir",
 					vfst.TestDoesNotExist,
 				),
 			},
 		},
 		{
-			name: "dir_windows",
+			name: "dir_subdir",
 			destPaths: []string{
-				"/home/user/.ssh",
+				"/home/user/.dir/subdir",
 			},
 			addOptions: AddOptions{
 				Include: NewIncludeSet(IncludeAll),
 			},
 			tests: []interface{}{
-				vfst.TestPath("/home/user/.local/share/chezmoi/dot_ssh",
+				vfst.TestPath("/home/user/.local/share/chezmoi/dot_dir",
 					vfst.TestIsDir,
 					vfst.TestModePerm(0o777&^GetUmask()),
 				),
-				vfst.TestPath("/home/user/.local/share/chezmoi/dot_ssh/config",
+				vfst.TestPath("/home/user/.local/share/chezmoi/dot_dir/subdir",
+					vfst.TestIsDir,
+					vfst.TestModePerm(0o777&^GetUmask()),
+				),
+				vfst.TestPath("/home/user/.local/share/chezmoi/dot_dir/subdir/file",
 					vfst.TestDoesNotExist,
 				),
 			},
@@ -161,13 +189,13 @@ func TestSourceStateAdd(t *testing.T) {
 			},
 			extraRoot: map[string]interface{}{
 				"/home/user": map[string]interface{}{
-					".symlink": &vfst.Symlink{Target: ".ssh/config"},
+					".symlink": &vfst.Symlink{Target: ".dir/subdir/file"},
 				},
 			},
 			tests: []interface{}{
 				vfst.TestPath("/home/user/.local/share/chezmoi/symlink_dot_symlink",
 					vfst.TestModeIsRegular,
-					vfst.TestContentsString(".ssh/config\n"),
+					vfst.TestContentsString(".dir/subdir/file\n"),
 				),
 			},
 		},
@@ -181,39 +209,38 @@ func TestSourceStateAdd(t *testing.T) {
 			},
 			extraRoot: map[string]interface{}{
 				"/home/user": map[string]interface{}{
-					".symlink": &vfst.Symlink{Target: ".ssh\\config"},
+					".symlink": &vfst.Symlink{Target: ".dir\\subdir\\file"},
 				},
 			},
 			tests: []interface{}{
 				vfst.TestPath("/home/user/.local/share/chezmoi/symlink_dot_symlink",
 					vfst.TestModeIsRegular,
-					vfst.TestContentsString(".ssh/config\n"),
+					vfst.TestContentsString(".dir/subdir/file\n"),
 				),
 			},
 		},
 		{
 			name: "change_dir_attr",
 			destPaths: []string{
-				"/home/user/dir",
+				"/home/user/.dir",
 			},
 			addOptions: AddOptions{
 				Include: NewIncludeSet(IncludeAll),
 			},
 			extraRoot: map[string]interface{}{
 				"/home/user": map[string]interface{}{
-					".local/share/chezmoi/exact_dir/file": "# contents of file\n",
-					"dir/file":                            "# contents of file\n",
+					".local/share/chezmoi/exact_dot_dir/file": "# contents of file\n",
 				},
 			},
 			tests: []interface{}{
-				vfst.TestPath("/home/user/.local/share/chezmoi/exact_dir",
+				vfst.TestPath("/home/user/.local/share/chezmoi/exact_dot_dir",
 					vfst.TestDoesNotExist,
 				),
-				vfst.TestPath("/home/user/.local/share/chezmoi/dir",
+				vfst.TestPath("/home/user/.local/share/chezmoi/dot_dir",
 					vfst.TestIsDir,
 					vfst.TestModePerm(0o777&^GetUmask()),
 				),
-				vfst.TestPath("/home/user/.local/share/chezmoi/dir/file",
+				vfst.TestPath("/home/user/.local/share/chezmoi/dot_dir/file",
 					vfst.TestModeIsRegular,
 					vfst.TestModePerm(0o666&^GetUmask()),
 					vfst.TestContentsString("# contents of file\n"),
@@ -221,63 +248,70 @@ func TestSourceStateAdd(t *testing.T) {
 			},
 		},
 		{
-			name: "dir_and_file_windows",
+			name: "dir_and_file",
 			destPaths: []string{
-				"/home/user/.ssh",
-				"/home/user/.ssh/config",
+				"/home/user/.dir",
+				"/home/user/.dir/file",
 			},
 			addOptions: AddOptions{
 				Include: NewIncludeSet(IncludeAll),
 			},
 			tests: []interface{}{
-				vfst.TestPath("/home/user/.local/share/chezmoi/dot_ssh",
+				vfst.TestPath("/home/user/.local/share/chezmoi/dot_dir",
 					vfst.TestIsDir,
 					vfst.TestModePerm(0o777&^GetUmask()),
 				),
-				vfst.TestPath("/home/user/.local/share/chezmoi/dot_ssh/config",
+				vfst.TestPath("/home/user/.local/share/chezmoi/dot_dir/file",
 					vfst.TestModeIsRegular,
 					vfst.TestModePerm(0o666&^GetUmask()),
-					vfst.TestContentsString("# contents of .ssh/config\n"),
+					vfst.TestContentsString("# contents of .dir/file\n"),
 				),
 			},
 		},
 		{
-			name: "file_in_dir_unix",
+			name: "file_in_dir",
 			destPaths: []string{
-				"/home/user/.ssh/config",
+				"/home/user/.dir/file",
 			},
 			addOptions: AddOptions{
 				Include: NewIncludeSet(IncludeAll),
 			},
 			tests: []interface{}{
-				vfst.TestPath("/home/user/.local/share/chezmoi/private_dot_ssh",
+				vfst.TestPath("/home/user/.local/share/chezmoi/dot_dir",
 					vfst.TestIsDir,
 					vfst.TestModePerm(0o777&^GetUmask()),
 				),
-				vfst.TestPath("/home/user/.local/share/chezmoi/private_dot_ssh/config",
+				vfst.TestPath("/home/user/.local/share/chezmoi/dot_dir/file",
 					vfst.TestModeIsRegular,
 					vfst.TestModePerm(0o666&^GetUmask()),
-					vfst.TestContentsString("# contents of .ssh/config\n"),
+					vfst.TestContentsString("# contents of .dir/file\n"),
 				),
 			},
 		},
 		{
-			name: "file_in_dir_windows",
+			name: "file_in_dir_subdir",
 			destPaths: []string{
-				"/home/user/.ssh/config",
+				"/home/user/.dir/subdir/file",
 			},
 			addOptions: AddOptions{
 				Include: NewIncludeSet(IncludeAll),
 			},
 			tests: []interface{}{
-				vfst.TestPath("/home/user/.local/share/chezmoi/dot_ssh",
+				vfst.TestPath("/home/user/.local/share/chezmoi/dot_dir",
 					vfst.TestIsDir,
 					vfst.TestModePerm(0o777&^GetUmask()),
 				),
-				vfst.TestPath("/home/user/.local/share/chezmoi/dot_ssh/config",
+				vfst.TestPath("/home/user/.local/share/chezmoi/dot_dir/file",
+					vfst.TestDoesNotExist,
+				),
+				vfst.TestPath("/home/user/.local/share/chezmoi/dot_dir/subdir",
+					vfst.TestIsDir,
+					vfst.TestModePerm(0o777&^GetUmask()),
+				),
+				vfst.TestPath("/home/user/.local/share/chezmoi/dot_dir/subdir/file",
 					vfst.TestModeIsRegular,
 					vfst.TestModePerm(0o666&^GetUmask()),
-					vfst.TestContentsString("# contents of .ssh/config\n"),
+					vfst.TestContentsString("# contents of .dir/subdir/file\n"),
 				),
 			},
 		},
@@ -287,14 +321,30 @@ func TestSourceStateAdd(t *testing.T) {
 
 			chezmoitest.WithTestFS(t, map[string]interface{}{
 				"/home/user": map[string]interface{}{
-					".bashrc": "# contents of .bashrc\n",
-					".ssh": &vfst.Dir{
-						Perm: 0o700,
-						Entries: map[string]interface{}{
-							"config": "# contents of .ssh/config\n",
+					".dir": map[string]interface{}{
+						"file": "# contents of .dir/file\n",
+						"subdir": map[string]interface{}{
+							"file": "# contents of .dir/subdir/file\n",
 						},
 					},
-					".local/share/chezmoi": &vfst.Dir{Perm: 0o777},
+					".empty": "",
+					".executable": &vfst.File{
+						Perm:     0o777,
+						Contents: []byte("# contents of .executable\n"),
+					},
+					".exists": "# contents of .exists\n",
+					".file":   "# contents of .file\n",
+					".local": map[string]interface{}{
+						"share": map[string]interface{}{
+							"chezmoi": &vfst.Dir{Perm: 0o777},
+						},
+					},
+					".private": &vfst.File{
+						Perm:     0o600,
+						Contents: []byte("# contents of .private\n"),
+					},
+					".symlink":  &vfst.Symlink{Target: ".dir/subdir/file"},
+					".template": "key = value\n",
 				},
 			}, func(fs vfs.FS) {
 				if tc.extraRoot != nil {
