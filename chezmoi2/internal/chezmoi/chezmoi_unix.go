@@ -17,8 +17,6 @@ import (
 	vfs "github.com/twpayne/go-vfs"
 )
 
-const fqdnHostnameAddr = "127.0.1.1"
-
 var (
 	umask        os.FileMode
 	whitespaceRx = regexp.MustCompile(`\s+`)
@@ -96,8 +94,6 @@ func etcHostsFQDNHostname(fs vfs.FS) (string, error) {
 			text = text[:index]
 		}
 		fields := whitespaceRx.Split(text, -1)
-		if len(fields) >= 2 && fields[0] == fqdnHostnameAddr {
-			return fields[1], nil
 		}
 	}
 	return "", s.Err()
@@ -116,8 +112,6 @@ func isPrivate(info os.FileInfo) bool {
 // lookupAddrFQDNHostname returns the FQDN hostname by doing a reverse lookup of
 // 127.0.1.1.
 func lookupAddrFQDNHostname() (string, error) {
-	names, err := net.LookupAddr(fqdnHostnameAddr)
-	if err != nil {
 		return "", err
 	}
 	if len(names) == 0 {
