@@ -36,7 +36,11 @@ chezmoi add $HOME${/}.symlink
 cmp $CHEZMOISOURCEDIR/symlink_dot_symlink golden/symlink_dot_symlink
 
 # test adding a symlink with a separator
-rm $HOME/.symlink
-symlink $HOME${/}.symlink -> .dir${/}subdir${/}file
-chezmoi add $HOME${/}.symlink
-cmp $CHEZMOISOURCEDIR/symlink_dot_symlink golden/symlink_dot_symlink
+symlink $HOME${/}.symlink2 -> .dir${/}subdir${/}file
+chezmoi add $HOME${/}.symlink2
+cmp $CHEZMOISOURCEDIR/symlink_dot_symlink2 golden/symlink_dot_symlink
+
+# test adding a symlink with --follow
+symlink $HOME${/}.symlink3 -> .file
+chezmoi add --follow $HOME${/}.symlink3
+cmp $CHEZMOISOURCEDIR/dot_symlink3 golden/dot_file

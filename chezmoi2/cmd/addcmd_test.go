@@ -102,6 +102,25 @@ func TestAddCmd(t *testing.T) {
 			},
 		},
 		{
+			name: "add_symlink--follow",
+			root: map[string]interface{}{
+				"/home/user": map[string]interface{}{
+					".file": "# contents of .file\n",
+					".symlink": &vfst.Symlink{
+						Target: ".file",
+					},
+				},
+			},
+			args: []string{"--follow", "~/.symlink"},
+			tests: []interface{}{
+				vfst.TestPath("/home/user/.local/share/chezmoi/dot_symlink",
+					vfst.TestModeIsRegular,
+					vfst.TestModePerm(0o666&^chezmoi.GetUmask()),
+					vfst.TestContentsString("# contents of .file\n"),
+				),
+			},
+		},
+		{
 			name: "add_private_dir_unix",
 			root: map[string]interface{}{
 				"/home/user": map[string]interface{}{

@@ -442,7 +442,7 @@ func (c *Config) defaultTemplateData() map[string]interface{} {
 	}
 }
 
-func (c *Config) destPathInfos(sourceState *chezmoi.SourceState, args []string, recursive bool) (map[string]os.FileInfo, error) {
+func (c *Config) destPathInfos(sourceState *chezmoi.SourceState, args []string, recursive, follow bool) (map[string]os.FileInfo, error) {
 	destPathInfos := make(map[string]os.FileInfo)
 	for _, arg := range args {
 		destPath, err := c.normalizedDestPath(chezmoi.NewOSPath(arg))
@@ -454,12 +454,27 @@ func (c *Config) destPathInfos(sourceState *chezmoi.SourceState, args []string, 
 				if err != nil {
 					return err
 				}
+				if follow && info.Mode()&os.ModeType == os.ModeSymlink {
+					info, err = c.destSystem.Stat(destPath)
+					if err != nil {
+						return err
+					}
+				}
 				return sourceState.AddDestPathInfos(destPathInfos, c.destSystem, destPath, info)
 			}); err != nil {
 				return nil, err
 			}
 		} else {
-			if err := sourceState.AddDestPathInfos(destPathInfos, c.destSystem, destPath, nil); err != nil {
+			var info os.FileInfo
+			if follow {
+				info, err = c.destSystem.Stat(destPath)
+			} else {
+				info, err = c.destSystem.Lstat(destPath)
+			}
+			if err != nil {
+				return nil, err
+			}
+			if err := sourceState.AddDestPathInfos(destPathInfos, c.destSystem, destPath, info); err != nil {
 				return nil, err
 			}
 		}

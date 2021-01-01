@@ -39,8 +39,10 @@ type ActualStateSymlink struct {
 
 // NewActualStateEntry returns a new ActualStateEntry populated with path from
 // fs.
-func NewActualStateEntry(s System, path string) (ActualStateEntry, error) {
-	info, err := s.Lstat(path)
+func NewActualStateEntry(s System, path string, info os.FileInfo, err error) (ActualStateEntry, error) {
+	if info == nil {
+		info, err = s.Lstat(path)
+	}
 	switch {
 	case os.IsNotExist(err):
 		return &ActualStateAbsent{

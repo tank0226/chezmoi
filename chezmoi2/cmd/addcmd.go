@@ -12,6 +12,7 @@ type addCmdConfig struct {
 	encrypt      bool
 	exact        bool
 	exists       bool
+	follow       bool
 	include      *chezmoi.IncludeSet
 	recursive    bool
 	template     bool
@@ -39,6 +40,7 @@ func (c *Config) newAddCmd() *cobra.Command {
 	flags.BoolVar(&c.add.encrypt, "encrypt", c.add.encrypt, "encrypt files")
 	flags.BoolVarP(&c.add.exact, "exact", "x", c.add.exact, "add directories exactly")
 	flags.BoolVar(&c.add.exists, "exists", c.add.exists, "add files that should exist, irrespective of their contents")
+	flags.BoolVarP(&c.add.follow, "follow", "f", c.add.follow, "add symlink targets instead of symlinks")
 	flags.BoolVarP(&c.add.recursive, "recursive", "r", c.add.recursive, "recursive")
 	flags.BoolVarP(&c.add.template, "template", "T", c.add.template, "add files as templates")
 
@@ -46,7 +48,7 @@ func (c *Config) newAddCmd() *cobra.Command {
 }
 
 func (c *Config) runAddCmd(cmd *cobra.Command, args []string, sourceState *chezmoi.SourceState) error {
-	destPathInfos, err := c.destPathInfos(sourceState, args, c.add.recursive)
+	destPathInfos, err := c.destPathInfos(sourceState, args, c.add.recursive, c.add.follow)
 	if err != nil {
 		return err
 	}

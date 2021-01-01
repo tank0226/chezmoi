@@ -173,7 +173,7 @@ func (s *SourceState) Add(sourceSystem System, persistentState PersistentState, 
 			return fmt.Errorf("%s: parent directory not in source state", destPath)
 		}
 
-		actualStateEntry, err := NewActualStateEntry(sourceSystem, destPath)
+		actualStateEntry, err := NewActualStateEntry(sourceSystem, destPath, destPathInfo, nil)
 		if err != nil {
 			return err
 		}
@@ -341,7 +341,7 @@ func (s *SourceState) Apply(targetSystem System, persistentState PersistentState
 		return err
 	}
 
-	actualStateEntry, err := NewActualStateEntry(targetSystem, targetPath)
+	actualStateEntry, err := NewActualStateEntry(targetSystem, targetPath, nil, nil)
 	if err != nil {
 		return err
 	}
