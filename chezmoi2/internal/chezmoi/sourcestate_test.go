@@ -23,120 +23,6 @@ func TestSourceStateAdd(t *testing.T) {
 		tests      []interface{}
 	}{
 		{
-			name: "file",
-			destPaths: []string{
-				"/home/user/.file",
-			},
-			addOptions: AddOptions{
-				Include: NewIncludeSet(IncludeAll),
-			},
-			tests: []interface{}{
-				vfst.TestPath("/home/user/.local/share/chezmoi/dot_file",
-					vfst.TestModeIsRegular,
-					vfst.TestModePerm(0o666&^GetUmask()),
-					vfst.TestContentsString("# contents of .file\n"),
-				),
-			},
-		},
-		{
-			name: "file_in_dir",
-			destPaths: []string{
-				"/home/user/.dir/file",
-			},
-			addOptions: AddOptions{
-				Include: NewIncludeSet(IncludeAll),
-			},
-			extraRoot: map[string]interface{}{
-				"/home/user/.local/share/chezmoi/dot_dir": &vfst.Dir{Perm: 0o777},
-			},
-			tests: []interface{}{
-				vfst.TestPath("/home/user/.local/share/chezmoi/dot_dir/file",
-					vfst.TestModeIsRegular,
-					vfst.TestContentsString("# contents of .dir/file\n"),
-				),
-			},
-		},
-		{
-			name: "file_in_dir_subdir",
-			destPaths: []string{
-				"/home/user/.dir/subdir/file",
-			},
-			addOptions: AddOptions{
-				Include: NewIncludeSet(IncludeAll),
-			},
-			extraRoot: map[string]interface{}{
-				"/home/user/.local/share/chezmoi/dot_dir/subdir": &vfst.Dir{Perm: 0o777},
-			},
-			tests: []interface{}{
-				vfst.TestPath("/home/user/.local/share/chezmoi/dot_dir/subdir/file",
-					vfst.TestModeIsRegular,
-					vfst.TestContentsString("# contents of .dir/subdir/file\n"),
-				),
-			},
-		},
-		// FIXME enable following test which currently fails
-		/*
-			{
-				name: "file_in_dir_exact_subdir",
-				destPaths: []string{
-					"/home/user/.dir/subdir/file",
-				},
-				addOptions: AddOptions{
-					Include: NewIncludeSet(IncludeAll),
-				},
-				extraRoot: map[string]interface{}{
-					"/home/user/.local/share/chezmoi/dot_dir/exact_subdir": &vfst.Dir{Perm: 0o777},
-				},
-				tests: []interface{}{
-					vfst.TestPath("/home/user/.local/share/chezmoi/dot_dir/exact_subdir/file",
-						vfst.TestModeIsRegular,
-						vfst.TestContentsString("# contents of .dir/subdir/file\n"),
-					),
-				},
-			},
-		*/
-		{
-			name: "replace_file_contents",
-			destPaths: []string{
-				"/home/user/.file",
-			},
-			addOptions: AddOptions{
-				Include: NewIncludeSet(IncludeAll),
-			},
-			extraRoot: map[string]interface{}{
-				"/home/user/.local/share/chezmoi/dot_file": "# old contents of .file\n",
-			},
-			tests: []interface{}{
-				vfst.TestPath("/home/user/.local/share/chezmoi/dot_file",
-					vfst.TestModeIsRegular,
-					vfst.TestModePerm(0o666&^GetUmask()),
-					vfst.TestContentsString("# contents of .file\n"),
-				),
-			},
-		},
-		{
-			name: "change_file_attr",
-			destPaths: []string{
-				"/home/user/.file",
-			},
-			addOptions: AddOptions{
-				Include: NewIncludeSet(IncludeAll),
-			},
-			extraRoot: map[string]interface{}{
-				"/home/user/.local/share/chezmoi/executable_dot_file": "# contents of .file\n",
-			},
-			tests: []interface{}{
-				vfst.TestPath("/home/user/.local/share/chezmoi/dot_file",
-					vfst.TestModeIsRegular,
-					vfst.TestModePerm(0o666&^GetUmask()),
-					vfst.TestContentsString("# contents of .file\n"),
-				),
-				vfst.TestPath("/home/user/.local/share/chezmoi/executable_dot_file",
-					vfst.TestDoesNotExist,
-				),
-			},
-		},
-		{
 			name: "dir",
 			destPaths: []string{
 				"/home/user/.dir",
@@ -154,6 +40,72 @@ func TestSourceStateAdd(t *testing.T) {
 				),
 				vfst.TestPath("/home/user/.local/share/chezmoi/dot_dir/subdir",
 					vfst.TestDoesNotExist,
+				),
+			},
+		},
+		{
+			name: "dir_change_attributes",
+			destPaths: []string{
+				"/home/user/.dir",
+			},
+			addOptions: AddOptions{
+				Include: NewIncludeSet(IncludeAll),
+			},
+			extraRoot: map[string]interface{}{
+				"/home/user": map[string]interface{}{
+					".local/share/chezmoi/exact_dot_dir/file": "# contents of file\n",
+				},
+			},
+			tests: []interface{}{
+				vfst.TestPath("/home/user/.local/share/chezmoi/exact_dot_dir",
+					vfst.TestDoesNotExist,
+				),
+				vfst.TestPath("/home/user/.local/share/chezmoi/dot_dir",
+					vfst.TestIsDir,
+					vfst.TestModePerm(0o777&^GetUmask()),
+				),
+				vfst.TestPath("/home/user/.local/share/chezmoi/dot_dir/file",
+					vfst.TestModeIsRegular,
+					vfst.TestModePerm(0o666&^GetUmask()),
+					vfst.TestContentsString("# contents of file\n"),
+				),
+			},
+		},
+		{
+			name: "dir_file",
+			destPaths: []string{
+				"/home/user/.dir/file",
+			},
+			addOptions: AddOptions{
+				Include: NewIncludeSet(IncludeAll),
+			},
+			tests: []interface{}{
+				vfst.TestPath("/home/user/.local/share/chezmoi/dot_dir",
+					vfst.TestIsDir,
+					vfst.TestModePerm(0o777&^GetUmask()),
+				),
+				vfst.TestPath("/home/user/.local/share/chezmoi/dot_dir/file",
+					vfst.TestModeIsRegular,
+					vfst.TestModePerm(0o666&^GetUmask()),
+					vfst.TestContentsString("# contents of .dir/file\n"),
+				),
+			},
+		},
+		{
+			name: "dir_file_existing_dir",
+			destPaths: []string{
+				"/home/user/.dir/file",
+			},
+			addOptions: AddOptions{
+				Include: NewIncludeSet(IncludeAll),
+			},
+			extraRoot: map[string]interface{}{
+				"/home/user/.local/share/chezmoi/dot_dir": &vfst.Dir{Perm: 0o777},
+			},
+			tests: []interface{}{
+				vfst.TestPath("/home/user/.local/share/chezmoi/dot_dir/file",
+					vfst.TestModeIsRegular,
+					vfst.TestContentsString("# contents of .dir/file\n"),
 				),
 			},
 		},
@@ -176,6 +128,207 @@ func TestSourceStateAdd(t *testing.T) {
 				),
 				vfst.TestPath("/home/user/.local/share/chezmoi/dot_dir/subdir/file",
 					vfst.TestDoesNotExist,
+				),
+			},
+		},
+		{
+			name: "dir_subdir_file",
+			destPaths: []string{
+				"/home/user/.dir/subdir/file",
+			},
+			addOptions: AddOptions{
+				Include: NewIncludeSet(IncludeAll),
+			},
+			tests: []interface{}{
+				vfst.TestPath("/home/user/.local/share/chezmoi/dot_dir",
+					vfst.TestIsDir,
+					vfst.TestModePerm(0o777&^GetUmask()),
+				),
+				vfst.TestPath("/home/user/.local/share/chezmoi/dot_dir/file",
+					vfst.TestDoesNotExist,
+				),
+				vfst.TestPath("/home/user/.local/share/chezmoi/dot_dir/subdir",
+					vfst.TestIsDir,
+					vfst.TestModePerm(0o777&^GetUmask()),
+				),
+				vfst.TestPath("/home/user/.local/share/chezmoi/dot_dir/subdir/file",
+					vfst.TestModeIsRegular,
+					vfst.TestModePerm(0o666&^GetUmask()),
+					vfst.TestContentsString("# contents of .dir/subdir/file\n"),
+				),
+			},
+		},
+		{
+			name: "dir_subdir_file_existing_dir_subdir",
+			destPaths: []string{
+				"/home/user/.dir/subdir/file",
+			},
+			addOptions: AddOptions{
+				Include: NewIncludeSet(IncludeAll),
+			},
+			extraRoot: map[string]interface{}{
+				"/home/user/.local/share/chezmoi/dot_dir/subdir": &vfst.Dir{Perm: 0o777},
+			},
+			tests: []interface{}{
+				vfst.TestPath("/home/user/.local/share/chezmoi/dot_dir/subdir/file",
+					vfst.TestModeIsRegular,
+					vfst.TestContentsString("# contents of .dir/subdir/file\n"),
+				),
+			},
+		},
+		{
+			name: "empty",
+			destPaths: []string{
+				"/home/user/.empty",
+			},
+			addOptions: AddOptions{
+				Include: NewIncludeSet(IncludeAll),
+			},
+			tests: []interface{}{
+				vfst.TestPath("/home/user/.local/share/chezmoi/dot_empty",
+					vfst.TestDoesNotExist,
+				),
+			},
+		},
+		// FIXME enable following failing test
+		/*
+			{
+				name: "empty_with_empty",
+				destPaths: []string{
+					"/home/user/.empty",
+				},
+				addOptions: AddOptions{
+					Empty:   true,
+					Include: NewIncludeSet(IncludeAll),
+				},
+				tests: []interface{}{
+					vfst.TestPath("/home/user/.local/share/chezmoi/dot_empty",
+						vfst.TestModeIsRegular,
+						vfst.TestModePerm(0o666&^GetUmask()),
+						vfst.TestContents(nil),
+					),
+				},
+			},
+		*/
+		{
+			name: "executable",
+			destPaths: []string{
+				"/home/user/.executable",
+			},
+			addOptions: AddOptions{
+				Include: NewIncludeSet(IncludeAll),
+			},
+			tests: []interface{}{
+				vfst.TestPath("/home/user/.local/share/chezmoi/executable_dot_executable",
+					vfst.TestModeIsRegular,
+					vfst.TestModePerm(0o666&^GetUmask()),
+					vfst.TestContentsString("# contents of .executable\n"),
+				),
+			},
+		},
+		{
+			name: "exists",
+			destPaths: []string{
+				"/home/user/.exists",
+			},
+			addOptions: AddOptions{
+				Exists:  true,
+				Include: NewIncludeSet(IncludeAll),
+			},
+			tests: []interface{}{
+				vfst.TestPath("/home/user/.local/share/chezmoi/exists_dot_exists",
+					vfst.TestModeIsRegular,
+					vfst.TestModePerm(0o666&^GetUmask()),
+					vfst.TestContentsString("# contents of .exists\n"),
+				),
+			},
+		},
+		{
+			name: "file",
+			destPaths: []string{
+				"/home/user/.file",
+			},
+			addOptions: AddOptions{
+				Include: NewIncludeSet(IncludeAll),
+			},
+			tests: []interface{}{
+				vfst.TestPath("/home/user/.local/share/chezmoi/dot_file",
+					vfst.TestModeIsRegular,
+					vfst.TestModePerm(0o666&^GetUmask()),
+					vfst.TestContentsString("# contents of .file\n"),
+				),
+			},
+		},
+		{
+			name: "file_change_attributes",
+			destPaths: []string{
+				"/home/user/.file",
+			},
+			addOptions: AddOptions{
+				Include: NewIncludeSet(IncludeAll),
+			},
+			extraRoot: map[string]interface{}{
+				"/home/user/.local/share/chezmoi/executable_dot_file": "# contents of .file\n",
+			},
+			tests: []interface{}{
+				vfst.TestPath("/home/user/.local/share/chezmoi/dot_file",
+					vfst.TestModeIsRegular,
+					vfst.TestModePerm(0o666&^GetUmask()),
+					vfst.TestContentsString("# contents of .file\n"),
+				),
+				vfst.TestPath("/home/user/.local/share/chezmoi/executable_dot_file",
+					vfst.TestDoesNotExist,
+				),
+			},
+		},
+		{
+			name: "file_replace_contents",
+			destPaths: []string{
+				"/home/user/.file",
+			},
+			addOptions: AddOptions{
+				Include: NewIncludeSet(IncludeAll),
+			},
+			extraRoot: map[string]interface{}{
+				"/home/user/.local/share/chezmoi/dot_file": "# old contents of .file\n",
+			},
+			tests: []interface{}{
+				vfst.TestPath("/home/user/.local/share/chezmoi/dot_file",
+					vfst.TestModeIsRegular,
+					vfst.TestModePerm(0o666&^GetUmask()),
+					vfst.TestContentsString("# contents of .file\n"),
+				),
+			},
+		},
+		{
+			name: "private_unix",
+			destPaths: []string{
+				"/home/user/.private",
+			},
+			addOptions: AddOptions{
+				Include: NewIncludeSet(IncludeAll),
+			},
+			tests: []interface{}{
+				vfst.TestPath("/home/user/.local/share/chezmoi/private_dot_private",
+					vfst.TestModeIsRegular,
+					vfst.TestModePerm(0o666&^GetUmask()),
+					vfst.TestContentsString("# contents of .private\n"),
+				),
+			},
+		},
+		{
+			name: "private_windows",
+			destPaths: []string{
+				"/home/user/.private",
+			},
+			addOptions: AddOptions{
+				Include: NewIncludeSet(IncludeAll),
+			},
+			tests: []interface{}{
+				vfst.TestPath("/home/user/.local/share/chezmoi/dot_private",
+					vfst.TestModeIsRegular,
+					vfst.TestModePerm(0o666&^GetUmask()),
+					vfst.TestContentsString("# contents of .private\n"),
 				),
 			},
 		},
@@ -220,101 +373,64 @@ func TestSourceStateAdd(t *testing.T) {
 			},
 		},
 		{
-			name: "change_dir_attr",
+			name: "template",
+			destPaths: []string{
+				"/home/user/.template",
+			},
+			addOptions: AddOptions{
+				AutoTemplate: true,
+				Include:      NewIncludeSet(IncludeAll),
+			},
+			tests: []interface{}{
+				vfst.TestPath("/home/user/.local/share/chezmoi/dot_template.tmpl",
+					vfst.TestModeIsRegular,
+					vfst.TestModePerm(0o666&^GetUmask()),
+					vfst.TestContentsString("key = {{ .variable }}\n"),
+				),
+			},
+		},
+		{
+			name: "dir_and_dir_file",
 			destPaths: []string{
 				"/home/user/.dir",
+				"/home/user/.dir/file",
 			},
 			addOptions: AddOptions{
 				Include: NewIncludeSet(IncludeAll),
 			},
-			extraRoot: map[string]interface{}{
-				"/home/user": map[string]interface{}{
-					".local/share/chezmoi/exact_dot_dir/file": "# contents of file\n",
+			tests: []interface{}{
+				vfst.TestPath("/home/user/.local/share/chezmoi/dot_dir",
+					vfst.TestIsDir,
+					vfst.TestModePerm(0o777&^GetUmask()),
+				),
+				vfst.TestPath("/home/user/.local/share/chezmoi/dot_dir/file",
+					vfst.TestModeIsRegular,
+					vfst.TestModePerm(0o666&^GetUmask()),
+					vfst.TestContentsString("# contents of .dir/file\n"),
+				),
+			},
+		},
+		// FIXME enable following test which currently fails
+		/*
+			{
+				name: "file_in_dir_exact_subdir",
+				destPaths: []string{
+					"/home/user/.dir/subdir/file",
+				},
+				addOptions: AddOptions{
+					Include: NewIncludeSet(IncludeAll),
+				},
+				extraRoot: map[string]interface{}{
+					"/home/user/.local/share/chezmoi/dot_dir/exact_subdir": &vfst.Dir{Perm: 0o777},
+				},
+				tests: []interface{}{
+					vfst.TestPath("/home/user/.local/share/chezmoi/dot_dir/exact_subdir/file",
+						vfst.TestModeIsRegular,
+						vfst.TestContentsString("# contents of .dir/subdir/file\n"),
+					),
 				},
 			},
-			tests: []interface{}{
-				vfst.TestPath("/home/user/.local/share/chezmoi/exact_dot_dir",
-					vfst.TestDoesNotExist,
-				),
-				vfst.TestPath("/home/user/.local/share/chezmoi/dot_dir",
-					vfst.TestIsDir,
-					vfst.TestModePerm(0o777&^GetUmask()),
-				),
-				vfst.TestPath("/home/user/.local/share/chezmoi/dot_dir/file",
-					vfst.TestModeIsRegular,
-					vfst.TestModePerm(0o666&^GetUmask()),
-					vfst.TestContentsString("# contents of file\n"),
-				),
-			},
-		},
-		{
-			name: "dir_and_file",
-			destPaths: []string{
-				"/home/user/.dir",
-				"/home/user/.dir/file",
-			},
-			addOptions: AddOptions{
-				Include: NewIncludeSet(IncludeAll),
-			},
-			tests: []interface{}{
-				vfst.TestPath("/home/user/.local/share/chezmoi/dot_dir",
-					vfst.TestIsDir,
-					vfst.TestModePerm(0o777&^GetUmask()),
-				),
-				vfst.TestPath("/home/user/.local/share/chezmoi/dot_dir/file",
-					vfst.TestModeIsRegular,
-					vfst.TestModePerm(0o666&^GetUmask()),
-					vfst.TestContentsString("# contents of .dir/file\n"),
-				),
-			},
-		},
-		{
-			name: "file_in_dir",
-			destPaths: []string{
-				"/home/user/.dir/file",
-			},
-			addOptions: AddOptions{
-				Include: NewIncludeSet(IncludeAll),
-			},
-			tests: []interface{}{
-				vfst.TestPath("/home/user/.local/share/chezmoi/dot_dir",
-					vfst.TestIsDir,
-					vfst.TestModePerm(0o777&^GetUmask()),
-				),
-				vfst.TestPath("/home/user/.local/share/chezmoi/dot_dir/file",
-					vfst.TestModeIsRegular,
-					vfst.TestModePerm(0o666&^GetUmask()),
-					vfst.TestContentsString("# contents of .dir/file\n"),
-				),
-			},
-		},
-		{
-			name: "file_in_dir_subdir",
-			destPaths: []string{
-				"/home/user/.dir/subdir/file",
-			},
-			addOptions: AddOptions{
-				Include: NewIncludeSet(IncludeAll),
-			},
-			tests: []interface{}{
-				vfst.TestPath("/home/user/.local/share/chezmoi/dot_dir",
-					vfst.TestIsDir,
-					vfst.TestModePerm(0o777&^GetUmask()),
-				),
-				vfst.TestPath("/home/user/.local/share/chezmoi/dot_dir/file",
-					vfst.TestDoesNotExist,
-				),
-				vfst.TestPath("/home/user/.local/share/chezmoi/dot_dir/subdir",
-					vfst.TestIsDir,
-					vfst.TestModePerm(0o777&^GetUmask()),
-				),
-				vfst.TestPath("/home/user/.local/share/chezmoi/dot_dir/subdir/file",
-					vfst.TestModeIsRegular,
-					vfst.TestModePerm(0o666&^GetUmask()),
-					vfst.TestContentsString("# contents of .dir/subdir/file\n"),
-				),
-			},
-		},
+		*/
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			chezmoitest.SkipUnlessGOOS(t, tc.name)
@@ -357,6 +473,9 @@ func TestSourceStateAdd(t *testing.T) {
 					WithDestDir("/home/user"),
 					WithSourceDir("/home/user/.local/share/chezmoi"),
 					WithSystem(system),
+					withUserTemplateData(map[string]interface{}{
+						"variable": "value",
+					}),
 				)
 				require.NoError(t, s.Read())
 				require.NoError(t, s.evaluateAll())
