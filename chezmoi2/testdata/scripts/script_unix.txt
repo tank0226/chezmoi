@@ -1,17 +1,25 @@
 [windows] skip 'UNIX only'
 
+# test that chezmoi apply runs the script
 chezmoi apply --force
 stdout ${HOME@R}
 
+# test that chezmoi apply runs the script even if it has run before
+chezmoi apply --force
+stdout ${HOME@R}
+
+# test that chezmoi dump includes the script
 chezmoi dump
 cmp stdout golden/dump.json
 
+# test that chezmoi managed includes the script
 chezmoi managed --include=scripts
 cmpenv stdout golden/managed
 
 [!exec:tar] stop
 
-chezmoi archive --gzip --output=archive.tar.gz
+# test that chezmoi archive includes the script in the archive
+chezmoi archive --format=tar --gzip --output=archive.tar.gz
 exec tar -tzf archive.tar.gz
 cmp stdout golden/archive
 

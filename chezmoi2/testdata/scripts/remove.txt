@@ -13,6 +13,6 @@ chezmoi remove --force $HOME${/}.dir
 
 # test that if any chezmoi remove stops on any error
 exists $HOME/.executable
-! chezmoi remove --debug --force $HOME${/}.newfile $HOME${/}.executable
+! chezmoi remove --force $HOME${/}.newfile $HOME${/}.executable
 stderr 'not in source state'
 exists $HOME/.executable

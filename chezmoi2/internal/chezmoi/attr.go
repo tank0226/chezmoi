@@ -92,19 +92,19 @@ func (da DirAttr) perm() os.FileMode {
 // parseFileAttr parses a source file name in the source state.
 func parseFileAttr(sourceName string) FileAttr {
 	var (
-		typ        = SourceFileTypeFile
-		name       = sourceName
-		empty      = false
-		encrypted  = false
-		executable = false
-		once       = false
-		private    = false
-		template   = false
-		order      = 0
+		sourceFileType = SourceFileTypeFile
+		name           = sourceName
+		empty          = false
+		encrypted      = false
+		executable     = false
+		once           = false
+		private        = false
+		template       = false
+		order          = 0
 	)
 	switch {
 	case strings.HasPrefix(name, existsPrefix):
-		typ = SourceFileTypePresent
+		sourceFileType = SourceFileTypePresent
 		name = mustTrimPrefix(name, existsPrefix)
 		if strings.HasPrefix(name, encryptedPrefix) {
 			name = mustTrimPrefix(name, encryptedPrefix)
@@ -119,7 +119,7 @@ func parseFileAttr(sourceName string) FileAttr {
 			executable = true
 		}
 	case strings.HasPrefix(name, runPrefix):
-		typ = SourceFileTypeScript
+		sourceFileType = SourceFileTypeScript
 		name = mustTrimPrefix(name, runPrefix)
 		switch {
 		case strings.HasPrefix(name, firstPrefix):
@@ -134,7 +134,7 @@ func parseFileAttr(sourceName string) FileAttr {
 			once = true
 		}
 	case strings.HasPrefix(name, symlinkPrefix):
-		typ = SourceFileTypeSymlink
+		sourceFileType = SourceFileTypeSymlink
 		name = mustTrimPrefix(name, symlinkPrefix)
 	default:
 		if strings.HasPrefix(name, encryptedPrefix) {
@@ -163,7 +163,7 @@ func parseFileAttr(sourceName string) FileAttr {
 	}
 	return FileAttr{
 		Name:       name,
-		Type:       typ,
+		Type:       sourceFileType,
 		Empty:      empty,
 		Encrypted:  encrypted,
 		Executable: executable,

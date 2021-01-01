@@ -1,0 +1,23 @@
+[windows] skip 'UNIX only'
+
+# test that chezmoi apply runs the script
+chezmoi apply --force
+stdout ${HOME@R}
+
+# test that the script is recorded in the state
+chezmoi state dump
+stdout 94d80d5c9f06d747eb874b0a05a356085515b51ac8761a923079db734fe68133 # sha256sum of script contents
+
+# test that chezmoi apply does not run the script a second time
+chezmoi apply --force
+! stdout ${HOME@R}
+
+# test that reseting the state causes the next chezmoi apply to run the script
+chezmoi state reset --force
+chezmoi apply --force
+stdout ${HOME@R}
+
+-- home/user/.local/share/chezmoi/run_once_script --
+#!/bin/sh
+
+echo $PWD

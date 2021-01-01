@@ -277,11 +277,10 @@ func (t *TargetStateScript) Apply(system System, persistentState PersistentState
 			return err
 		}
 		key = []byte(hex.EncodeToString(contentsSHA256))
-		scriptOnceState, err := persistentState.Get(ScriptOnceStateBucket, key)
-		if err != nil {
+		switch scriptOnceState, err := persistentState.Get(ScriptOnceStateBucket, key); {
+		case err != nil:
 			return err
-		}
-		if scriptOnceState != nil {
+		case scriptOnceState != nil:
 			return nil
 		}
 		executedAt = time.Now()
