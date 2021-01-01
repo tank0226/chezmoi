@@ -398,9 +398,18 @@ func (c *Config) defaultTemplateData() map[string]interface{} {
 			data["username"] = user
 		} else {
 			c.logger.Debug().
+				Str("key", "USER").
 				Bool("ok", ok).
 				Msg("os.LookupEnv")
 		}
+	}
+
+	if fqdnHostname, err := chezmoi.FQDNHostname(c.fs); err == nil && fqdnHostname != "" {
+		data["fqdnHostname"] = fqdnHostname
+	} else {
+		c.logger.Debug().
+			Err(err).
+			Msg("chezmoi.EtcHostsFQDNHostname")
 	}
 
 	if hostname, err := os.Hostname(); err == nil {
@@ -417,7 +426,7 @@ func (c *Config) defaultTemplateData() map[string]interface{} {
 	} else {
 		c.logger.Debug().
 			Err(err).
-			Msg("chezmoi.KernelInfo(...)")
+			Msg("chezmoi.KernelInfo")
 	}
 
 	if osRelease, err := chezmoi.OSRelease(c.fs); err == nil {
@@ -425,7 +434,7 @@ func (c *Config) defaultTemplateData() map[string]interface{} {
 	} else {
 		c.logger.Debug().
 			Err(err).
-			Msg("chezmoi.OSRelease(...)")
+			Msg("chezmoi.OSRelease")
 	}
 
 	return map[string]interface{}{
@@ -837,8 +846,8 @@ func (c *Config) persistentPreRunRootE(cmd *cobra.Command, args []string) error 
 		NoColor:    !c.color,
 		TimeFormat: time.RFC3339,
 	})
-	if c.debug {
-		logger = logger.Level(zerolog.DebugLevel)
+	if !c.debug {
+		logger = logger.Level(zerolog.InfoLevel)
 	}
 	c.logger = logger.With().Timestamp().Logger()
 

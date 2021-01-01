@@ -5,6 +5,8 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+
+	vfs "github.com/twpayne/go-vfs"
 )
 
 // ExpandTilde expands a leading tilde in path.
@@ -17,6 +19,12 @@ func ExpandTilde(path, homeDir string) string {
 	default:
 		return path
 	}
+}
+
+// FQDNHostname does nothing on Windows.
+func FQDNHostname(fs vfs.FS) (string, error) {
+	// LATER find out how to determine the FQDN hostname on Windows
+	return "", nil
 }
 
 // GetUmask returns the umask.

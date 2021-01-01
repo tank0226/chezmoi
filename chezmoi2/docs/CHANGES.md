@@ -32,6 +32,7 @@ General:
 - new type `--exists`
 - `chezmoi archive --format=zip`
 - `pre_` and `post_` script attributes change script order, scripts now run during
+- new `fqdnHostname` template var (UNIX only for now)
 
 {{ range (gitHubKeys "twpayne") -}}
 {{ .Key }}
