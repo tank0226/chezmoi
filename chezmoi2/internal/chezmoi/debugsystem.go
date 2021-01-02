@@ -25,10 +25,10 @@ func NewDebugSystem(system System, logger zerolog.Logger) *DebugSystem {
 }
 
 // Chmod implements System.Chmod.
-func (s *DebugSystem) Chmod(name string, mode os.FileMode) error {
+func (s *DebugSystem) Chmod(name AbsPath, mode os.FileMode) error {
 	err := s.system.Chmod(name, mode)
 	s.logger.Debug().
-		Str("name", name).
+		Str("name", string(name)).
 		Int("mode", int(mode)).
 		Err(err).
 		Msg("Chmod")
@@ -87,20 +87,20 @@ func (s *DebugSystem) IdempotentCmdOutput(cmd *exec.Cmd) ([]byte, error) {
 }
 
 // Lstat implements System.Lstat.
-func (s *DebugSystem) Lstat(name string) (os.FileInfo, error) {
+func (s *DebugSystem) Lstat(name AbsPath) (os.FileInfo, error) {
 	info, err := s.system.Lstat(name)
 	s.logger.Debug().
-		Str("name", name).
+		Str("name", string(name)).
 		Err(err).
 		Msg("Lstat")
 	return info, err
 }
 
 // Mkdir implements System.Mkdir.
-func (s *DebugSystem) Mkdir(name string, perm os.FileMode) error {
+func (s *DebugSystem) Mkdir(name AbsPath, perm os.FileMode) error {
 	err := s.system.Mkdir(name, perm)
 	s.logger.Debug().
-		Str("name", name).
+		Str("name", string(name)).
 		Int("perm", int(perm)).
 		Err(err).
 		Msg("Mkdir")
@@ -108,25 +108,25 @@ func (s *DebugSystem) Mkdir(name string, perm os.FileMode) error {
 }
 
 // RawPath implements System.RawPath.
-func (s *DebugSystem) RawPath(path string) (string, error) {
+func (s *DebugSystem) RawPath(path AbsPath) (AbsPath, error) {
 	return s.system.RawPath(path)
 }
 
 // ReadDir implements System.ReadDir.
-func (s *DebugSystem) ReadDir(name string) ([]os.FileInfo, error) {
+func (s *DebugSystem) ReadDir(name AbsPath) ([]os.FileInfo, error) {
 	infos, err := s.system.ReadDir(name)
 	s.logger.Debug().
-		Str("name", name).
+		Str("name", string(name)).
 		Err(err).
 		Msg("ReadDir")
 	return infos, err
 }
 
 // ReadFile implements System.ReadFile.
-func (s *DebugSystem) ReadFile(filename string) ([]byte, error) {
+func (s *DebugSystem) ReadFile(filename AbsPath) ([]byte, error) {
 	data, err := s.system.ReadFile(filename)
 	s.logger.Debug().
-		Str("filename", filename).
+		Str("filename", string(filename)).
 		Str("data", firstFewBytes(data)).
 		Err(err).
 		Msg("ReadFile")
@@ -134,10 +134,10 @@ func (s *DebugSystem) ReadFile(filename string) ([]byte, error) {
 }
 
 // Readlink implements System.Readlink.
-func (s *DebugSystem) Readlink(name string) (string, error) {
+func (s *DebugSystem) Readlink(name AbsPath) (string, error) {
 	linkname, err := s.system.Readlink(name)
 	s.logger.Debug().
-		Str("name", name).
+		Str("name", string(name)).
 		Str("linkname", linkname).
 		Err(err).
 		Msg("Readlink")
@@ -145,21 +145,21 @@ func (s *DebugSystem) Readlink(name string) (string, error) {
 }
 
 // RemoveAll implements System.RemoveAll.
-func (s *DebugSystem) RemoveAll(name string) error {
+func (s *DebugSystem) RemoveAll(name AbsPath) error {
 	err := s.system.RemoveAll(name)
 	s.logger.Debug().
-		Str("name", name).
+		Str("name", string(name)).
 		Err(err).
 		Msg("RemoveAll")
 	return err
 }
 
 // Rename implements System.Rename.
-func (s *DebugSystem) Rename(oldpath, newpath string) error {
+func (s *DebugSystem) Rename(oldpath, newpath AbsPath) error {
 	err := s.system.Rename(oldpath, newpath)
 	s.logger.Debug().
-		Str("oldpath", oldpath).
-		Str("newpath", newpath).
+		Str("oldpath", string(oldpath)).
+		Str("newpath", string(newpath)).
 		Err(err).
 		Msg("Rename")
 	return err
@@ -203,7 +203,7 @@ func (s *DebugSystem) RunCmd(cmd *exec.Cmd) error {
 }
 
 // RunScript implements System.RunScript.
-func (s *DebugSystem) RunScript(scriptname, dir string, data []byte) error {
+func (s *DebugSystem) RunScript(scriptname string, dir AbsPath, data []byte) error {
 	type result struct {
 		startTime time.Time
 		err       error
@@ -226,7 +226,7 @@ func (s *DebugSystem) RunScript(scriptname, dir string, data []byte) error {
 	case <-time.After(1 * time.Second):
 		s.logger.Debug().
 			Str("scriptname", scriptname).
-			Str("dir", dir).
+			Str("dir", string(dir)).
 			Str("data", firstFewBytes(data)).
 			Msg("RunScript")
 		r = <-resultCh
@@ -234,7 +234,7 @@ func (s *DebugSystem) RunScript(scriptname, dir string, data []byte) error {
 
 	s.logger.Debug().
 		Str("scriptname", scriptname).
-		Str("dir", dir).
+		Str("dir", string(dir)).
 		Str("data", firstFewBytes(data)).
 		Err(r.err).
 		Dur("duration", time.Since(r.startTime)).
@@ -244,10 +244,10 @@ func (s *DebugSystem) RunScript(scriptname, dir string, data []byte) error {
 }
 
 // Stat implements System.Stat.
-func (s *DebugSystem) Stat(name string) (os.FileInfo, error) {
+func (s *DebugSystem) Stat(name AbsPath) (os.FileInfo, error) {
 	info, err := s.system.Stat(name)
 	s.logger.Debug().
-		Str("name", name).
+		Str("name", string(name)).
 		Err(err).
 		Msg("Stat")
 	return info, err
@@ -259,10 +259,10 @@ func (s *DebugSystem) UnderlyingFS() vfs.FS {
 }
 
 // WriteFile implements System.WriteFile.
-func (s *DebugSystem) WriteFile(name string, data []byte, perm os.FileMode) error {
+func (s *DebugSystem) WriteFile(name AbsPath, data []byte, perm os.FileMode) error {
 	err := s.system.WriteFile(name, data, perm)
 	s.logger.Debug().
-		Str("name", name).
+		Str("name", string(name)).
 		Str("data", firstFewBytes(data)).
 		Int("perm", int(perm)).
 		Err(err).
@@ -271,11 +271,11 @@ func (s *DebugSystem) WriteFile(name string, data []byte, perm os.FileMode) erro
 }
 
 // WriteSymlink implements System.WriteSymlink.
-func (s *DebugSystem) WriteSymlink(oldname, newname string) error {
+func (s *DebugSystem) WriteSymlink(oldname string, newname AbsPath) error {
 	err := s.system.WriteSymlink(oldname, newname)
 	s.logger.Debug().
 		Str("oldname", oldname).
-		Str("newname", newname).
+		Str("newname", string(newname)).
 		Err(err).
 		Msg("WriteSymlink")
 	return err

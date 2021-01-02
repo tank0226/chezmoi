@@ -66,7 +66,7 @@ func (t *TargetStateAbsent) Apply(system System, persistentState PersistentState
 	if _, ok := actualStateEntry.(*ActualStateAbsent); ok {
 		return nil
 	}
-	return system.RemoveAll(string(actualStateEntry.Path()))
+	return system.RemoveAll(actualStateEntry.Path())
 }
 
 // EntryState returns t's entry state.
@@ -96,12 +96,12 @@ func (t *TargetStateDir) Apply(system System, persistentState PersistentState, a
 		if umaskPermEqual(actualStateDir.perm, t.perm, umask) {
 			return nil
 		}
-		return system.Chmod(string(actualStateDir.Path()), t.perm)
+		return system.Chmod(actualStateDir.Path(), t.perm)
 	}
 	if err := actualStateEntry.Remove(system); err != nil {
 		return err
 	}
-	return system.Mkdir(string(actualStateEntry.Path()), t.perm)
+	return system.Mkdir(actualStateEntry.Path(), t.perm)
 }
 
 // EntryState returns t's entry state.
@@ -147,7 +147,7 @@ func (t *TargetStateFile) Apply(system System, persistentState PersistentState, 
 			if umaskPermEqual(actualStateFile.perm, t.perm, umask) {
 				return nil
 			}
-			return system.Chmod(string(actualStateFile.Path()), t.perm)
+			return system.Chmod(actualStateFile.Path(), t.perm)
 		}
 	} else if err := actualStateEntry.Remove(system); err != nil {
 		return err
@@ -156,7 +156,7 @@ func (t *TargetStateFile) Apply(system System, persistentState PersistentState, 
 	if err != nil {
 		return err
 	}
-	return system.WriteFile(string(actualStateEntry.Path()), contents, t.perm)
+	return system.WriteFile(actualStateEntry.Path(), contents, t.perm)
 }
 
 // EntryState returns t's entry state.
@@ -207,7 +207,7 @@ func (t *TargetStatePresent) Apply(system System, persistentState PersistentStat
 		if umaskPermEqual(actualStateFile.perm, t.perm, umask) {
 			return nil
 		}
-		return system.Chmod(string(actualStateFile.Path()), t.perm)
+		return system.Chmod(actualStateFile.Path(), t.perm)
 	} else if err := actualStateEntry.Remove(system); err != nil {
 		return err
 	}
@@ -215,7 +215,7 @@ func (t *TargetStatePresent) Apply(system System, persistentState PersistentStat
 	if err != nil {
 		return err
 	}
-	return system.WriteFile(string(actualStateEntry.Path()), contents, t.perm)
+	return system.WriteFile(actualStateEntry.Path(), contents, t.perm)
 }
 
 // EntryState returns t's entry state.
@@ -246,7 +246,7 @@ func (t *TargetStatePresent) Evaluate() error {
 // Apply renames actualStateEntry.
 func (t *TargetStateRenameDir) Apply(system System, persistentState PersistentState, actualStateEntry ActualStateEntry, umask os.FileMode) error {
 	dir := actualStateEntry.Path().Dir()
-	return system.Rename(string(dir.Join(t.oldRelPath)), string(dir.Join(t.newRelPath)))
+	return system.Rename(dir.Join(t.oldRelPath), dir.Join(t.newRelPath))
 }
 
 // EntryState returns t's entry state.
@@ -285,7 +285,7 @@ func (t *TargetStateScript) Apply(system System, persistentState PersistentState
 	}
 	runAt := time.Now().UTC()
 	if !isEmpty(contents) {
-		if err := system.RunScript(string(t.name), string(actualStateEntry.Path().Dir()), contents); err != nil {
+		if err := system.RunScript(string(t.name), actualStateEntry.Path().Dir(), contents); err != nil {
 			return err
 		}
 	}
@@ -345,7 +345,7 @@ func (t *TargetStateSymlink) Apply(system System, persistentState PersistentStat
 	if err := actualStateEntry.Remove(system); err != nil {
 		return err
 	}
-	return system.WriteSymlink(linkname, string(actualStateEntry.Path()))
+	return system.WriteSymlink(linkname, actualStateEntry.Path())
 }
 
 // EntryState returns t's entry state.

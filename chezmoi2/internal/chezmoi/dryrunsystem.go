@@ -22,7 +22,7 @@ func NewDryRunSystem(system System) *DryRunSystem {
 }
 
 // Chmod implements System.Chmod.
-func (s *DryRunSystem) Chmod(name string, mode os.FileMode) error {
+func (s *DryRunSystem) Chmod(name AbsPath, mode os.FileMode) error {
 	s.modified = true
 	return nil
 }
@@ -38,12 +38,12 @@ func (s *DryRunSystem) IdempotentCmdOutput(cmd *exec.Cmd) ([]byte, error) {
 }
 
 // Lstat implements System.Lstat.
-func (s *DryRunSystem) Lstat(name string) (os.FileInfo, error) {
+func (s *DryRunSystem) Lstat(name AbsPath) (os.FileInfo, error) {
 	return s.system.Lstat(name)
 }
 
 // Mkdir implements System.Mkdir.
-func (s *DryRunSystem) Mkdir(name string, perm os.FileMode) error {
+func (s *DryRunSystem) Mkdir(name AbsPath, perm os.FileMode) error {
 	s.modified = true
 	return nil
 }
@@ -55,33 +55,33 @@ func (s *DryRunSystem) Modified() bool {
 }
 
 // RawPath implements System.RawPath.
-func (s *DryRunSystem) RawPath(path string) (string, error) {
+func (s *DryRunSystem) RawPath(path AbsPath) (AbsPath, error) {
 	return s.system.RawPath(path)
 }
 
 // ReadDir implements System.ReadDir.
-func (s *DryRunSystem) ReadDir(dirname string) ([]os.FileInfo, error) {
+func (s *DryRunSystem) ReadDir(dirname AbsPath) ([]os.FileInfo, error) {
 	return s.system.ReadDir(dirname)
 }
 
 // ReadFile implements System.ReadFile.
-func (s *DryRunSystem) ReadFile(filename string) ([]byte, error) {
+func (s *DryRunSystem) ReadFile(filename AbsPath) ([]byte, error) {
 	return s.system.ReadFile(filename)
 }
 
 // Readlink implements System.Readlink.
-func (s *DryRunSystem) Readlink(name string) (string, error) {
+func (s *DryRunSystem) Readlink(name AbsPath) (string, error) {
 	return s.system.Readlink(name)
 }
 
 // RemoveAll implements System.RemoveAll.
-func (s *DryRunSystem) RemoveAll(string) error {
+func (s *DryRunSystem) RemoveAll(AbsPath) error {
 	s.modified = true
 	return nil
 }
 
 // Rename implements System.Rename.
-func (s *DryRunSystem) Rename(oldpath, newpath string) error {
+func (s *DryRunSystem) Rename(oldpath, newpath AbsPath) error {
 	s.modified = true
 	return nil
 }
@@ -93,13 +93,13 @@ func (s *DryRunSystem) RunCmd(cmd *exec.Cmd) error {
 }
 
 // RunScript implements System.RunScript.
-func (s *DryRunSystem) RunScript(scriptname, dir string, data []byte) error {
+func (s *DryRunSystem) RunScript(scriptname string, dir AbsPath, data []byte) error {
 	s.modified = true
 	return nil
 }
 
 // Stat implements System.Stat.
-func (s *DryRunSystem) Stat(name string) (os.FileInfo, error) {
+func (s *DryRunSystem) Stat(name AbsPath) (os.FileInfo, error) {
 	return s.system.Stat(name)
 }
 
@@ -109,13 +109,13 @@ func (s *DryRunSystem) UnderlyingFS() vfs.FS {
 }
 
 // WriteFile implements System.WriteFile.
-func (s *DryRunSystem) WriteFile(string, []byte, os.FileMode) error {
+func (s *DryRunSystem) WriteFile(AbsPath, []byte, os.FileMode) error {
 	s.modified = true
 	return nil
 }
 
 // WriteSymlink implements System.WriteSymlink.
-func (s *DryRunSystem) WriteSymlink(string, string) error {
+func (s *DryRunSystem) WriteSymlink(string, AbsPath) error {
 	s.modified = true
 	return nil
 }

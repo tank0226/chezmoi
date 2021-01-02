@@ -37,7 +37,7 @@ func NewGitDiffSystem(system System, w io.Writer, dir AbsPath, color bool) *GitD
 }
 
 // Chmod implements System.Chmod.
-func (s *GitDiffSystem) Chmod(name string, mode os.FileMode) error {
+func (s *GitDiffSystem) Chmod(name AbsPath, mode os.FileMode) error {
 	fromFileMode, info, err := s.fileMode(name)
 	if err != nil {
 		return err
@@ -47,18 +47,18 @@ func (s *GitDiffSystem) Chmod(name string, mode os.FileMode) error {
 	if err != nil {
 		return err
 	}
-	path := s.trimPrefix(name)
+	relPath := s.trimPrefix(name)
 	if err := s.unifiedEncoder.Encode(&gitDiffPatch{
 		filePatches: []diff.FilePatch{
 			&gitDiffFilePatch{
 				from: &gitDiffFile{
 					fileMode: fromFileMode,
-					path:     string(path),
+					relPath:  relPath,
 					hash:     plumbing.ZeroHash,
 				},
 				to: &gitDiffFile{
 					fileMode: toFileMode,
-					path:     string(path),
+					relPath:  relPath,
 					hash:     plumbing.ZeroHash,
 				},
 			},
@@ -80,12 +80,12 @@ func (s *GitDiffSystem) IdempotentCmdOutput(cmd *exec.Cmd) ([]byte, error) {
 }
 
 // Lstat implements System.Lstat.
-func (s *GitDiffSystem) Lstat(name string) (os.FileInfo, error) {
+func (s *GitDiffSystem) Lstat(name AbsPath) (os.FileInfo, error) {
 	return s.system.Lstat(name)
 }
 
 // Mkdir implements System.Mkdir.
-func (s *GitDiffSystem) Mkdir(name string, perm os.FileMode) error {
+func (s *GitDiffSystem) Mkdir(name AbsPath, perm os.FileMode) error {
 	toFileMode, err := filemode.NewFromOSFileMode(os.ModeDir | perm)
 	if err != nil {
 		return err
@@ -95,7 +95,7 @@ func (s *GitDiffSystem) Mkdir(name string, perm os.FileMode) error {
 			&gitDiffFilePatch{
 				to: &gitDiffFile{
 					fileMode: toFileMode,
-					path:     string(s.trimPrefix(name)),
+					relPath:  s.trimPrefix(name),
 					hash:     plumbing.ZeroHash,
 				},
 			},
@@ -107,27 +107,27 @@ func (s *GitDiffSystem) Mkdir(name string, perm os.FileMode) error {
 }
 
 // RawPath implements System.RawPath.
-func (s *GitDiffSystem) RawPath(path string) (string, error) {
+func (s *GitDiffSystem) RawPath(path AbsPath) (AbsPath, error) {
 	return s.system.RawPath(path)
 }
 
 // ReadDir implements System.ReadDir.
-func (s *GitDiffSystem) ReadDir(dirname string) ([]os.FileInfo, error) {
+func (s *GitDiffSystem) ReadDir(dirname AbsPath) ([]os.FileInfo, error) {
 	return s.system.ReadDir(dirname)
 }
 
 // ReadFile implements System.ReadFile.
-func (s *GitDiffSystem) ReadFile(filename string) ([]byte, error) {
+func (s *GitDiffSystem) ReadFile(filename AbsPath) ([]byte, error) {
 	return s.system.ReadFile(filename)
 }
 
 // Readlink implements System.Readlink.
-func (s *GitDiffSystem) Readlink(name string) (string, error) {
+func (s *GitDiffSystem) Readlink(name AbsPath) (string, error) {
 	return s.system.Readlink(name)
 }
 
 // RemoveAll implements System.RemoveAll.
-func (s *GitDiffSystem) RemoveAll(name string) error {
+func (s *GitDiffSystem) RemoveAll(name AbsPath) error {
 	fromFileMode, _, err := s.fileMode(name)
 	if err != nil && !os.IsNotExist(err) {
 		return err
@@ -137,7 +137,7 @@ func (s *GitDiffSystem) RemoveAll(name string) error {
 			&gitDiffFilePatch{
 				from: &gitDiffFile{
 					fileMode: fromFileMode,
-					path:     string(s.trimPrefix(name)),
+					relPath:  s.trimPrefix(name),
 					hash:     plumbing.ZeroHash,
 				},
 			},
@@ -149,7 +149,7 @@ func (s *GitDiffSystem) RemoveAll(name string) error {
 }
 
 // Rename implements System.Rename.
-func (s *GitDiffSystem) Rename(oldpath, newpath string) error {
+func (s *GitDiffSystem) Rename(oldpath, newpath AbsPath) error {
 	fileMode, _, err := s.fileMode(oldpath)
 	if err != nil {
 		return err
@@ -159,12 +159,12 @@ func (s *GitDiffSystem) Rename(oldpath, newpath string) error {
 			&gitDiffFilePatch{
 				from: &gitDiffFile{
 					fileMode: fileMode,
-					path:     string(s.trimPrefix(oldpath)),
+					relPath:  s.trimPrefix(oldpath),
 					hash:     plumbing.ZeroHash,
 				},
 				to: &gitDiffFile{
 					fileMode: fileMode,
-					path:     string(s.trimPrefix(newpath)),
+					relPath:  s.trimPrefix(newpath),
 					hash:     plumbing.ZeroHash,
 				},
 			},
@@ -181,7 +181,7 @@ func (s *GitDiffSystem) RunCmd(cmd *exec.Cmd) error {
 }
 
 // RunScript implements System.RunScript.
-func (s *GitDiffSystem) RunScript(scriptname, dir string, data []byte) error {
+func (s *GitDiffSystem) RunScript(scriptname string, dir AbsPath, data []byte) error {
 	isBinary := isBinary(data)
 	var chunks []diff.Chunk
 	if !isBinary {
@@ -197,7 +197,7 @@ func (s *GitDiffSystem) RunScript(scriptname, dir string, data []byte) error {
 				isBinary: isBinary,
 				to: &gitDiffFile{
 					fileMode: filemode.Executable,
-					path:     string(s.trimPrefix(scriptname)),
+					relPath:  s.trimPrefix(AbsPath(scriptname)),
 					hash:     plumbing.ComputeHash(plumbing.BlobObject, data),
 				},
 				chunks: chunks,
@@ -210,7 +210,7 @@ func (s *GitDiffSystem) RunScript(scriptname, dir string, data []byte) error {
 }
 
 // Stat implements System.Stat.
-func (s *GitDiffSystem) Stat(name string) (os.FileInfo, error) {
+func (s *GitDiffSystem) Stat(name AbsPath) (os.FileInfo, error) {
 	return s.system.Stat(name)
 }
 
@@ -220,7 +220,7 @@ func (s *GitDiffSystem) UnderlyingFS() vfs.FS {
 }
 
 // WriteFile implements System.WriteFile.
-func (s *GitDiffSystem) WriteFile(filename string, data []byte, perm os.FileMode) error {
+func (s *GitDiffSystem) WriteFile(filename AbsPath, data []byte, perm os.FileMode) error {
 	fromFileMode, _, err := s.fileMode(filename)
 	var fromData []byte
 	switch {
@@ -249,12 +249,12 @@ func (s *GitDiffSystem) WriteFile(filename string, data []byte, perm os.FileMode
 				isBinary: isBinary,
 				from: &gitDiffFile{
 					fileMode: fromFileMode,
-					path:     string(path),
+					relPath:  path,
 					hash:     plumbing.ComputeHash(plumbing.BlobObject, fromData),
 				},
 				to: &gitDiffFile{
 					fileMode: toFileMode,
-					path:     string(path),
+					relPath:  path,
 					hash:     plumbing.ComputeHash(plumbing.BlobObject, data),
 				},
 				chunks: chunks,
@@ -267,13 +267,13 @@ func (s *GitDiffSystem) WriteFile(filename string, data []byte, perm os.FileMode
 }
 
 // WriteSymlink implements System.WriteSymlink.
-func (s *GitDiffSystem) WriteSymlink(oldname, newname string) error {
+func (s *GitDiffSystem) WriteSymlink(oldname string, newname AbsPath) error {
 	if err := s.unifiedEncoder.Encode(&gitDiffPatch{
 		filePatches: []diff.FilePatch{
 			&gitDiffFilePatch{
 				to: &gitDiffFile{
 					fileMode: filemode.Symlink,
-					path:     string(s.trimPrefix(newname)),
+					relPath:  s.trimPrefix(newname),
 					hash:     plumbing.ComputeHash(plumbing.BlobObject, []byte(oldname)),
 				},
 				chunks: []diff.Chunk{
@@ -290,7 +290,7 @@ func (s *GitDiffSystem) WriteSymlink(oldname, newname string) error {
 	return s.system.WriteSymlink(oldname, newname)
 }
 
-func (s *GitDiffSystem) fileMode(name string) (filemode.FileMode, os.FileInfo, error) {
+func (s *GitDiffSystem) fileMode(name AbsPath) (filemode.FileMode, os.FileInfo, error) {
 	info, err := s.system.Stat(name)
 	if err != nil {
 		return filemode.Empty, nil, err
@@ -299,8 +299,8 @@ func (s *GitDiffSystem) fileMode(name string) (filemode.FileMode, os.FileInfo, e
 	return fileMode, info, err
 }
 
-func (s *GitDiffSystem) trimPrefix(name string) RelPath {
-	return AbsPath(name).MustTrimDirPrefix(s.dir)
+func (s *GitDiffSystem) trimPrefix(absPath AbsPath) RelPath {
+	return absPath.MustTrimDirPrefix(s.dir)
 }
 
 var gitDiffOperation = map[diffmatchpatch.Operation]diff.Operation{
@@ -320,12 +320,12 @@ func (c *gitDiffChunk) Type() diff.Operation { return c.operation }
 type gitDiffFile struct {
 	hash     plumbing.Hash
 	fileMode filemode.FileMode
-	path     string
+	relPath  RelPath
 }
 
 func (f *gitDiffFile) Hash() plumbing.Hash     { return f.hash }
 func (f *gitDiffFile) Mode() filemode.FileMode { return f.fileMode }
-func (f *gitDiffFile) Path() string            { return f.path }
+func (f *gitDiffFile) Path() string            { return string(f.relPath) }
 
 type gitDiffFilePatch struct {
 	isBinary bool

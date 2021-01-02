@@ -21,20 +21,20 @@ const (
 // A DumpSystem is a System that writes to a data file.
 type DumpSystem struct {
 	nullReaderSystem
-	data map[string]interface{}
+	data map[AbsPath]interface{}
 }
 
 // A dirData contains data about a directory.
 type dirData struct {
 	Type dataType    `json:"type" toml:"type" yaml:"type"`
-	Name string      `json:"name" toml:"name" yaml:"name"`
+	Name AbsPath     `json:"name" toml:"name" yaml:"name"`
 	Perm os.FileMode `json:"perm" toml:"perm" yaml:"perm"`
 }
 
 // A fileData contains data about a file.
 type fileData struct {
 	Type     dataType    `json:"type" toml:"type" yaml:"type"`
-	Name     string      `json:"name" toml:"name" yaml:"name"`
+	Name     AbsPath     `json:"name" toml:"name" yaml:"name"`
 	Contents string      `json:"contents" toml:"contents" yaml:"contents"`
 	Perm     os.FileMode `json:"perm" toml:"perm" yaml:"perm"`
 }
@@ -42,26 +42,26 @@ type fileData struct {
 // A scriptData contains data about a script.
 type scriptData struct {
 	Type     dataType `json:"type" toml:"type" yaml:"type"`
-	Name     string   `json:"name" toml:"name" yaml:"name"`
+	Name     AbsPath  `json:"name" toml:"name" yaml:"name"`
 	Contents string   `json:"contents" toml:"contents" yaml:"contents"`
 }
 
 // A symlinkData contains data about a symlink.
 type symlinkData struct {
 	Type     dataType `json:"type" toml:"type" yaml:"type"`
-	Name     string   `json:"name" toml:"name" yaml:"name"`
+	Name     AbsPath  `json:"name" toml:"name" yaml:"name"`
 	Linkname string   `json:"linkname" toml:"linkname" yaml:"linkname"`
 }
 
 // NewDumpSystem returns a new DumpSystem that accumulates data.
 func NewDumpSystem() *DumpSystem {
 	return &DumpSystem{
-		data: make(map[string]interface{}),
+		data: make(map[AbsPath]interface{}),
 	}
 }
 
 // Chmod implements System.Chmod.
-func (s *DumpSystem) Chmod(name string, mode os.FileMode) error {
+func (s *DumpSystem) Chmod(name AbsPath, mode os.FileMode) error {
 	return os.ErrPermission
 }
 
@@ -71,7 +71,7 @@ func (s *DumpSystem) Data() interface{} {
 }
 
 // Mkdir implements System.Mkdir.
-func (s *DumpSystem) Mkdir(dirname string, perm os.FileMode) error {
+func (s *DumpSystem) Mkdir(dirname AbsPath, perm os.FileMode) error {
 	if _, exists := s.data[dirname]; exists {
 		return os.ErrExist
 	}
@@ -84,12 +84,12 @@ func (s *DumpSystem) Mkdir(dirname string, perm os.FileMode) error {
 }
 
 // RemoveAll implements System.RemoveAll.
-func (s *DumpSystem) RemoveAll(name string) error {
+func (s *DumpSystem) RemoveAll(name AbsPath) error {
 	return os.ErrPermission
 }
 
 // Rename implements System.Rename.
-func (s *DumpSystem) Rename(oldpath, newpath string) error {
+func (s *DumpSystem) Rename(oldpath, newpath AbsPath) error {
 	return os.ErrPermission
 }
 
@@ -99,13 +99,14 @@ func (s *DumpSystem) RunCmd(cmd *exec.Cmd) error {
 }
 
 // RunScript implements System.RunScript.
-func (s *DumpSystem) RunScript(scriptname, dir string, data []byte) error {
-	if _, exists := s.data[scriptname]; exists {
+func (s *DumpSystem) RunScript(scriptname string, dir AbsPath, data []byte) error {
+	scriptnameAbsPath := AbsPath(scriptname)
+	if _, exists := s.data[scriptnameAbsPath]; exists {
 		return os.ErrExist
 	}
-	s.data[scriptname] = &scriptData{
+	s.data[scriptnameAbsPath] = &scriptData{
 		Type:     dataTypeScript,
-		Name:     scriptname,
+		Name:     scriptnameAbsPath,
 		Contents: string(data),
 	}
 	return nil
@@ -117,7 +118,7 @@ func (s *DumpSystem) UnderlyingFS() vfs.FS {
 }
 
 // WriteFile implements System.WriteFile.
-func (s *DumpSystem) WriteFile(filename string, data []byte, perm os.FileMode) error {
+func (s *DumpSystem) WriteFile(filename AbsPath, data []byte, perm os.FileMode) error {
 	if _, exists := s.data[filename]; exists {
 		return os.ErrExist
 	}
@@ -131,7 +132,7 @@ func (s *DumpSystem) WriteFile(filename string, data []byte, perm os.FileMode) e
 }
 
 // WriteSymlink implements System.WriteSymlink.
-func (s *DumpSystem) WriteSymlink(oldname, newname string) error {
+func (s *DumpSystem) WriteSymlink(oldname string, newname AbsPath) error {
 	if _, exists := s.data[newname]; exists {
 		return os.ErrExist
 	}

@@ -26,7 +26,7 @@ func NewZIPSystem(w io.Writer, modified time.Time) *ZIPSystem {
 }
 
 // Chmod implements System.Chmod.
-func (s *ZIPSystem) Chmod(name string, mode os.FileMode) error {
+func (s *ZIPSystem) Chmod(name AbsPath, mode os.FileMode) error {
 	return os.ErrPermission
 }
 
@@ -36,9 +36,9 @@ func (s *ZIPSystem) Close() error {
 }
 
 // Mkdir implements System.Mkdir.
-func (s *ZIPSystem) Mkdir(name string, perm os.FileMode) error {
+func (s *ZIPSystem) Mkdir(name AbsPath, perm os.FileMode) error {
 	fh := zip.FileHeader{
-		Name:     name,
+		Name:     string(name),
 		Modified: s.modified,
 	}
 	fh.SetMode(os.ModeDir | perm)
@@ -47,12 +47,12 @@ func (s *ZIPSystem) Mkdir(name string, perm os.FileMode) error {
 }
 
 // RemoveAll implements System.RemoveAll.
-func (s *ZIPSystem) RemoveAll(name string) error {
+func (s *ZIPSystem) RemoveAll(name AbsPath) error {
 	return os.ErrPermission
 }
 
 // Rename implements System.Rename.
-func (s *ZIPSystem) Rename(oldpath, newpath string) error {
+func (s *ZIPSystem) Rename(oldpath, newpath AbsPath) error {
 	return os.ErrPermission
 }
 
@@ -62,8 +62,8 @@ func (s *ZIPSystem) RunCmd(cmd *exec.Cmd) error {
 }
 
 // RunScript implements System.RunScript.
-func (s *ZIPSystem) RunScript(scriptname, dir string, data []byte) error {
-	return s.WriteFile(scriptname, data, 0o700)
+func (s *ZIPSystem) RunScript(scriptname string, dir AbsPath, data []byte) error {
+	return s.WriteFile(AbsPath(scriptname), data, 0o700)
 }
 
 // UnderlyingFS implements System.UnderlyingFS.
@@ -72,9 +72,9 @@ func (s *ZIPSystem) UnderlyingFS() vfs.FS {
 }
 
 // WriteFile implements System.WriteFile.
-func (s *ZIPSystem) WriteFile(filename string, data []byte, perm os.FileMode) error {
+func (s *ZIPSystem) WriteFile(filename AbsPath, data []byte, perm os.FileMode) error {
 	fh := zip.FileHeader{
-		Name:               filename,
+		Name:               string(filename),
 		Method:             zip.Deflate,
 		Modified:           s.modified,
 		UncompressedSize64: uint64(len(data)),
@@ -89,10 +89,10 @@ func (s *ZIPSystem) WriteFile(filename string, data []byte, perm os.FileMode) er
 }
 
 // WriteSymlink implements System.WriteSymlink.
-func (s *ZIPSystem) WriteSymlink(oldname, newname string) error {
+func (s *ZIPSystem) WriteSymlink(oldname string, newname AbsPath) error {
 	data := []byte(oldname)
 	fh := zip.FileHeader{
-		Name:               newname,
+		Name:               string(newname),
 		Modified:           s.modified,
 		UncompressedSize64: uint64(len(data)),
 	}

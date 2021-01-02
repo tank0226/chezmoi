@@ -25,7 +25,7 @@ func NewTARSystem(w io.Writer, headerTemplate tar.Header) *TARSystem {
 }
 
 // Chmod implements System.Chmod.
-func (s *TARSystem) Chmod(name string, mode os.FileMode) error {
+func (s *TARSystem) Chmod(name AbsPath, mode os.FileMode) error {
 	return os.ErrPermission
 }
 
@@ -35,21 +35,21 @@ func (s *TARSystem) Close() error {
 }
 
 // Mkdir implements System.Mkdir.
-func (s *TARSystem) Mkdir(name string, perm os.FileMode) error {
+func (s *TARSystem) Mkdir(name AbsPath, perm os.FileMode) error {
 	header := s.headerTemplate
 	header.Typeflag = tar.TypeDir
-	header.Name = name + "/"
+	header.Name = string(name) + "/"
 	header.Mode = int64(perm)
 	return s.w.WriteHeader(&header)
 }
 
 // RemoveAll implements System.RemoveAll.
-func (s *TARSystem) RemoveAll(name string) error {
+func (s *TARSystem) RemoveAll(name AbsPath) error {
 	return os.ErrPermission
 }
 
 // Rename implements System.Rename.
-func (s *TARSystem) Rename(oldpath, newpath string) error {
+func (s *TARSystem) Rename(oldpath, newpath AbsPath) error {
 	return os.ErrPermission
 }
 
@@ -59,8 +59,8 @@ func (s *TARSystem) RunCmd(cmd *exec.Cmd) error {
 }
 
 // RunScript implements System.RunScript.
-func (s *TARSystem) RunScript(scriptname, dir string, data []byte) error {
-	return s.WriteFile(scriptname, data, 0o700)
+func (s *TARSystem) RunScript(scriptname string, dir AbsPath, data []byte) error {
+	return s.WriteFile(AbsPath(scriptname), data, 0o700)
 }
 
 // UnderlyingFS implements System.UnderlyingFS.
@@ -69,10 +69,10 @@ func (s *TARSystem) UnderlyingFS() vfs.FS {
 }
 
 // WriteFile implements System.WriteFile.
-func (s *TARSystem) WriteFile(filename string, data []byte, perm os.FileMode) error {
+func (s *TARSystem) WriteFile(filename AbsPath, data []byte, perm os.FileMode) error {
 	header := s.headerTemplate
 	header.Typeflag = tar.TypeReg
-	header.Name = filename
+	header.Name = string(filename)
 	header.Size = int64(len(data))
 	header.Mode = int64(perm)
 	if err := s.w.WriteHeader(&header); err != nil {
@@ -83,10 +83,10 @@ func (s *TARSystem) WriteFile(filename string, data []byte, perm os.FileMode) er
 }
 
 // WriteSymlink implements System.WriteSymlink.
-func (s *TARSystem) WriteSymlink(oldname, newname string) error {
+func (s *TARSystem) WriteSymlink(oldname string, newname AbsPath) error {
 	header := s.headerTemplate
 	header.Typeflag = tar.TypeSymlink
-	header.Name = newname
+	header.Name = string(newname)
 	header.Linkname = oldname
 	return s.w.WriteHeader(&header)
 }

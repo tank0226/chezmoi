@@ -20,7 +20,7 @@ func NewReadOnlySystem(system System) *ReadOnlySystem {
 }
 
 // Chmod implements System.Chmod.
-func (s *ReadOnlySystem) Chmod(name string, perm os.FileMode) error {
+func (s *ReadOnlySystem) Chmod(name AbsPath, perm os.FileMode) error {
 	return os.ErrPermission
 }
 
@@ -35,42 +35,42 @@ func (s *ReadOnlySystem) IdempotentCmdOutput(cmd *exec.Cmd) ([]byte, error) {
 }
 
 // Lstat implements System.Lstat.
-func (s *ReadOnlySystem) Lstat(filename string) (os.FileInfo, error) {
+func (s *ReadOnlySystem) Lstat(filename AbsPath) (os.FileInfo, error) {
 	return s.system.Lstat(filename)
 }
 
 // Mkdir implements System.Mkdir.
-func (s *ReadOnlySystem) Mkdir(name string, perm os.FileMode) error {
+func (s *ReadOnlySystem) Mkdir(name AbsPath, perm os.FileMode) error {
 	return os.ErrPermission
 }
 
 // RawPath implements System.RawPath.
-func (s *ReadOnlySystem) RawPath(path string) (string, error) {
+func (s *ReadOnlySystem) RawPath(path AbsPath) (AbsPath, error) {
 	return s.system.RawPath(path)
 }
 
 // ReadDir implements System.ReadDir.
-func (s *ReadOnlySystem) ReadDir(dirname string) ([]os.FileInfo, error) {
+func (s *ReadOnlySystem) ReadDir(dirname AbsPath) ([]os.FileInfo, error) {
 	return s.system.ReadDir(dirname)
 }
 
 // ReadFile implements System.ReadFile.
-func (s *ReadOnlySystem) ReadFile(filename string) ([]byte, error) {
+func (s *ReadOnlySystem) ReadFile(filename AbsPath) ([]byte, error) {
 	return s.system.ReadFile(filename)
 }
 
 // Readlink implements System.Readlink.
-func (s *ReadOnlySystem) Readlink(name string) (string, error) {
+func (s *ReadOnlySystem) Readlink(name AbsPath) (string, error) {
 	return s.system.Readlink(name)
 }
 
 // RemoveAll implements System.RemoveAll.
-func (s *ReadOnlySystem) RemoveAll(name string) error {
+func (s *ReadOnlySystem) RemoveAll(name AbsPath) error {
 	return os.ErrPermission
 }
 
 // Rename implements System.Rename.
-func (s *ReadOnlySystem) Rename(oldpath, newpath string) error {
+func (s *ReadOnlySystem) Rename(oldpath, newpath AbsPath) error {
 	return os.ErrPermission
 }
 
@@ -80,12 +80,12 @@ func (s *ReadOnlySystem) RunCmd(cmd *exec.Cmd) error {
 }
 
 // RunScript implements System.RunScript.
-func (s *ReadOnlySystem) RunScript(scriptname, dir string, data []byte) error {
+func (s *ReadOnlySystem) RunScript(scriptname string, dir AbsPath, data []byte) error {
 	return os.ErrPermission
 }
 
 // Stat implements System.Stat.
-func (s *ReadOnlySystem) Stat(name string) (os.FileInfo, error) {
+func (s *ReadOnlySystem) Stat(name AbsPath) (os.FileInfo, error) {
 	return s.system.Stat(name)
 }
 
@@ -95,11 +95,11 @@ func (s *ReadOnlySystem) UnderlyingFS() vfs.FS {
 }
 
 // WriteFile implements System.WriteFile.
-func (s *ReadOnlySystem) WriteFile(filename string, data []byte, perm os.FileMode) error {
+func (s *ReadOnlySystem) WriteFile(filename AbsPath, data []byte, perm os.FileMode) error {
 	return os.ErrPermission
 }
 
 // WriteSymlink implements System.WriteSymlink.
-func (s *ReadOnlySystem) WriteSymlink(oldname, newname string) error {
+func (s *ReadOnlySystem) WriteSymlink(oldname string, newname AbsPath) error {
 	return os.ErrPermission
 }

@@ -117,6 +117,11 @@ func (e *errUnsupportedFileType) Error() string {
 // An AbsPath is an absolute path.
 type AbsPath string
 
+// Base returns p's basename.
+func (p AbsPath) Base() string {
+	return path.Base(string(p))
+}
+
 // Dir returns p's directory.
 func (p AbsPath) Dir() AbsPath {
 	return AbsPath(path.Dir(string(p)))

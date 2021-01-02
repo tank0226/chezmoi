@@ -5,7 +5,6 @@ package chezmoi
 import (
 	"errors"
 	"os"
-	"path"
 	"syscall"
 
 	"github.com/google/renameio"
@@ -16,25 +15,25 @@ import (
 // An RealSystem is a System that writes to a filesystem and executes scripts.
 type RealSystem struct {
 	vfs.FS
-	devCache     map[string]uint // devCache maps directories to device numbers.
-	tempDirCache map[uint]string // tempDirCache maps device numbers to renameio temporary directories.
+	devCache     map[AbsPath]uint // devCache maps directories to device numbers.
+	tempDirCache map[uint]string  // tempDirCache maps device numbers to renameio temporary directories.
 }
 
 // NewRealSystem returns a System that acts on fs.
 func NewRealSystem(fs vfs.FS) *RealSystem {
 	return &RealSystem{
 		FS:           fs,
-		devCache:     make(map[string]uint),
+		devCache:     make(map[AbsPath]uint),
 		tempDirCache: make(map[uint]string),
 	}
 }
 
 // WriteFile implements System.WriteFile.
-func (s *RealSystem) WriteFile(filename string, data []byte, perm os.FileMode) error {
+func (s *RealSystem) WriteFile(filename AbsPath, data []byte, perm os.FileMode) error {
 	// Special case: if writing to the real filesystem, use
 	// github.com/google/renameio.
 	if s.FS == vfs.OSFS {
-		dir := path.Dir(filename)
+		dir := filename.Dir()
 		dev, ok := s.devCache[dir]
 		if !ok {
 			info, err := s.Stat(dir)
@@ -50,10 +49,10 @@ func (s *RealSystem) WriteFile(filename string, data []byte, perm os.FileMode) e
 		}
 		tempDir, ok := s.tempDirCache[dev]
 		if !ok {
-			tempDir = renameio.TempDir(dir)
+			tempDir = renameio.TempDir(string(dir))
 			s.tempDirCache[dev] = tempDir
 		}
-		t, err := renameio.TempFile(tempDir, filename)
+		t, err := renameio.TempFile(tempDir, string(filename))
 		if err != nil {
 			return err
 		}
@@ -73,24 +72,24 @@ func (s *RealSystem) WriteFile(filename string, data []byte, perm os.FileMode) e
 }
 
 // WriteSymlink implements System.WriteSymlink.
-func (s *RealSystem) WriteSymlink(oldname, newname string) error {
+func (s *RealSystem) WriteSymlink(oldname string, newname AbsPath) error {
 	// Special case: if writing to the real filesystem, use
 	// github.com/google/renameio.
 	if s.FS == vfs.OSFS {
-		return renameio.Symlink(oldname, newname)
+		return renameio.Symlink(oldname, string(newname))
 	}
-	if err := s.FS.RemoveAll(newname); err != nil && !os.IsNotExist(err) {
+	if err := s.FS.RemoveAll(string(newname)); err != nil && !os.IsNotExist(err) {
 		return err
 	}
-	return s.FS.Symlink(oldname, newname)
+	return s.FS.Symlink(oldname, string(newname))
 }
 
 // writeFile is like ioutil.writeFile but always sets perm before writing data.
 // ioutil.writeFile only sets the permissions when creating a new file. We need
 // to ensure permissions, so we use our own implementation.
-func writeFile(fs vfs.FS, filename string, data []byte, perm os.FileMode) (err error) {
+func writeFile(fs vfs.FS, filename AbsPath, data []byte, perm os.FileMode) (err error) {
 	// Create a new file, or truncate any existing one.
-	f, err := fs.OpenFile(filename, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, perm)
+	f, err := fs.OpenFile(string(filename), os.O_WRONLY|os.O_CREATE|os.O_TRUNC, perm)
 	if err != nil {
 		return
 	}

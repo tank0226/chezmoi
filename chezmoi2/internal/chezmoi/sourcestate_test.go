@@ -479,7 +479,7 @@ func TestSourceStateAdd(t *testing.T) {
 				system := NewRealSystem(fs)
 				persistentState := NewMockPersistentState()
 				if tc.extraRoot != nil {
-					require.NoError(t, vfst.NewBuilder().Build(system, tc.extraRoot))
+					require.NoError(t, vfst.NewBuilder().Build(system.UnderlyingFS(), tc.extraRoot))
 				}
 
 				s := NewSourceState(
