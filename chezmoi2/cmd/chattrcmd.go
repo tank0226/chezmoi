@@ -95,7 +95,7 @@ func (c *Config) runChattrCmd(cmd *cobra.Command, args []string, sourceState *ch
 
 	for _, targetName := range targetNames {
 		sourceStateEntry := sourceState.MustEntry(targetName)
-		sourceName, err := chezmoi.TrimDirPrefix(sourceStateEntry.Path(), c.normalizedSourceDir)
+		sourceName, err := chezmoi.TrimDirPrefix(sourceStateEntry.Name(), c.normalizedSourceDir)
 		if err != nil {
 			return err
 		}
@@ -103,8 +103,9 @@ func (c *Config) runChattrCmd(cmd *cobra.Command, args []string, sourceState *ch
 		switch sourceStateEntry := sourceStateEntry.(type) {
 		case *chezmoi.SourceStateDir:
 			if newBaseName := am.modifyDirAttr(sourceStateEntry.Attr).BaseName(); newBaseName != baseName {
+				oldSourcePath := path.Join(c.normalizedSourceDir, parentDirName, baseName)
 				newSourcePath := path.Join(c.normalizedSourceDir, parentDirName, newBaseName)
-				if err := c.sourceSystem.Rename(sourceStateEntry.Path(), newSourcePath); err != nil {
+				if err := c.sourceSystem.Rename(oldSourcePath, newSourcePath); err != nil {
 					return err
 				}
 			}
@@ -112,8 +113,9 @@ func (c *Config) runChattrCmd(cmd *cobra.Command, args []string, sourceState *ch
 			// FIXME encrypted attribute changes
 			// FIXME when changing encrypted attribute add new file before removing old one
 			if newBaseName := am.modifyFileAttr(sourceStateEntry.Attr).BaseName(); newBaseName != baseName {
+				oldSourcePath := path.Join(c.normalizedSourceDir, parentDirName, baseName)
 				newSourcePath := path.Join(c.normalizedSourceDir, parentDirName, newBaseName)
-				if err := c.sourceSystem.Rename(sourceStateEntry.Path(), newSourcePath); err != nil {
+				if err := c.sourceSystem.Rename(oldSourcePath, newSourcePath); err != nil {
 					return err
 				}
 			}

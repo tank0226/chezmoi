@@ -1063,7 +1063,7 @@ func (c *Config) sourcePaths(s *chezmoi.SourceState, args []string) ([]string, e
 	}
 	sourcePaths := make([]string, 0, len(targetNames))
 	for _, targetName := range targetNames {
-		sourcePath := s.MustEntry(targetName).Path()
+		sourcePath := s.MustEntry(targetName).Name()
 		sourcePaths = append(sourcePaths, sourcePath)
 	}
 	return sourcePaths, nil

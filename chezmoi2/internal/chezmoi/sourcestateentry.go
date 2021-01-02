@@ -3,15 +3,15 @@ package chezmoi
 // A SourceStateEntry represents the state of an entry in the source state.
 type SourceStateEntry interface {
 	Evaluate() error
+	Name() SourceStatePath
 	Order() int
-	Path() string
 	TargetStateEntry() (TargetStateEntry, error)
 }
 
 // A SourceStateDir represents the state of a directory in the source state.
 type SourceStateDir struct {
 	Attr             DirAttr
-	path             string
+	name             SourceStatePath
 	targetStateEntry TargetStateEntry
 }
 
@@ -19,7 +19,7 @@ type SourceStateDir struct {
 type SourceStateFile struct {
 	*lazyContents
 	Attr                 FileAttr
-	path                 string
+	name                 SourceStatePath
 	targetStateEntryFunc func() (TargetStateEntry, error)
 	targetStateEntry     TargetStateEntry
 	targetStateEntryErr  error
@@ -27,14 +27,14 @@ type SourceStateFile struct {
 
 // A SourceStateRemove represents that an entry should be removed.
 type SourceStateRemove struct {
-	path string
+	name SourceStatePath
 }
 
 // A SourceStateRenameDir represents the renaming of a directory in the source
 // state.
 type SourceStateRenameDir struct {
-	oldName string
-	newName string
+	oldName SourceStatePath
+	newName SourceStatePath
 }
 
 // Evaluate evaluates s and returns any error.
@@ -42,14 +42,14 @@ func (s *SourceStateDir) Evaluate() error {
 	return nil
 }
 
+// Name returns s's name.
+func (s *SourceStateDir) Name() SourceStatePath {
+	return s.name
+}
+
 // Order returns s's order.
 func (s *SourceStateDir) Order() int {
 	return 0
-}
-
-// Path returns s's path.
-func (s *SourceStateDir) Path() string {
-	return s.path
 }
 
 // TargetStateEntry returns s's target state entry.
@@ -63,14 +63,14 @@ func (s *SourceStateFile) Evaluate() error {
 	return err
 }
 
+// Name returns s's name.
+func (s *SourceStateFile) Name() SourceStatePath {
+	return s.name
+}
+
 // Order returns s's order.
 func (s *SourceStateFile) Order() int {
 	return s.Attr.Order
-}
-
-// Path returns s's path.
-func (s *SourceStateFile) Path() string {
-	return s.path
 }
 
 // TargetStateEntry returns s's target state entry.
@@ -87,14 +87,14 @@ func (s *SourceStateRemove) Evaluate() error {
 	return nil
 }
 
+// Name returns s's name.
+func (s *SourceStateRemove) Name() SourceStatePath {
+	return s.name
+}
+
 // Order returns s's order.
 func (s *SourceStateRemove) Order() int {
 	return 0
-}
-
-// Path returns s's path.
-func (s *SourceStateRemove) Path() string {
-	return s.path
 }
 
 // TargetStateEntry returns s's target state entry.
@@ -112,8 +112,8 @@ func (s *SourceStateRenameDir) Order() int {
 	return -1
 }
 
-// Path returns s's path.
-func (s *SourceStateRenameDir) Path() string {
+// Name returns s's name.
+func (s *SourceStateRenameDir) Name() SourceStatePath {
 	return s.newName
 }
 

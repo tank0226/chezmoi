@@ -24,10 +24,10 @@ type Lstater interface {
 
 // A SourceState is a source state.
 type SourceState struct {
-	entries                 map[string]SourceStateEntry
+	entries                 map[RelPath]SourceStateEntry
 	system                  System
-	sourceDir               string
-	destDir                 string
+	sourceDir               AbsPath
+	destDir                 AbsPath
 	umask                   os.FileMode
 	encryptionTool          EncryptionTool
 	ignore                  *patternSet
@@ -45,7 +45,7 @@ type SourceState struct {
 type SourceStateOption func(*SourceState)
 
 // WithDestDir sets the destination directory.
-func WithDestDir(destDir string) SourceStateOption {
+func WithDestDir(destDir AbsPath) SourceStateOption {
 	return func(s *SourceState) {
 		s.destDir = destDir
 	}
@@ -66,7 +66,7 @@ func WithPriorityTemplateData(priorityTemplateData map[string]interface{}) Sourc
 }
 
 // WithSourceDir sets the source directory.
-func WithSourceDir(sourceDir string) SourceStateOption {
+func WithSourceDir(sourceDir AbsPath) SourceStateOption {
 	return func(s *SourceState) {
 		s.sourceDir = sourceDir
 	}
@@ -110,7 +110,7 @@ func WithUmask(umask os.FileMode) SourceStateOption {
 // NewSourceState creates a new source state with the given options.
 func NewSourceState(options ...SourceStateOption) *SourceState {
 	s := &SourceState{
-		entries:              make(map[string]SourceStateEntry),
+		entries:              make(map[RelPath]SourceStateEntry),
 		umask:                GetUmask(),
 		encryptionTool:       &nullEncryptionTool{},
 		ignore:               newPatternSet(),
@@ -137,37 +137,37 @@ type AddOptions struct {
 }
 
 // Add adds destPathInfos to s.
-func (s *SourceState) Add(sourceSystem System, persistentState PersistentState, destPathInfos map[string]os.FileInfo, options *AddOptions) error {
+func (s *SourceState) Add(sourceSystem System, persistentState PersistentState, destPathInfos map[AbsPath]os.FileInfo, options *AddOptions) error {
 	type update struct {
-		destPath              string
+		destPath              AbsPath
 		entryState            *EntryState
-		sourceStateEntryNames []string
+		sourceStateEntryNames []RelPath
 	}
 
-	destPaths := make([]string, 0, len(destPathInfos))
+	destPaths := make([]AbsPath, 0, len(destPathInfos))
 	for destPath := range destPathInfos {
 		destPaths = append(destPaths, destPath)
 	}
-	sort.Strings(destPaths)
+	sort.Sort(absPathsByName(destPaths))
 
 	updates := make([]update, 0, len(destPathInfos))
-	newSourceStateEntries := make(map[string]SourceStateEntry)
-	newSourceStateEntriesByTargetName := make(map[string]SourceStateEntry)
+	newSourceStateEntries := make(map[RelPath]SourceStateEntry)
+	newSourceStateEntriesByTargetName := make(map[RelPath]SourceStateEntry)
 	for _, destPath := range destPaths {
 		destPathInfo := destPathInfos[destPath]
 		if !options.Include.IncludeFileInfo(destPathInfo) {
 			continue
 		}
-		targetName := MustTrimDirPrefix(destPath, s.destDir)
+		targetName := destPath.MustTrimPrefix(s.destDir)
 
 		// Find the target's parent directory.
-		var parentDir string
-		if parentDirTargetName := path.Dir(targetName); parentDirTargetName == "." {
-			parentDir = ""
+		var parentDirName string
+		if parentDirTargetName := targetName.Dir(); parentDirTargetName == "." {
+			parentDirName = ""
 		} else if parentDirEntry, ok := newSourceStateEntriesByTargetName[parentDirTargetName]; ok {
-			parentDir = parentDirEntry.Path()
+			parentDirName = parentDirEntry.Name()
 		} else if parentDirEntry, ok := s.entries[parentDirTargetName]; ok {
-			parentDir = parentDirEntry.Path()
+			parentDirName = parentDirEntry.Name()
 		} else {
 			return fmt.Errorf("%s: parent directory not in source state", destPath)
 		}
@@ -176,7 +176,7 @@ func (s *SourceState) Add(sourceSystem System, persistentState PersistentState, 
 		if err != nil {
 			return err
 		}
-		newSourceStateEntry, err := s.sourceStateEntry(actualStateEntry, destPath, destPathInfo, parentDir, options)
+		newSourceStateEntry, err := s.sourceStateEntry(actualStateEntry, destPath, destPathInfo, parentDirName, options)
 		if err != nil {
 			return err
 		}
@@ -184,7 +184,7 @@ func (s *SourceState) Add(sourceSystem System, persistentState PersistentState, 
 			continue
 		}
 
-		sourceEntryName := newSourceStateEntry.Path()
+		sourceEntryName := newSourceStateEntry.Name()
 
 		entryState, err := actualStateEntry.EntryState()
 		if err != nil {
@@ -193,15 +193,14 @@ func (s *SourceState) Add(sourceSystem System, persistentState PersistentState, 
 		update := update{
 			destPath:              destPath,
 			entryState:            entryState,
-			sourceStateEntryNames: []string{sourceEntryName},
+			sourceStateEntryNames: []RelPath{sourceEntryName},
 		}
 
 		if oldSourceStateEntry, ok := s.entries[targetName]; ok {
 			// If both the new and old source state entries are directories but the name has changed,
 			// rename to avoid losing the directory's contents. Otherwise,
-			// remove the old.
-			oldSourceEntryName := MustTrimDirPrefix(oldSourceStateEntry.Path(), s.sourceDir)
-			if sourceEntryName != oldSourceEntryName {
+			// remove the old.``
+			if oldSourceEntryName := oldSourceStateEntry.Name(); sourceEntryName != oldSourceEntryName {
 				_, newIsDir := newSourceStateEntry.(*SourceStateDir)
 				_, oldIsDir := oldSourceStateEntry.(*SourceStateDir)
 				if newIsDir && oldIsDir {
@@ -248,52 +247,42 @@ func (s *SourceState) Add(sourceSystem System, persistentState PersistentState, 
 
 // AddDestPathInfos adds an os.FileInfo to destPathInfos for destPath and any of
 // its parents which are not already known.
-func (s *SourceState) AddDestPathInfos(destPathInfos map[string]os.FileInfo, lstater Lstater, destPath string, info os.FileInfo) error {
-	if _, err := TrimDirPrefix(destPath, s.destDir); err != nil {
-		return err
-	}
-
-	if _, ok := destPathInfos[destPath]; ok {
-		return nil
-	}
-
-	if info == nil {
-		var err error
-		info, err = lstater.Lstat(destPath)
-		if err != nil {
+func (s *SourceState) AddDestPathInfos(destPathInfos map[AbsPath]os.FileInfo, lstater Lstater, destPath AbsPath, info os.FileInfo) error {
+	for {
+		if _, err := s.destDir.TrimPrefix(destPath); err != nil {
 			return err
 		}
-	}
 
-	destPathInfos[destPath] = info
-	destPath = path.Dir(destPath)
-	if destPath == s.destDir {
-		return nil
-	}
-
-	for {
 		if _, ok := destPathInfos[destPath]; ok {
 			return nil
 		}
-		info, err := lstater.Lstat(destPath)
-		if err != nil {
-			return err
+
+		if info == nil {
+			var err error
+			info, err = lstater.Lstat(destPath.String())
+			if err != nil {
+				return err
+			}
 		}
 		destPathInfos[destPath] = info
-		parentDir := path.Dir(destPath)
-		if parentDir == s.destDir {
+
+		parentPath := destPath.Dir()
+		if parentPath == s.destDir {
 			return nil
 		}
-		if _, ok := s.entries[parentDir]; ok {
+		parentTargetName := s.destDir.MustTrimDirPrefix(parentPath)
+		if _, ok := s.entries[parentTargetName]; ok {
 			return nil
 		}
-		destPath = parentDir
+
+		destPath = parentPath
+		info = nil
 	}
 }
 
 // AllTargetNames returns all of s's target names in order.
-func (s *SourceState) AllTargetNames() []string {
-	targetNames := make([]string, 0, len(s.entries))
+func (s *SourceState) AllTargetNames() []RelPath {
+	targetNames := make([]RelPath, 0, len(s.entries))
 	for targetName := range s.entries {
 		targetNames = append(targetNames, targetName)
 	}
@@ -323,7 +312,7 @@ type ApplyOptions struct {
 }
 
 // Apply updates targetName in targetDir in targetSystem to match s.
-func (s *SourceState) Apply(targetSystem System, persistentState PersistentState, targetDir, targetName string, options ApplyOptions) error {
+func (s *SourceState) Apply(targetSystem System, persistentState PersistentState, targetDir AbsPath, targetName RelPath, options ApplyOptions) error {
 	targetStateEntry, err := s.entries[targetName].TargetStateEntry()
 	if err != nil {
 		return err
@@ -333,7 +322,7 @@ func (s *SourceState) Apply(targetSystem System, persistentState PersistentState
 		return nil
 	}
 
-	targetPath := path.Join(targetDir, targetName)
+	targetPath := targetDir.Join(targetName)
 
 	targetEntryState, err := targetStateEntry.EntryState()
 	if err != nil {
@@ -380,12 +369,12 @@ func (s *SourceState) Apply(targetSystem System, persistentState PersistentState
 }
 
 // Entries returns s's source state entries.
-func (s *SourceState) Entries() map[string]SourceStateEntry {
+func (s *SourceState) Entries() map[RelPath]SourceStateEntry {
 	return s.entries
 }
 
 // Entry returns the source state entry for targetName.
-func (s *SourceState) Entry(targetName string) (SourceStateEntry, bool) {
+func (s *SourceState) Entry(targetName RelPath) (SourceStateEntry, bool) {
 	sourceStateEntry, ok := s.entries[targetName]
 	return sourceStateEntry, ok
 }
@@ -424,7 +413,7 @@ func (s *SourceState) MinVersion() semver.Version {
 
 // MustEntry returns the source state entry associated with targetName, and
 // panics if it does not exist.
-func (s *SourceState) MustEntry(targetName string) SourceStateEntry {
+func (s *SourceState) MustEntry(targetName RelPath) SourceStateEntry {
 	sourceStateEntry, ok := s.entries[targetName]
 	if !ok {
 		panic(fmt.Sprintf("%s: not in source state", targetName))
@@ -434,7 +423,7 @@ func (s *SourceState) MustEntry(targetName string) SourceStateEntry {
 
 // Read reads a source state from sourcePath.
 func (s *SourceState) Read() error {
-	info, err := s.system.Lstat(s.sourceDir)
+	info, err := s.system.Lstat(s.sourceDir.String())
 	switch {
 	case os.IsNotExist(err):
 		return nil
@@ -446,11 +435,11 @@ func (s *SourceState) Read() error {
 
 	// Read all source entries.
 	allSourceStateEntries := make(map[string][]SourceStateEntry)
-	if err := vfs.WalkSlash(s.system, s.sourceDir, func(sourcePath string, info os.FileInfo, err error) error {
+	if err := vfs.WalkSlash(s.system, s.sourceDir.String(), func(sourcePath string, info os.FileInfo, err error) error {
 		if err != nil {
 			return err
 		}
-		if sourcePath == s.sourceDir {
+		if sourcePath == s.sourceDir.String() {
 			return nil
 		}
 		relPath := MustTrimDirPrefix(sourcePath, s.sourceDir)
@@ -493,10 +482,10 @@ func (s *SourceState) Read() error {
 				}
 			}
 			matches = matches[:n]
-			sourceStateEntry := &SourceStateRemove{
-				path: sourcePath,
-			}
 			for _, match := range matches {
+				sourceStateEntry := &SourceStateRemove{
+					name: path.Join(sourcePath, match),
+				}
 				allSourceStateEntries[match] = append(allSourceStateEntries[match], sourceStateEntry)
 			}
 			return nil
@@ -562,7 +551,7 @@ func (s *SourceState) Read() error {
 			continue
 		}
 		sourceStateRemove := &SourceStateRemove{
-			path: sourceStateDir.Path(),
+			name: sourceStateDir.Name(),
 		}
 		infos, err := s.system.ReadDir(path.Join(s.destDir, targetName))
 		switch {
@@ -602,7 +591,7 @@ func (s *SourceState) Read() error {
 		}
 		sourcePaths := make([]string, 0, len(sourceStateEntries))
 		for _, sourceStateEntry := range sourceStateEntries {
-			sourcePaths = append(sourcePaths, sourceStateEntry.Path())
+			sourcePaths = append(sourcePaths, sourceStateEntry.Name())
 		}
 		err = multierr.Append(err, &duplicateTargetError{
 			targetName:  targetName,
@@ -624,8 +613,8 @@ func (s *SourceState) Read() error {
 // TargetNames returns all of s's target names in alphabetical order.
 func (s *SourceState) TargetNames() []string {
 	targetNames := make([]string, 0, len(s.entries))
-	for targetName := range s.entries {
-		targetNames = append(targetNames, targetName)
+	for sourceStatePath := range s.entries {
+		targetNames = append(targetNames, sourceStatePath.RelPath())
 	}
 	sort.Strings(targetNames)
 	return targetNames
@@ -780,7 +769,7 @@ func (s *SourceState) newSourceStateDir(sourcePath string, dirAttr DirAttr) *Sou
 		perm: dirAttr.perm(),
 	}
 	return &SourceStateDir{
-		path:             sourcePath,
+		name:             sourcePath,
 		Attr:             dirAttr,
 		targetStateEntry: targetStateDir,
 	}
@@ -880,14 +869,14 @@ func (s *SourceState) newSourceStateFile(sourcePath string, fileAttr FileAttr, t
 
 	return &SourceStateFile{
 		lazyContents:         lazyContents,
-		path:                 sourcePath,
+		name:                 sourcePath,
 		Attr:                 fileAttr,
 		targetStateEntryFunc: targetStateEntryFunc,
 	}
 }
 
 // sourceStateEntry returns a new SourceStateEntry based on actualStateEntry.
-func (s *SourceState) sourceStateEntry(actualStateEntry ActualStateEntry, destPath string, info os.FileInfo, parentDir string, options *AddOptions) (SourceStateEntry, error) {
+func (s *SourceState) sourceStateEntry(actualStateEntry ActualStateEntry, destPath AbsPath, info os.FileInfo, parentDirName string, options *AddOptions) (SourceStateEntry, error) {
 	switch actualStateEntry := actualStateEntry.(type) {
 	case *ActualStateAbsent:
 		return nil, fmt.Errorf("%s: not found", destPath)
@@ -898,7 +887,7 @@ func (s *SourceState) sourceStateEntry(actualStateEntry ActualStateEntry, destPa
 			Private: isPrivate(info),
 		}
 		return &SourceStateDir{
-			path: path.Join(parentDir, dirAttr.BaseName()),
+			name: path.Join(parentDirName, dirAttr.BaseName()),
 			Attr: dirAttr,
 			targetStateEntry: &TargetStateDir{
 				perm: 0o777,
@@ -932,7 +921,7 @@ func (s *SourceState) sourceStateEntry(actualStateEntry ActualStateEntry, destPa
 			contents: contents,
 		}
 		return &SourceStateFile{
-			path:         path.Join(parentDir, fileAttr.BaseName()),
+			name:         path.Join(parentDirName, fileAttr.BaseName()),
 			Attr:         fileAttr,
 			lazyContents: lazyContents,
 			targetStateEntry: &TargetStateFile{
@@ -959,7 +948,7 @@ func (s *SourceState) sourceStateEntry(actualStateEntry ActualStateEntry, destPa
 			contents: contents,
 		}
 		return &SourceStateFile{
-			path:         path.Join(parentDir, fileAttr.BaseName()),
+			name:         path.Join(parentDirName, fileAttr.BaseName()),
 			Attr:         fileAttr,
 			lazyContents: lazyContents,
 			targetStateEntry: &TargetStateFile{

@@ -77,7 +77,7 @@ func (c *Config) runMergeCmd(cmd *cobra.Command, args []string, sourceState *che
 		args := append(
 			append([]string{}, c.Merge.Args...),
 			path.Join(c.normalizedDestDir, targetName),
-			sourceStateEntry.Path(),
+			sourceStateEntry.Name(),
 			targetStatePath,
 		)
 		if err := c.run(c.normalizedDestDir, c.Merge.Command, args); err != nil {

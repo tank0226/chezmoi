@@ -9,6 +9,14 @@ import (
 	vfs "github.com/twpayne/go-vfs"
 )
 
+// NewAbsPath returns a new AbsPath.
+func NewAbsPath(path string) (AbsPath, error) {
+	if !filepath.IsAbs(path) {
+		return "", fmt.Errorf("%s: not an absolute path")
+	}
+	return AbsPath(path), nil
+}
+
 // ExpandTilde expands a leading tilde in path.
 func ExpandTilde(path, homeDir string) string {
 	switch {

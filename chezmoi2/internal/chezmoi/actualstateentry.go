@@ -8,39 +8,39 @@ import (
 // filesystem.
 type ActualStateEntry interface {
 	EntryState() (*EntryState, error)
-	Path() string
+	Path() AbsPath
 	Remove(system System) error
 }
 
 // A ActualStateAbsent represents the absence of an entry in the filesystem.
 type ActualStateAbsent struct {
-	path string
+	path AbsPath
 }
 
 // A ActualStateDir represents the state of a directory in the filesystem.
 type ActualStateDir struct {
-	path string
+	path AbsPath
 	perm os.FileMode
 }
 
 // A ActualStateFile represents the state of a file in the filesystem.
 type ActualStateFile struct {
-	path string
+	path AbsPath
 	perm os.FileMode
 	*lazyContents
 }
 
 // A ActualStateSymlink represents the state of a symlink in the filesystem.
 type ActualStateSymlink struct {
-	path string
+	path AbsPath
 	*lazyLinkname
 }
 
 // NewActualStateEntry returns a new ActualStateEntry populated with path from
 // fs.
-func NewActualStateEntry(s System, path string, info os.FileInfo, err error) (ActualStateEntry, error) {
+func NewActualStateEntry(s System, path AbsPath, info os.FileInfo, err error) (ActualStateEntry, error) {
 	if info == nil {
-		info, err = s.Lstat(path)
+		info, err = s.Lstat(path.String())
 	}
 	switch {
 	case os.IsNotExist(err):
@@ -58,7 +58,7 @@ func NewActualStateEntry(s System, path string, info os.FileInfo, err error) (Ac
 			perm: info.Mode() & os.ModePerm,
 			lazyContents: &lazyContents{
 				contentsFunc: func() ([]byte, error) {
-					return s.ReadFile(path)
+					return s.ReadFile(path.String())
 				},
 			},
 		}, nil
@@ -72,7 +72,7 @@ func NewActualStateEntry(s System, path string, info os.FileInfo, err error) (Ac
 			path: path,
 			lazyLinkname: &lazyLinkname{
 				linknameFunc: func() (string, error) {
-					linkname, err := s.Readlink(path)
+					linkname, err := s.Readlink(path.String())
 					if err != nil {
 						return "", err
 					}
@@ -82,7 +82,7 @@ func NewActualStateEntry(s System, path string, info os.FileInfo, err error) (Ac
 		}, nil
 	default:
 		return nil, &unsupportedFileTypeError{
-			path: path,
+			path: path.String(),
 			mode: info.Mode(),
 		}
 	}
@@ -96,7 +96,7 @@ func (s *ActualStateAbsent) EntryState() (*EntryState, error) {
 }
 
 // Path returns d's path.
-func (s *ActualStateAbsent) Path() string {
+func (s *ActualStateAbsent) Path() AbsPath {
 	return s.path
 }
 
@@ -114,13 +114,13 @@ func (s *ActualStateDir) EntryState() (*EntryState, error) {
 }
 
 // Path returns d's path.
-func (s *ActualStateDir) Path() string {
+func (s *ActualStateDir) Path() AbsPath {
 	return s.path
 }
 
 // Remove removes d.
 func (s *ActualStateDir) Remove(system System) error {
-	return system.RemoveAll(s.path)
+	return system.RemoveAll(s.path.String())
 }
 
 // EntryState returns d's entry state.
@@ -137,13 +137,13 @@ func (s *ActualStateFile) EntryState() (*EntryState, error) {
 }
 
 // Path returns d's path.
-func (s *ActualStateFile) Path() string {
+func (s *ActualStateFile) Path() AbsPath {
 	return s.path
 }
 
 // Remove removes d.
 func (s *ActualStateFile) Remove(system System) error {
-	return system.RemoveAll(s.path)
+	return system.RemoveAll(s.path.String())
 }
 
 // EntryState returns d's entry state.
@@ -159,11 +159,11 @@ func (s *ActualStateSymlink) EntryState() (*EntryState, error) {
 }
 
 // Path returns d's path.
-func (s *ActualStateSymlink) Path() string {
+func (s *ActualStateSymlink) Path() AbsPath {
 	return s.path
 }
 
 // Remove removes d.
 func (s *ActualStateSymlink) Remove(system System) error {
-	return system.RemoveAll(s.path)
+	return system.RemoveAll(s.path.String())
 }

@@ -19,12 +19,12 @@ import (
 // diff.
 type GitDiffSystem struct {
 	system         System
-	dir            string
+	dir            AbsPath
 	unifiedEncoder *diff.UnifiedEncoder
 }
 
 // NewGitDiffSystem returns a new GitDiffSystem.
-func NewGitDiffSystem(system System, w io.Writer, dir string, color bool) *GitDiffSystem {
+func NewGitDiffSystem(system System, w io.Writer, dir AbsPath, color bool) *GitDiffSystem {
 	unifiedEncoder := diff.NewUnifiedEncoder(w, diff.DefaultContextLines)
 	if color {
 		unifiedEncoder.SetColor(diff.NewColorConfig())
@@ -53,12 +53,12 @@ func (s *GitDiffSystem) Chmod(name string, mode os.FileMode) error {
 			&gitDiffFilePatch{
 				from: &gitDiffFile{
 					fileMode: fromFileMode,
-					path:     path,
+					path:     path.String(),
 					hash:     plumbing.ZeroHash,
 				},
 				to: &gitDiffFile{
 					fileMode: toFileMode,
-					path:     path,
+					path:     path.String(),
 					hash:     plumbing.ZeroHash,
 				},
 			},
@@ -95,7 +95,7 @@ func (s *GitDiffSystem) Mkdir(name string, perm os.FileMode) error {
 			&gitDiffFilePatch{
 				to: &gitDiffFile{
 					fileMode: toFileMode,
-					path:     s.trimPrefix(name),
+					path:     s.trimPrefix(name).String(),
 					hash:     plumbing.ZeroHash,
 				},
 			},
@@ -137,7 +137,7 @@ func (s *GitDiffSystem) RemoveAll(name string) error {
 			&gitDiffFilePatch{
 				from: &gitDiffFile{
 					fileMode: fromFileMode,
-					path:     s.trimPrefix(name),
+					path:     s.trimPrefix(name).String(),
 					hash:     plumbing.ZeroHash,
 				},
 			},
@@ -159,12 +159,12 @@ func (s *GitDiffSystem) Rename(oldpath, newpath string) error {
 			&gitDiffFilePatch{
 				from: &gitDiffFile{
 					fileMode: fileMode,
-					path:     s.trimPrefix(oldpath),
+					path:     s.trimPrefix(oldpath).String(),
 					hash:     plumbing.ZeroHash,
 				},
 				to: &gitDiffFile{
 					fileMode: fileMode,
-					path:     s.trimPrefix(newpath),
+					path:     s.trimPrefix(newpath).String(),
 					hash:     plumbing.ZeroHash,
 				},
 			},
@@ -197,7 +197,7 @@ func (s *GitDiffSystem) RunScript(scriptname, dir string, data []byte) error {
 				isBinary: isBinary,
 				to: &gitDiffFile{
 					fileMode: filemode.Executable,
-					path:     s.trimPrefix(scriptname),
+					path:     s.trimPrefix(scriptname).String(),
 					hash:     plumbing.ComputeHash(plumbing.BlobObject, data),
 				},
 				chunks: chunks,
@@ -249,12 +249,12 @@ func (s *GitDiffSystem) WriteFile(filename string, data []byte, perm os.FileMode
 				isBinary: isBinary,
 				from: &gitDiffFile{
 					fileMode: fromFileMode,
-					path:     path,
+					path:     path.String(),
 					hash:     plumbing.ComputeHash(plumbing.BlobObject, fromData),
 				},
 				to: &gitDiffFile{
 					fileMode: toFileMode,
-					path:     path,
+					path:     path.String(),
 					hash:     plumbing.ComputeHash(plumbing.BlobObject, data),
 				},
 				chunks: chunks,
@@ -273,7 +273,7 @@ func (s *GitDiffSystem) WriteSymlink(oldname, newname string) error {
 			&gitDiffFilePatch{
 				to: &gitDiffFile{
 					fileMode: filemode.Symlink,
-					path:     s.trimPrefix(newname),
+					path:     s.trimPrefix(newname).String(),
 					hash:     plumbing.ComputeHash(plumbing.BlobObject, []byte(oldname)),
 				},
 				chunks: []diff.Chunk{
@@ -299,7 +299,7 @@ func (s *GitDiffSystem) fileMode(name string) (filemode.FileMode, os.FileInfo, e
 	return fileMode, info, err
 }
 
-func (s *GitDiffSystem) trimPrefix(path string) string {
+func (s *GitDiffSystem) trimPrefix(path string) AbsPath {
 	return MustTrimDirPrefix(path, s.dir)
 }
 

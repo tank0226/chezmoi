@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
+	"path"
 	"path/filepath"
 	"strings"
 )
@@ -100,8 +101,80 @@ func (e *unsupportedFileTypeError) Error() string {
 	return fmt.Sprintf("%s: unsupported file type %s", e.path, modeTypeName(e.mode))
 }
 
+// An AbsPath is an absolute path.
+type AbsPath string
+
+// Dir returns p's directory.
+func (p AbsPath) Dir() AbsPath {
+	return AbsPath(path.Dir(string(p)))
+}
+
+// Join appends elems to p.
+func (p AbsPath) Join(elems ...RelPath) AbsPath {
+	elemStrs := make([]string, 0, len(elems)+1)
+	elemStrs = append(elemStrs, string(p))
+	for _, elem := range elems {
+		elemStrs = append(elemStrs, string(elem))
+	}
+	return AbsPath(path.Join(elemStrs...))
+}
+
+// MustTrimPrefix is like TrimPrefix but panics on any error.
+func (p AbsPath) MustTrimPrefix(prefix AbsPath) RelPath {
+	relPath, err := p.TrimPrefix(prefix)
+	if err != nil {
+		panic(err)
+	}
+	return relPath
+}
+
+func (p AbsPath) String() string { return string(p) }
+
+// TrimPrefix trims prefix from p.
+func (p AbsPath) TrimPrefix(prefix AbsPath) (RelPath, error) {
+	if !strings.HasPrefix(string(p), string(prefix+"/")) {
+		return "", &notInDirError{
+			path: string(p),
+			dir:  string(prefix),
+		}
+	}
+	return RelPath(p[len(prefix)+1:]), nil
+}
+
+type absPathsByName []AbsPath
+
+func (a absPathsByName) Len() int           { return len(a) }
+func (a absPathsByName) Less(i, j int) bool { return string(a[i]) < string(a[j]) }
+func (a absPathsByName) Swap(i, j int)      { a[i], a[j] = a[j], a[i] }
+
+// A RelPath is a relative path.
+type RelPath string
+
+// Dir returns p's directory.
+func (p RelPath) Dir() RelPath {
+	return RelPath(path.Dir(string(p)))
+}
+
+func (p RelPath) String() string { return string(p) }
+
+// TrimPrefix trims prefix from p.
+func (p RelPath) TrimPrefix(prefix RelPath) (RelPath, error) {
+	if !strings.HasPrefix(string(p), string(prefix+"/")) {
+		return "", &notInDirError{
+			path: string(p),
+			dir:  string(prefix),
+		}
+	}
+	return RelPath(p[len(prefix)+1:]), nil
+}
+
 // MustTrimDirPrefix is like TrimDirPrefix but panics on any error.
-func MustTrimDirPrefix(path, dir string) string {
+// FIXME remove this function
+func MustTrimDirPrefix(pathStr string, dir AbsPath) AbsPath {
+	path, err := NewAbsPath(pathStr)
+	if err != nil {
+		panic(err)
+	}
 	result, err := TrimDirPrefix(path, dir)
 	if err != nil {
 		panic(err)

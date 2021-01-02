@@ -8,7 +8,6 @@ import (
 	"fmt"
 	"net"
 	"os"
-	"path"
 	"path/filepath"
 	"regexp"
 	"strings"
@@ -25,6 +24,14 @@ var (
 func init() {
 	umask = os.FileMode(syscall.Umask(0))
 	syscall.Umask(int(umask))
+}
+
+// NewAbsPath returns a new AbsPath.
+func NewAbsPath(path string) (AbsPath, error) {
+	if path == "" || path[0] != '/' {
+		return "", fmt.Errorf("%s: not an absolute path", path)
+	}
+	return AbsPath(path), nil
 }
 
 // ExpandTilde expands a leading tilde in path.
@@ -66,18 +73,15 @@ func SetUmask(newUmask os.FileMode) {
 
 // TrimDirPrefix returns path p with the directory prefix dir stripped. path must
 // be an absolute path with forward slashes.
-func TrimDirPrefix(p, dir string) (string, error) {
-	switch {
-	case !path.IsAbs(p):
-		return "", fmt.Errorf("%s: not an absolute path", p)
-	case !strings.HasPrefix(p, dir+"/"):
+func TrimDirPrefix(p, dir AbsPath) (AbsPath, error) {
+	dirStr := dir.String()
+	if pathStr := p.String(); !strings.HasPrefix(pathStr, dirStr+"/") {
 		return "", &notInDirError{
-			path: p,
-			dir:  dir,
+			path: pathStr,
+			dir:  dirStr,
 		}
-	default:
-		return p[len(dir)+1:], nil
 	}
+	return AbsPath(p[len(dirStr)+1:]), nil
 }
 
 // etcHostsFQDNHostname returns the FQDN hostname from parsing /etc/hosts.
