@@ -495,7 +495,7 @@ func TestSourceStateAdd(t *testing.T) {
 
 				destAbsPathInfos := make(map[AbsPath]os.FileInfo)
 				for _, destAbsPath := range tc.destAbsPaths {
-					require.NoError(t, s.AddDestPathInfos(destAbsPathInfos, system, destAbsPath, nil))
+					require.NoError(t, s.AddDestAbsPathInfos(destAbsPathInfos, system, destAbsPath, nil))
 				}
 				require.NoError(t, s.Add(system, persistentState, destAbsPathInfos, &tc.addOptions))
 

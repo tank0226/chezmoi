@@ -249,9 +249,9 @@ func (s *SourceState) Add(sourceSystem System, persistentState PersistentState, 
 	return nil
 }
 
-// AddDestPathInfos adds an os.FileInfo to destAbsPathInfos for destAbsPath and
-// any of its parents which are not already known.
-func (s *SourceState) AddDestPathInfos(destAbsPathInfos map[AbsPath]os.FileInfo, lstater Lstater, destAbsPath AbsPath, info os.FileInfo) error {
+// AddDestAbsPathInfos adds an os.FileInfo to destAbsPathInfos for destAbsPath
+// and any of its parents which are not already known.
+func (s *SourceState) AddDestAbsPathInfos(destAbsPathInfos map[AbsPath]os.FileInfo, lstater Lstater, destAbsPath AbsPath, info os.FileInfo) error {
 	for {
 		if _, err := destAbsPath.TrimDirPrefix(s.destDirAbsPath); err != nil {
 			return err

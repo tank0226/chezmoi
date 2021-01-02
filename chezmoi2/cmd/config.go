@@ -444,7 +444,7 @@ func (c *Config) defaultTemplateData() map[string]interface{} {
 func (c *Config) destAbsPathInfos(sourceState *chezmoi.SourceState, args []string, recursive, follow bool) (map[chezmoi.AbsPath]os.FileInfo, error) {
 	destAbsPathInfos := make(map[chezmoi.AbsPath]os.FileInfo)
 	for _, arg := range args {
-		destAbsPath, err := c.normalizedDestPath(chezmoi.NewOSPath(arg))
+		destAbsPath, err := c.destAbsPath(chezmoi.NewOSPath(arg))
 		if err != nil {
 			return nil, err
 		}
@@ -459,7 +459,7 @@ func (c *Config) destAbsPathInfos(sourceState *chezmoi.SourceState, args []strin
 						return err
 					}
 				}
-				return sourceState.AddDestPathInfos(destAbsPathInfos, c.destSystem, destAbsPath, info)
+				return sourceState.AddDestAbsPathInfos(destAbsPathInfos, c.destSystem, destAbsPath, info)
 			}); err != nil {
 				return nil, err
 			}
@@ -473,7 +473,7 @@ func (c *Config) destAbsPathInfos(sourceState *chezmoi.SourceState, args []strin
 			if err != nil {
 				return nil, err
 			}
-			if err := sourceState.AddDestPathInfos(destAbsPathInfos, c.destSystem, destAbsPath, info); err != nil {
+			if err := sourceState.AddDestAbsPathInfos(destAbsPathInfos, c.destSystem, destAbsPath, info); err != nil {
 				return nil, err
 			}
 		}
@@ -585,7 +585,7 @@ func (c *Config) execute(args []string) error {
 }
 
 func (c *Config) getTargetRelPath(arg *chezmoi.OSPath) (chezmoi.RelPath, error) {
-	destAbsPath, err := c.normalizedDestPath(arg)
+	destAbsPath, err := c.destAbsPath(arg)
 	if err != nil {
 		return "", err
 	}
@@ -758,7 +758,7 @@ func (c *Config) newRootCmd() (*cobra.Command, error) {
 	return rootCmd, nil
 }
 
-func (c *Config) normalizedDestPath(arg *chezmoi.OSPath) (chezmoi.AbsPath, error) {
+func (c *Config) destAbsPath(arg *chezmoi.OSPath) (chezmoi.AbsPath, error) {
 	normalizedPath, err := arg.Normalize(c.homeDirAbsPath)
 	if err != nil {
 		return "", err
