@@ -76,7 +76,7 @@ func SetUmask(newUmask os.FileMode) {
 func TrimDirPrefix(p, dir AbsPath) (AbsPath, error) {
 	dirStr := dir.String()
 	if pathStr := p.String(); !strings.HasPrefix(pathStr, dirStr+"/") {
-		return "", &notInDirError{
+		return "", &errNotInDir{
 			path: pathStr,
 			dir:  dirStr,
 		}

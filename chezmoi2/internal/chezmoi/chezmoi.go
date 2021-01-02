@@ -74,30 +74,34 @@ var modeTypeNames = map[os.FileMode]string{
 	os.ModeCharDevice: "char device",
 }
 
-type duplicateTargetError struct {
+type errDuplicateTarget struct {
 	targetName  string
-	sourcePaths []string
+	sourcePaths []SourceStatePath
 }
 
-func (e *duplicateTargetError) Error() string {
-	return fmt.Sprintf("%s: duplicate target (%s)", e.targetName, strings.Join(e.sourcePaths, ", "))
+func (e *errDuplicateTarget) Error() string {
+	sourcePathStrs := make([]string, 0, len(e.sourcePaths))
+	for _, sourcePath := range e.sourcePaths {
+		sourcePathStrs = append(sourcePathStrs, sourcePath.String())
+	}
+	return fmt.Sprintf("%s: duplicate target (%s)", e.targetName, strings.Join(sourcePathStrs, ", "))
 }
 
-type notInDirError struct {
+type errNotInDir struct {
 	path string
 	dir  string
 }
 
-func (e *notInDirError) Error() string {
+func (e *errNotInDir) Error() string {
 	return fmt.Sprintf("%s: not in %s", e.path, e.dir)
 }
 
-type unsupportedFileTypeError struct {
+type errUnsupportedFileType struct {
 	path string
 	mode os.FileMode
 }
 
-func (e *unsupportedFileTypeError) Error() string {
+func (e *errUnsupportedFileType) Error() string {
 	return fmt.Sprintf("%s: unsupported file type %s", e.path, modeTypeName(e.mode))
 }
 
@@ -119,9 +123,9 @@ func (p AbsPath) Join(elems ...RelPath) AbsPath {
 	return AbsPath(path.Join(elemStrs...))
 }
 
-// MustTrimPrefix is like TrimPrefix but panics on any error.
-func (p AbsPath) MustTrimPrefix(prefix AbsPath) RelPath {
-	relPath, err := p.TrimPrefix(prefix)
+// MustTrimDirPrefix is like TrimPrefix but panics on any error.
+func (p AbsPath) MustTrimDirPrefix(dirPrefix AbsPath) RelPath {
+	relPath, err := p.TrimDirPrefix(dirPrefix)
 	if err != nil {
 		panic(err)
 	}
@@ -130,15 +134,15 @@ func (p AbsPath) MustTrimPrefix(prefix AbsPath) RelPath {
 
 func (p AbsPath) String() string { return string(p) }
 
-// TrimPrefix trims prefix from p.
-func (p AbsPath) TrimPrefix(prefix AbsPath) (RelPath, error) {
-	if !strings.HasPrefix(string(p), string(prefix+"/")) {
-		return "", &notInDirError{
+// TrimDirPrefix trims prefix from p.
+func (p AbsPath) TrimDirPrefix(dirPrefix AbsPath) (RelPath, error) {
+	if !strings.HasPrefix(string(p), string(dirPrefix+"/")) {
+		return "", &errNotInDir{
 			path: string(p),
-			dir:  string(prefix),
+			dir:  string(dirPrefix),
 		}
 	}
-	return RelPath(p[len(prefix)+1:]), nil
+	return RelPath(p[len(dirPrefix)+1:]), nil
 }
 
 type absPathsByName []AbsPath
@@ -157,29 +161,15 @@ func (p RelPath) Dir() RelPath {
 
 func (p RelPath) String() string { return string(p) }
 
-// TrimPrefix trims prefix from p.
-func (p RelPath) TrimPrefix(prefix RelPath) (RelPath, error) {
+// TrimDirPrefix trims prefix from p.
+func (p RelPath) TrimDirPrefix(prefix RelPath) (RelPath, error) {
 	if !strings.HasPrefix(string(p), string(prefix+"/")) {
-		return "", &notInDirError{
+		return "", &errNotInDir{
 			path: string(p),
 			dir:  string(prefix),
 		}
 	}
 	return RelPath(p[len(prefix)+1:]), nil
-}
-
-// MustTrimDirPrefix is like TrimDirPrefix but panics on any error.
-// FIXME remove this function
-func MustTrimDirPrefix(pathStr string, dir AbsPath) AbsPath {
-	path, err := NewAbsPath(pathStr)
-	if err != nil {
-		panic(err)
-	}
-	result, err := TrimDirPrefix(path, dir)
-	if err != nil {
-		panic(err)
-	}
-	return result
 }
 
 // StateData returns the state data in bucket in s.

@@ -246,8 +246,8 @@ func (t *TargetStatePresent) Evaluate() error {
 
 // Apply renames actualStateEntry.
 func (t *TargetStateRenameDir) Apply(system System, persistentState PersistentState, actualStateEntry ActualStateEntry, umask os.FileMode) error {
-	dir := path.Dir(actualStateEntry.Path())
-	return system.Rename(path.Join(dir, t.oldName), path.Join(dir, t.newName))
+	dir := actualStateEntry.Path().Dir()
+	return system.Rename(dir.Join(t.oldName).String(), dir.Join(t.newName).String())
 }
 
 // EntryState returns t's entry state.

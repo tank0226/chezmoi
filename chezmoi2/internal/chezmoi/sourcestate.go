@@ -158,7 +158,7 @@ func (s *SourceState) Add(sourceSystem System, persistentState PersistentState, 
 		if !options.Include.IncludeFileInfo(destPathInfo) {
 			continue
 		}
-		targetName := destPath.MustTrimPrefix(s.destDir)
+		targetName := destPath.MustTrimDirPrefix(s.destDir)
 
 		// Find the target's parent directory.
 		var parentDirName string
@@ -193,7 +193,7 @@ func (s *SourceState) Add(sourceSystem System, persistentState PersistentState, 
 		update := update{
 			destPath:              destPath,
 			entryState:            entryState,
-			sourceStateEntryNames: []RelPath{sourceEntryName},
+			sourceStateEntryNames: []RelPath{sourceEntryName.RelPath()},
 		}
 
 		if oldSourceStateEntry, ok := s.entries[targetName]; ok {
@@ -209,8 +209,8 @@ func (s *SourceState) Add(sourceSystem System, persistentState PersistentState, 
 						newName: sourceEntryName,
 					}
 				} else {
-					newSourceStateEntries[oldSourceEntryName] = &SourceStateRemove{}
-					update.sourceStateEntryNames = append(update.sourceStateEntryNames, oldSourceEntryName)
+					newSourceStateEntries[oldSourceEntryName.RelPath()] = &SourceStateRemove{}
+					update.sourceStateEntryNames = append(update.sourceStateEntryNames, oldSourceEntryName.RelPath())
 				}
 			}
 		}
@@ -249,7 +249,7 @@ func (s *SourceState) Add(sourceSystem System, persistentState PersistentState, 
 // its parents which are not already known.
 func (s *SourceState) AddDestPathInfos(destPathInfos map[AbsPath]os.FileInfo, lstater Lstater, destPath AbsPath, info os.FileInfo) error {
 	for {
-		if _, err := s.destDir.TrimPrefix(destPath); err != nil {
+		if _, err := destPath.TrimDirPrefix(s.destDir); err != nil {
 			return err
 		}
 
@@ -434,7 +434,7 @@ func (s *SourceState) Read() error {
 	}
 
 	// Read all source entries.
-	allSourceStateEntries := make(map[string][]SourceStateEntry)
+	allSourceStateEntries := make(map[SourceStatePath][]SourceStateEntry)
 	if err := vfs.WalkSlash(s.system, s.sourceDir.String(), func(sourcePath string, info os.FileInfo, err error) error {
 		if err != nil {
 			return err
@@ -470,7 +470,7 @@ func (s *SourceState) Read() error {
 			if err := s.addPatterns(removePatterns, sourcePath, targetDirName); err != nil {
 				return err
 			}
-			matches, err := removePatterns.glob(s.system.UnderlyingFS(), s.destDir+"/")
+			matches, err := removePatterns.glob(s.system.UnderlyingFS(), s.destDir.String()+"/")
 			if err != nil {
 				return err
 			}
@@ -522,7 +522,7 @@ func (s *SourceState) Read() error {
 			allSourceStateEntries[targetName] = append(allSourceStateEntries[targetName], sourceStateEntry)
 			return nil
 		default:
-			return &unsupportedFileTypeError{
+			return &errUnsupportedFileType{
 				path: sourcePath,
 				mode: info.Mode(),
 			}
@@ -579,7 +579,7 @@ func (s *SourceState) Read() error {
 
 	// Check for duplicate source entries with the same target name. Iterate
 	// over the target names in order so that any error is deterministic.
-	targetNames := make([]string, 0, len(allSourceStateEntries))
+	targetNames := make([]SourceStatePath, 0, len(allSourceStateEntries))
 	for targetName := range allSourceStateEntries {
 		targetNames = append(targetNames, targetName)
 	}
@@ -589,11 +589,11 @@ func (s *SourceState) Read() error {
 		if len(sourceStateEntries) == 1 {
 			continue
 		}
-		sourcePaths := make([]string, 0, len(sourceStateEntries))
+		sourcePaths := make([]SourceStatePath, 0, len(sourceStateEntries))
 		for _, sourceStateEntry := range sourceStateEntries {
 			sourcePaths = append(sourcePaths, sourceStateEntry.Name())
 		}
-		err = multierr.Append(err, &duplicateTargetError{
+		err = multierr.Append(err, &errDuplicateTarget{
 			targetName:  targetName,
 			sourcePaths: sourcePaths,
 		})
@@ -715,7 +715,7 @@ func (s *SourceState) addTemplatesDir(templateDir string) error {
 		case info.IsDir():
 			return nil
 		default:
-			return &unsupportedFileTypeError{
+			return &errUnsupportedFileType{
 				path: templatePath,
 				mode: info.Mode(),
 			}

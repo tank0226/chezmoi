@@ -299,8 +299,8 @@ func (s *GitDiffSystem) fileMode(name string) (filemode.FileMode, os.FileInfo, e
 	return fileMode, info, err
 }
 
-func (s *GitDiffSystem) trimPrefix(path string) AbsPath {
-	return MustTrimDirPrefix(path, s.dir)
+func (s *GitDiffSystem) trimPrefix(name string) RelPath {
+	return AbsPath(name).MustTrimDirPrefix(s.dir)
 }
 
 var gitDiffOperation = map[diffmatchpatch.Operation]diff.Operation{
