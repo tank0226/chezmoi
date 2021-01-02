@@ -5,10 +5,10 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
-	"path"
 	"path/filepath"
 	"runtime"
 
+	"github.com/twpayne/chezmoi/chezmoi2/internal/chezmoi"
 	"howett.net/plist"
 )
 
@@ -17,7 +17,7 @@ type ioregData struct {
 }
 
 func (c *Config) includeTemplateFunc(filename string) string {
-	contents, err := c.fs.ReadFile(path.Join(c.normalizedSourceDir, filename))
+	contents, err := c.fs.ReadFile(c.normalizedSourceDir.Join(chezmoi.RelPath(filename)).String())
 	if err != nil {
 		returnTemplateError(err)
 		return ""

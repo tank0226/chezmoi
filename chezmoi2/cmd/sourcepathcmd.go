@@ -23,17 +23,17 @@ func (c *Config) newSourcePathCmd() *cobra.Command {
 
 func (c *Config) runSourcePathCmd(cmd *cobra.Command, args []string, sourceState *chezmoi.SourceState) error {
 	if len(args) == 0 {
-		return c.writeOutputString(c.normalizedSourceDir + "\n")
+		return c.writeOutputString(string(c.normalizedSourceDir) + "\n")
 	}
 
-	sourcePaths, err := c.sourcePaths(sourceState, args)
+	sourceAbsPaths, err := c.sourceAbsPaths(sourceState, args)
 	if err != nil {
 		return err
 	}
 
 	sb := strings.Builder{}
-	for _, sourcePath := range sourcePaths {
-		fmt.Fprintln(&sb, sourcePath)
+	for _, sourceAbsPath := range sourceAbsPaths {
+		fmt.Fprintln(&sb, sourceAbsPath)
 	}
 	return c.writeOutputString(sb.String())
 }

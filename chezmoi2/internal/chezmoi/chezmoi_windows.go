@@ -18,12 +18,12 @@ func NewAbsPath(path string) (AbsPath, error) {
 }
 
 // ExpandTilde expands a leading tilde in path.
-func ExpandTilde(path, homeDir string) string {
+func ExpandTilde(path string, homeDirAbsPath AbsPath) string {
 	switch {
 	case path == "~":
-		return homeDir
+		return homeDirAbsPath
 	case len(path) >= 2 && path[0] == '~' && isSlash(path[1]):
-		return filepath.ToSlash(filepath.Join(homeDir, path[2:]))
+		return filepath.ToSlash(homeDirAbsPath.Join(path[2:]).String())
 	default:
 		return path
 	}
@@ -42,7 +42,7 @@ func GetUmask() os.FileMode {
 
 // NormalizePath returns path normalized. On Windows, normalized paths are
 // absolute paths with a uppercase volume name and forward slashes.
-func NormalizePath(path string) (string, error) {
+func NormalizePath(path string) (AbsPath, error) {
 	var err error
 	path, err = filepath.Abs(path)
 	if err != nil {
@@ -51,7 +51,7 @@ func NormalizePath(path string) (string, error) {
 	if n := volumeNameLen(path); n > 0 {
 		path = strings.ToUpper(path[:n]) + path[n:]
 	}
-	return filepath.ToSlash(path), nil
+	return AbsPath(filepath.ToSlash(path)), nil
 }
 
 // SetUmask sets the umask.

@@ -37,12 +37,12 @@ func (c *Config) newEditCmd() *cobra.Command {
 }
 
 func (c *Config) runEditCmd(cmd *cobra.Command, args []string, s *chezmoi.SourceState) error {
-	var sourcePaths []string
+	var sourceAbsPaths chezmoi.AbsPaths
 	if len(args) == 0 {
-		sourcePaths = []string{c.normalizedSourceDir}
+		sourceAbsPaths = chezmoi.AbsPaths{c.normalizedSourceDir}
 	} else {
 		var err error
-		sourcePaths, err = c.sourcePaths(s, args)
+		sourceAbsPaths, err = c.sourceAbsPaths(s, args)
 		if err != nil {
 			return err
 		}
@@ -50,7 +50,11 @@ func (c *Config) runEditCmd(cmd *cobra.Command, args []string, s *chezmoi.Source
 
 	// FIXME transparently decrypt encrypted files
 
-	if err := c.runEditor(sourcePaths); err != nil {
+	sourceAbsPathStrs := make([]string, 0, len(sourceAbsPaths))
+	for _, sourceAbsPath := range sourceAbsPaths {
+		sourceAbsPathStrs = append(sourceAbsPathStrs, sourceAbsPath.String())
+	}
+	if err := c.runEditor(sourceAbsPathStrs); err != nil {
 		return err
 	}
 

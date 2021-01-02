@@ -26,14 +26,14 @@ func (c *Config) newForgetCmd() *cobra.Command {
 }
 
 func (c *Config) runForgetCmd(cmd *cobra.Command, args []string, sourceState *chezmoi.SourceState) error {
-	sourcePaths, err := c.sourcePaths(sourceState, args)
+	sourceAbsPaths, err := c.sourceAbsPaths(sourceState, args)
 	if err != nil {
 		return err
 	}
 
-	for _, sourcePath := range sourcePaths {
+	for _, sourceAbsPath := range sourceAbsPaths {
 		if !c.force {
-			choice, err := c.prompt(fmt.Sprintf("Remove %s", sourcePath), "ynqa")
+			choice, err := c.prompt(fmt.Sprintf("Remove %s", sourceAbsPath), "ynqa")
 			if err != nil {
 				return err
 			}
@@ -47,7 +47,7 @@ func (c *Config) runForgetCmd(cmd *cobra.Command, args []string, sourceState *ch
 				c.force = false
 			}
 		}
-		if err := c.sourceSystem.RemoveAll(sourcePath); err != nil {
+		if err := c.sourceSystem.RemoveAll(sourceAbsPath.String()); err != nil {
 			return err
 		}
 	}

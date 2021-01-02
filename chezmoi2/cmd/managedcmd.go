@@ -2,7 +2,6 @@ package cmd
 
 import (
 	"fmt"
-	"path"
 	"sort"
 	"strings"
 
@@ -33,7 +32,7 @@ func (c *Config) newManagedCmd() *cobra.Command {
 
 func (c *Config) runManagedCmd(cmd *cobra.Command, args []string, sourceState *chezmoi.SourceState) error {
 	entries := sourceState.Entries()
-	targetNames := make([]string, 0, len(entries))
+	targetNames := make(chezmoi.RelPaths, 0, len(entries))
 	for targetName, sourceStateEntry := range entries {
 		targetStateEntry, err := sourceStateEntry.TargetStateEntry()
 		if err != nil {
@@ -45,10 +44,10 @@ func (c *Config) runManagedCmd(cmd *cobra.Command, args []string, sourceState *c
 		targetNames = append(targetNames, targetName)
 	}
 
-	sort.Strings(targetNames)
+	sort.Sort(targetNames)
 	sb := strings.Builder{}
 	for _, targetName := range targetNames {
-		fmt.Fprintln(&sb, path.Join(c.normalizedDestDir, targetName))
+		fmt.Fprintln(&sb, c.normalizedDestDir.Join(targetName))
 	}
 	return c.writeOutputString(sb.String())
 }

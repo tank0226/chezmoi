@@ -38,11 +38,11 @@ func (c *Config) newStatusCmd() *cobra.Command {
 func (c *Config) runStatusCmd(cmd *cobra.Command, args []string, sourceState *chezmoi.SourceState) error {
 	sb := strings.Builder{}
 	dryRunSystem := chezmoi.NewDryRunSystem(c.destSystem)
-	preApplyFunc := func(targetName string, targetEntryState, lastWrittenEntryState, actualEntryState *chezmoi.EntryState) error {
+	preApplyFunc := func(targetRelPath chezmoi.RelPath, targetEntryState, lastWrittenEntryState, actualEntryState *chezmoi.EntryState) error {
 		if !targetEntryState.Equivalent(actualEntryState, c.Umask.FileMode()) {
 			x := statusRune(lastWrittenEntryState, actualEntryState, c.Umask.FileMode())
 			y := statusRune(actualEntryState, targetEntryState, c.Umask.FileMode())
-			fmt.Fprintf(&sb, "%c%c %s\n", x, y, targetName)
+			fmt.Fprintf(&sb, "%c%c %s\n", x, y, targetRelPath)
 		}
 		return chezmoi.Skip
 	}

@@ -35,12 +35,12 @@ func NewAbsPath(path string) (AbsPath, error) {
 }
 
 // ExpandTilde expands a leading tilde in path.
-func ExpandTilde(path, homeDir string) string {
+func ExpandTilde(path string, homeDirAbsPath AbsPath) string {
 	switch {
 	case path == "~":
-		return homeDir
+		return homeDirAbsPath.String()
 	case strings.HasPrefix(path, "~/"):
-		return filepath.Clean(filepath.Join(homeDir, path[2:]))
+		return homeDirAbsPath.Join(RelPath(path[2:])).String()
 	default:
 		return path
 	}
@@ -61,8 +61,12 @@ func GetUmask() os.FileMode {
 
 // NormalizePath returns path normalized. On non-Windows systems, normalized
 // paths are absolute paths.
-func NormalizePath(path string) (string, error) {
-	return filepath.Abs(path)
+func NormalizePath(path string) (AbsPath, error) {
+	absPath, err := filepath.Abs(path)
+	if err != nil {
+		return "", err
+	}
+	return AbsPath(absPath), nil
 }
 
 // SetUmask sets the umask.

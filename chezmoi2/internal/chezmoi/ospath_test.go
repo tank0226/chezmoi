@@ -2,7 +2,6 @@ package chezmoi
 
 import (
 	"os"
-	"path"
 	"runtime"
 	"testing"
 
@@ -41,43 +40,43 @@ func TestOSPathFormat(t *testing.T) {
 func TestOSPathTildeAbsSlash(t *testing.T) {
 	wd, err := os.Getwd()
 	require.NoError(t, err)
-	normalizedWD, err := NormalizePath(wd)
+	wdAbsPath, err := NormalizePath(wd)
 	require.NoError(t, err)
 
 	for _, tc := range []struct {
 		name     string
 		s        string
-		expected string
+		expected AbsPath
 	}{
 		{
 			name:     "empty",
-			expected: normalizedWD,
+			expected: wdAbsPath,
 		},
 		{
 			name:     "file",
 			s:        "file",
-			expected: path.Join(normalizedWD, "file"),
+			expected: wdAbsPath.Join("file"),
 		},
 		{
 			name:     "tilde",
 			s:        "~",
-			expected: chezmoitest.NormalizedHomeDir(),
+			expected: AbsPath(chezmoitest.HomeDir()),
 		},
 		{
 			name:     "tilde_home_file",
 			s:        "~/file",
-			expected: chezmoitest.NormalizedHomeDir() + "/file",
+			expected: AbsPath(chezmoitest.HomeDir()) + "/file",
 		},
 		{
 			name:     "tilde_home_file_windows",
 			s:        `~\file`,
-			expected: chezmoitest.NormalizedHomeDir() + "/file",
+			expected: AbsPath(chezmoitest.HomeDir()) + "/file",
 		},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			chezmoitest.SkipUnlessGOOS(t, tc.name)
 
-			actual, err := NewOSPath(tc.s).Normalize(chezmoitest.NormalizedHomeDir())
+			actual, err := NewOSPath(tc.s).Normalize(AbsPath(chezmoitest.HomeDir()))
 			require.NoError(t, err)
 			assert.Equal(t, tc.expected, actual)
 		})

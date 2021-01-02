@@ -3,7 +3,6 @@ package cmd
 import (
 	"fmt"
 	"os"
-	"path"
 
 	"github.com/spf13/cobra"
 
@@ -38,10 +37,10 @@ func (c *Config) runRemoveCmd(cmd *cobra.Command, args []string, sourceState *ch
 	}
 
 	for _, targetName := range targetNames {
-		destPath := path.Join(c.normalizedDestDir, targetName)
-		sourcePath := sourceState.MustEntry(targetName).Name()
+		destAbsPath := c.normalizedDestDir.Join(targetName)
+		sourceAbsPath := sourceState.MustEntry(targetName).SourceRelPath()
 		if !c.force {
-			choice, err := c.prompt(fmt.Sprintf("Remove %s and %s", destPath, sourcePath), "ynqa")
+			choice, err := c.prompt(fmt.Sprintf("Remove %s and %s", destAbsPath, sourceAbsPath), "ynqa")
 			if err != nil {
 				return err
 			}
@@ -55,10 +54,10 @@ func (c *Config) runRemoveCmd(cmd *cobra.Command, args []string, sourceState *ch
 				c.force = true
 			}
 		}
-		if err := c.destSystem.RemoveAll(destPath); err != nil && !os.IsNotExist(err) {
+		if err := c.destSystem.RemoveAll(destAbsPath.String()); err != nil && !os.IsNotExist(err) {
 			return err
 		}
-		if err := c.sourceSystem.RemoveAll(sourcePath); err != nil && !os.IsNotExist(err) {
+		if err := c.sourceSystem.RemoveAll(sourceAbsPath.String()); err != nil && !os.IsNotExist(err) {
 			return err
 		}
 	}

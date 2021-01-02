@@ -111,19 +111,19 @@ func (c *Config) runDoctorCmd(cmd *cobra.Command, args []string) error {
 		&osArchCheck{},
 		&fileCheck{
 			name:       "config-file",
-			filename:   c.normalizedConfigFile,
+			filename:   c.normalizedConfigFile.String(),
 			ifNotExist: checkWarning,
 		},
 		&dirCheck{
 			name:    "source-dir",
-			dirname: c.normalizedSourceDir,
+			dirname: c.normalizedSourceDir.String(),
 		},
 		&suspiciousEntriesCheck{
-			dirname: c.normalizedSourceDir,
+			dirname: c.normalizedSourceDir.String(),
 		},
 		&dirCheck{
 			name:    "dest-dir",
-			dirname: c.normalizedDestDir,
+			dirname: c.normalizedDestDir.String(),
 		},
 		&binaryCheck{
 			name:       "shell",

@@ -8,7 +8,6 @@ import (
 	"os"
 	"os/exec"
 	"os/user"
-	"path"
 	"path/filepath"
 	"regexp"
 	"runtime"
@@ -113,10 +112,10 @@ type Config struct {
 	verify          verifyCmdConfig
 
 	// Computed configuration.
-	normalizedConfigFile string
-	normalizedHomeDir    string
-	normalizedSourceDir  string
-	normalizedDestDir    string
+	normalizedConfigFile chezmoi.AbsPath
+	normalizedHomeDir    chezmoi.AbsPath
+	normalizedSourceDir  chezmoi.AbsPath
+	normalizedDestDir    chezmoi.AbsPath
 
 	stdin     io.Reader
 	stdout    io.Writer
@@ -292,7 +291,7 @@ func (c *Config) addTemplateFunc(key string, value interface{}) {
 	c.templateFuncs[key] = value
 }
 
-func (c *Config) applyArgs(targetSystem chezmoi.System, targetDir string, args []string, include *chezmoi.IncludeSet, recursive bool, umask os.FileMode, preApplyFunc chezmoi.PreApplyFunc) error {
+func (c *Config) applyArgs(targetSystem chezmoi.System, targetDirAbsPath chezmoi.AbsPath, args []string, include *chezmoi.IncludeSet, recursive bool, umask os.FileMode, preApplyFunc chezmoi.PreApplyFunc) error {
 	s, err := c.sourceState()
 	if err != nil {
 		return err
@@ -304,9 +303,9 @@ func (c *Config) applyArgs(targetSystem chezmoi.System, targetDir string, args [
 		Umask:        umask,
 	}
 
-	var targetNames []string
+	var targetNames chezmoi.RelPaths
 	if len(args) == 0 {
-		targetNames = s.AllTargetNames()
+		targetNames = s.TargetRelPaths()
 	} else {
 		targetNames, err = c.targetNames(s, args, targetNamesOptions{
 			mustBeInSourceState: true,
@@ -318,7 +317,7 @@ func (c *Config) applyArgs(targetSystem chezmoi.System, targetDir string, args [
 	}
 
 	for _, targetName := range targetNames {
-		switch err := s.Apply(targetSystem, c.persistentState, targetDir, targetName, applyOptions); {
+		switch err := s.Apply(targetSystem, c.persistentState, targetDirAbsPath, targetName, applyOptions); {
 		case errors.Is(err, chezmoi.Skip):
 			continue
 		case err != nil && c.keepGoing:
@@ -331,11 +330,11 @@ func (c *Config) applyArgs(targetSystem chezmoi.System, targetDir string, args [
 	return nil
 }
 
-func (c *Config) cmdOutput(dir, name string, args []string) ([]byte, error) {
+func (c *Config) cmdOutput(dir chezmoi.AbsPath, name string, args []string) ([]byte, error) {
 	cmd := exec.Command(name, args...)
 	if dir != "" {
 		var err error
-		cmd.Dir, err = c.baseSystem.RawPath(dir)
+		cmd.Dir, err = c.baseSystem.RawPath(dir.String())
 		if err != nil {
 			return nil, err
 		}
@@ -443,43 +442,43 @@ func (c *Config) defaultTemplateData() map[string]interface{} {
 }
 
 func (c *Config) destPathInfos(sourceState *chezmoi.SourceState, args []string, recursive, follow bool) (map[chezmoi.AbsPath]os.FileInfo, error) {
-	destPathInfos := make(map[chezmoi.AbsPath]os.FileInfo)
+	destAbsPathInfos := make(map[chezmoi.AbsPath]os.FileInfo)
 	for _, arg := range args {
-		destPath, err := c.normalizedDestPath(chezmoi.NewOSPath(arg))
+		destAbsPath, err := c.normalizedDestPath(chezmoi.NewOSPath(arg))
 		if err != nil {
 			return nil, err
 		}
 		if recursive {
-			if err := vfs.WalkSlash(c.destSystem, destPath, func(destPathStr string, info os.FileInfo, err error) error {
+			if err := vfs.WalkSlash(c.destSystem, destAbsPath.String(), func(destPathStr string, info os.FileInfo, err error) error {
 				if err != nil {
 					return err
 				}
 				if follow && info.Mode()&os.ModeType == os.ModeSymlink {
-					info, err = c.destSystem.Stat(destPath)
+					info, err = c.destSystem.Stat(destAbsPath.String())
 					if err != nil {
 						return err
 					}
 				}
-				return sourceState.AddDestPathInfos(destPathInfos, c.destSystem, destPathStr, info)
+				return sourceState.AddDestPathInfos(destAbsPathInfos, c.destSystem, destAbsPath, info)
 			}); err != nil {
 				return nil, err
 			}
 		} else {
 			var info os.FileInfo
 			if follow {
-				info, err = c.destSystem.Stat(destPath)
+				info, err = c.destSystem.Stat(destAbsPath.String())
 			} else {
-				info, err = c.destSystem.Lstat(destPath)
+				info, err = c.destSystem.Lstat(destAbsPath.String())
 			}
 			if err != nil {
 				return nil, err
 			}
-			if err := sourceState.AddDestPathInfos(destPathInfos, c.destSystem, destPath, info); err != nil {
+			if err := sourceState.AddDestPathInfos(destAbsPathInfos, c.destSystem, destAbsPath, info); err != nil {
 				return nil, err
 			}
 		}
 	}
-	return destPathInfos, nil
+	return destAbsPathInfos, nil
 }
 
 func (c *Config) doPurge(purgeOptions *purgeOptions) error {
@@ -494,8 +493,8 @@ func (c *Config) doPurge(purgeOptions *purgeOptions) error {
 		return err
 	}
 
-	paths := []string{
-		path.Dir(c.normalizedConfigFile),
+	absPaths := chezmoi.AbsPaths{
+		c.normalizedConfigFile.Dir(),
 		c.normalizedConfigFile,
 		absSlashPersistentStateFile,
 		c.normalizedSourceDir,
@@ -503,13 +502,13 @@ func (c *Config) doPurge(purgeOptions *purgeOptions) error {
 	if purgeOptions != nil && purgeOptions.binary {
 		executable, err := os.Executable()
 		if err == nil {
-			paths = append(paths, executable)
+			absPaths = append(absPaths, chezmoi.AbsPath(executable))
 		}
 	}
 
 	// Remove all paths that exist.
-	for _, path := range paths {
-		switch _, err := c.baseSystem.Stat(path); {
+	for _, absPath := range absPaths {
+		switch _, err := c.baseSystem.Stat(absPath.String()); {
 		case os.IsNotExist(err):
 			continue
 		case err != nil:
@@ -517,7 +516,7 @@ func (c *Config) doPurge(purgeOptions *purgeOptions) error {
 		}
 
 		if !c.force {
-			switch choice, err := c.prompt(fmt.Sprintf("Remove %s", path), "ynqa"); {
+			switch choice, err := c.prompt(fmt.Sprintf("Remove %s", absPath), "ynqa"); {
 			case err != nil:
 				return err
 			case choice == 'a':
@@ -529,7 +528,7 @@ func (c *Config) doPurge(purgeOptions *purgeOptions) error {
 			}
 		}
 
-		switch err := c.baseSystem.RemoveAll(path); {
+		switch err := c.baseSystem.RemoveAll(absPath.String()); {
 		case os.IsPermission(err):
 			continue
 		case err != nil:
@@ -585,12 +584,12 @@ func (c *Config) execute(args []string) error {
 	return rootCmd.Execute()
 }
 
-func (c *Config) getTargetName(arg *chezmoi.OSPath) (string, error) {
-	destPath, err := c.normalizedDestPath(arg)
+func (c *Config) getTargetName(arg *chezmoi.OSPath) (chezmoi.RelPath, error) {
+	destAbsPath, err := c.normalizedDestPath(arg)
 	if err != nil {
 		return "", err
 	}
-	return chezmoi.TrimDirPrefix(destPath, c.normalizedDestDir)
+	return destAbsPath.TrimDirPrefix(c.normalizedDestDir)
 }
 
 func (c *Config) getTTY() (*bufio.Reader, io.Writer, error) {
@@ -781,7 +780,7 @@ func (c *Config) persistentPostRunRootE(cmd *cobra.Command, args []string) error
 		// Warn the user of any errors reading the config file.
 		v := viper.New()
 		v.SetFs(vfsafero.NewAferoFS(c.fs))
-		v.SetConfigFile(c.normalizedConfigFile)
+		v.SetConfigFile(c.normalizedConfigFile.String())
 		err := v.ReadInConfig()
 		if err == nil {
 			err = v.Unmarshal(&Config{})
@@ -927,13 +926,13 @@ func (c *Config) persistentPreRunRootE(cmd *cobra.Command, args []string) error 
 	}
 
 	if boolAnnotation(cmd, requiresConfigDirectory) {
-		if err := vfs.MkdirAll(c.baseSystem, path.Dir(c.normalizedConfigFile), 0o777); err != nil {
+		if err := vfs.MkdirAll(c.baseSystem, c.normalizedConfigFile.Dir().String(), 0o777); err != nil {
 			return err
 		}
 	}
 
 	if boolAnnotation(cmd, requiresSourceDirectory) {
-		if err := vfs.MkdirAll(c.baseSystem, c.normalizedSourceDir, 0o777); err != nil {
+		if err := vfs.MkdirAll(c.baseSystem, c.normalizedSourceDir.String(), 0o777); err != nil {
 			return err
 		}
 	}
@@ -968,7 +967,7 @@ func (c *Config) persistentStateFile() *chezmoi.OSPath {
 	return defaultConfigFile(c.fs, c.bds).Dir().Join(persistentStateFilename)
 }
 
-func (c *Config) preApply(targetName string, targetEntryState, lastWrittenEntryState, actualEntryState *chezmoi.EntryState) error {
+func (c *Config) preApply(targetRelPath chezmoi.RelPath, targetEntryState, lastWrittenEntryState, actualEntryState *chezmoi.EntryState) error {
 	switch {
 	case c.force:
 		return nil
@@ -978,7 +977,7 @@ func (c *Config) preApply(targetName string, targetEntryState, lastWrittenEntryS
 		return nil
 	}
 	// LATER add merge option
-	switch choice, err := c.prompt(fmt.Sprintf("%s has changed since chezmoi last wrote it, overwrite", targetName), "ynqa"); {
+	switch choice, err := c.prompt(fmt.Sprintf("%s has changed since chezmoi last wrote it, overwrite", targetRelPath), "ynqa"); {
 	case err != nil:
 		return err
 	case choice == 'a':
@@ -1016,7 +1015,7 @@ func (c *Config) prompt(s, choices string) (byte, error) {
 
 func (c *Config) readConfig() error {
 	v := viper.New()
-	v.SetConfigFile(c.normalizedConfigFile)
+	v.SetConfigFile(c.normalizedConfigFile.String())
 	v.SetFs(vfsafero.NewAferoFS(c.fs))
 	switch err := v.ReadInConfig(); {
 	case os.IsNotExist(err):
@@ -1033,11 +1032,11 @@ func (c *Config) readConfig() error {
 	return nil
 }
 
-func (c *Config) run(dir, name string, args []string) error {
+func (c *Config) run(dir chezmoi.AbsPath, name string, args []string) error {
 	cmd := exec.Command(name, args...)
 	if dir != "" {
 		var err error
-		cmd.Dir, err = c.baseSystem.RawPath(dir)
+		cmd.Dir, err = c.baseSystem.RawPath(dir.String())
 		if err != nil {
 			return err
 		}
@@ -1053,7 +1052,7 @@ func (c *Config) runEditor(args []string) error {
 	return c.run("", editor, append(editorArgs, args...))
 }
 
-func (c *Config) sourcePaths(s *chezmoi.SourceState, args []string) ([]string, error) {
+func (c *Config) sourceAbsPaths(s *chezmoi.SourceState, args []string) (chezmoi.AbsPaths, error) {
 	targetNames, err := c.targetNames(s, args, targetNamesOptions{
 		mustBeInSourceState: true,
 		recursive:           false,
@@ -1061,12 +1060,12 @@ func (c *Config) sourcePaths(s *chezmoi.SourceState, args []string) ([]string, e
 	if err != nil {
 		return nil, err
 	}
-	sourcePaths := make([]string, 0, len(targetNames))
+	sourceAbsPaths := make(chezmoi.AbsPaths, 0, len(targetNames))
 	for _, targetName := range targetNames {
-		sourcePath := s.MustEntry(targetName).Name()
-		sourcePaths = append(sourcePaths, sourcePath)
+		sourceAbsPath := c.normalizedSourceDir.Join(s.MustEntry(targetName).SourceRelPath().RelPath())
+		sourceAbsPaths = append(sourceAbsPaths, sourceAbsPath)
 	}
-	return sourcePaths, nil
+	return sourceAbsPaths, nil
 }
 
 func (c *Config) sourceState() (*chezmoi.SourceState, error) {
@@ -1096,8 +1095,8 @@ type targetNamesOptions struct {
 	recursive           bool
 }
 
-func (c *Config) targetNames(s *chezmoi.SourceState, args []string, options targetNamesOptions) ([]string, error) {
-	targetNames := make([]string, 0, len(args))
+func (c *Config) targetNames(s *chezmoi.SourceState, args []string, options targetNamesOptions) (chezmoi.RelPaths, error) {
+	targetNames := make(chezmoi.RelPaths, 0, len(args))
 	for _, arg := range args {
 		targetName, err := c.getTargetName(chezmoi.NewOSPath(arg))
 		if err != nil {
@@ -1109,10 +1108,11 @@ func (c *Config) targetNames(s *chezmoi.SourceState, args []string, options targ
 			}
 		}
 		targetNames = append(targetNames, targetName)
+		// FIXME this needs work
 		if options.recursive {
-			targetNamePrefix := targetName + "/"
-			for _, targetName := range s.TargetNames() {
-				if strings.HasPrefix(targetName, targetNamePrefix) {
+			targetNamePrefix := targetName.String() + "/"
+			for _, targetName := range s.TargetRelPaths() {
+				if strings.HasPrefix(targetName.String(), targetNamePrefix) {
 					targetNames = append(targetNames, targetName)
 				}
 			}
@@ -1124,7 +1124,7 @@ func (c *Config) targetNames(s *chezmoi.SourceState, args []string, options targ
 	}
 
 	// Sort and de-duplicate targetNames in place.
-	sort.Strings(targetNames)
+	sort.Sort(targetNames)
 	n := 1
 	for i := 1; i < len(targetNames); i++ {
 		if targetNames[i] != targetNames[i-1] {

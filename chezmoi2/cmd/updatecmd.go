@@ -44,7 +44,7 @@ func (c *Config) runUpdateCmd(cmd *cobra.Command, args []string) error {
 	case err != nil:
 		return err
 	case useBuiltinGit:
-		rawSourceDir, err := c.baseSystem.RawPath(c.normalizedSourceDir)
+		rawSourceDir, err := c.baseSystem.RawPath(c.normalizedSourceDir.String())
 		if err != nil {
 			return err
 		}

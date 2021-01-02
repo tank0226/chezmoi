@@ -25,18 +25,19 @@ func (c *Config) newUnmanagedCmd() *cobra.Command {
 
 func (c *Config) runUnmanagedCmd(cmd *cobra.Command, args []string, sourceState *chezmoi.SourceState) error {
 	sb := strings.Builder{}
-	if err := vfs.WalkSlash(c.destSystem, c.normalizedDestDir, func(path string, info os.FileInfo, err error) error {
+	if err := vfs.WalkSlash(c.destSystem, c.normalizedDestDir.String(), func(destAbsPathStr string, info os.FileInfo, err error) error {
 		if err != nil {
 			return err
 		}
-		if path == c.normalizedDestDir {
+		destAbsPath := chezmoi.AbsPath(destAbsPathStr)
+		if destAbsPath == c.normalizedDestDir {
 			return nil
 		}
-		targetName := chezmoi.MustTrimDirPrefix(path, c.normalizedDestDir)
-		_, managed := sourceState.Entry(targetName)
-		ignored := sourceState.Ignored(targetName)
+		targeRelPath := destAbsPath.MustTrimDirPrefix(c.normalizedDestDir)
+		_, managed := sourceState.Entry(targeRelPath)
+		ignored := sourceState.Ignored(targeRelPath)
 		if !managed && !ignored {
-			sb.WriteString(targetName + "\n")
+			sb.WriteString(string(targeRelPath) + "\n")
 		}
 		if info.IsDir() && (!managed || ignored) {
 			return vfs.SkipDir

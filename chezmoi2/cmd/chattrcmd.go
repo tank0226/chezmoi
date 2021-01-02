@@ -2,7 +2,6 @@ package cmd
 
 import (
 	"fmt"
-	"path"
 	"sort"
 	"strings"
 
@@ -91,31 +90,30 @@ func (c *Config) runChattrCmd(cmd *cobra.Command, args []string, sourceState *ch
 
 	// Sort targets in reverse so we update children before their parent
 	// directories.
-	sort.Sort(sort.Reverse(sort.StringSlice(targetNames)))
+	sort.Sort(sort.Reverse(targetNames))
 
 	for _, targetName := range targetNames {
 		sourceStateEntry := sourceState.MustEntry(targetName)
-		sourceName, err := chezmoi.TrimDirPrefix(sourceStateEntry.Name(), c.normalizedSourceDir)
-		if err != nil {
-			return err
-		}
-		parentDirName, baseName := path.Split(sourceName)
+		sourceName := sourceStateEntry.SourceRelPath()
+		parentDirSourceRelPath, baseName := sourceName.Split()
+		parentDirRelPath := parentDirSourceRelPath.RelPath()
+		baseNameRelPath := baseName.RelPath()
 		switch sourceStateEntry := sourceStateEntry.(type) {
 		case *chezmoi.SourceStateDir:
-			if newBaseName := am.modifyDirAttr(sourceStateEntry.Attr).BaseName(); newBaseName != baseName {
-				oldSourcePath := path.Join(c.normalizedSourceDir, parentDirName, baseName)
-				newSourcePath := path.Join(c.normalizedSourceDir, parentDirName, newBaseName)
-				if err := c.sourceSystem.Rename(oldSourcePath, newSourcePath); err != nil {
+			if newBaseNameRelPath := chezmoi.RelPath(am.modifyDirAttr(sourceStateEntry.Attr).BaseName()); newBaseNameRelPath != baseNameRelPath {
+				oldSourcePath := c.normalizedSourceDir.Join(parentDirRelPath, baseNameRelPath)
+				newSourcePath := c.normalizedSourceDir.Join(parentDirRelPath, newBaseNameRelPath)
+				if err := c.sourceSystem.Rename(string(oldSourcePath), string(newSourcePath)); err != nil {
 					return err
 				}
 			}
 		case *chezmoi.SourceStateFile:
 			// FIXME encrypted attribute changes
 			// FIXME when changing encrypted attribute add new file before removing old one
-			if newBaseName := am.modifyFileAttr(sourceStateEntry.Attr).BaseName(); newBaseName != baseName {
-				oldSourcePath := path.Join(c.normalizedSourceDir, parentDirName, baseName)
-				newSourcePath := path.Join(c.normalizedSourceDir, parentDirName, newBaseName)
-				if err := c.sourceSystem.Rename(oldSourcePath, newSourcePath); err != nil {
+			if newBaseNameRelPath := chezmoi.RelPath(am.modifyFileAttr(sourceStateEntry.Attr).BaseName()); newBaseNameRelPath != baseNameRelPath {
+				oldSourcePath := c.normalizedSourceDir.Join(parentDirRelPath, baseNameRelPath)
+				newSourcePath := c.normalizedSourceDir.Join(parentDirRelPath, newBaseNameRelPath)
+				if err := c.sourceSystem.Rename(oldSourcePath.String(), newSourcePath.String()); err != nil {
 					return err
 				}
 			}

@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"io/ioutil"
 	"os"
-	"path"
 
 	"github.com/spf13/cobra"
 
@@ -50,6 +49,7 @@ func (c *Config) runMergeCmd(cmd *cobra.Command, args []string, sourceState *che
 		return err
 	}
 	defer os.RemoveAll(tempDir)
+	tempDirAbsPath := chezmoi.AbsPath(tempDir)
 
 	for _, targetName := range targetNames {
 		sourceStateEntry := sourceState.MustEntry(targetName)
@@ -70,15 +70,15 @@ func (c *Config) runMergeCmd(cmd *cobra.Command, args []string, sourceState *che
 		if err != nil {
 			return err
 		}
-		targetStatePath := path.Join(tempDir, path.Base(targetName))
-		if err := c.baseSystem.WriteFile(targetStatePath, contents, 0o600); err != nil {
+		targetStatePath := tempDirAbsPath.Join(chezmoi.RelPath(targetName.Base()))
+		if err := c.baseSystem.WriteFile(targetStatePath.String(), contents, 0o600); err != nil {
 			return err
 		}
 		args := append(
 			append([]string{}, c.Merge.Args...),
-			path.Join(c.normalizedDestDir, targetName),
-			sourceStateEntry.Name(),
-			targetStatePath,
+			c.normalizedDestDir.Join(targetName).String(),
+			c.normalizedSourceDir.Join(sourceStateEntry.SourceRelPath().RelPath()).String(),
+			targetStatePath.String(),
 		)
 		if err := c.run(c.normalizedDestDir, c.Merge.Command, args); err != nil {
 			return fmt.Errorf("%s: %w", targetName, err)

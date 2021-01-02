@@ -41,8 +41,8 @@ func (p *OSPath) MarshalText() ([]byte, error) {
 }
 
 // Normalize performs tilde expansion on p and returns the normalized result.
-func (p *OSPath) Normalize(normalizedHomeDir string) (string, error) {
-	return NormalizePath(ExpandTilde(p.s, normalizedHomeDir))
+func (p *OSPath) Normalize(homeDirAbsPath AbsPath) (AbsPath, error) {
+	return NormalizePath(ExpandTilde(p.s, homeDirAbsPath))
 }
 
 func (p *OSPath) String() string {
