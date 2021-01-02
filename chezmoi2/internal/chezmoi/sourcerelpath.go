@@ -63,7 +63,7 @@ func (p SourceRelPath) Split() (SourceRelPath, SourceRelPath) {
 }
 
 func (p SourceRelPath) String() string {
-	return p.relPath.String()
+	return string(p.relPath)
 }
 
 // TargetRelPath returns the relative path of p's target.

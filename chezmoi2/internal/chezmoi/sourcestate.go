@@ -386,7 +386,7 @@ func (s *SourceState) ExecuteTemplateData(name string, data []byte) ([]byte, err
 
 // Ignored returns if targetRelPath is ignored.
 func (s *SourceState) Ignored(targetRelPath RelPath) bool {
-	return s.ignore.match(targetRelPath.String())
+	return s.ignore.match(string(targetRelPath))
 }
 
 // MinVersion returns the minimum version for which s is valid.
@@ -659,7 +659,7 @@ func (s *SourceState) addPatterns(patternSet *patternSet, sourceAbsPath AbsPath,
 			include = false
 			text = mustTrimPrefix(text, "!")
 		}
-		pattern := dir.Join(RelPath(text)).String()
+		pattern := string(dir.Join(RelPath(text)))
 		if err := patternSet.add(pattern, include); err != nil {
 			return fmt.Errorf("%s:%d: %w", sourceAbsPath, lineNumber, err)
 		}
@@ -673,7 +673,7 @@ func (s *SourceState) addPatterns(patternSet *patternSet, sourceAbsPath AbsPath,
 // addTemplateData adds all template data in sourcePath to s.
 func (s *SourceState) addTemplateData(sourceAbsPath AbsPath) error {
 	_, name := sourceAbsPath.Split()
-	suffix := mustTrimPrefix(name.String(), dataName+".")
+	suffix := mustTrimPrefix(string(name), dataName+".")
 	format, ok := Formats[suffix]
 	if !ok {
 		return fmt.Errorf("%s: unknown format", sourceAbsPath)
@@ -704,7 +704,7 @@ func (s *SourceState) addTemplatesDir(templatesDirAbsPath AbsPath) error {
 				return err
 			}
 			templateRelPath := templateAbsPath.MustTrimDirPrefix(templatesDirAbsPath)
-			name := templateRelPath.String()
+			name := string(templateRelPath)
 			tmpl, err := template.New(name).Option(s.templateOptions...).Funcs(s.templateFuncs).Parse(string(contents))
 			if err != nil {
 				return err

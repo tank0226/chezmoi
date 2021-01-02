@@ -285,12 +285,12 @@ func (t *TargetStateScript) Apply(system System, persistentState PersistentState
 	}
 	runAt := time.Now().UTC()
 	if !isEmpty(contents) {
-		if err := system.RunScript(t.name.String(), string(actualStateEntry.Path().Dir()), contents); err != nil {
+		if err := system.RunScript(string(t.name), string(actualStateEntry.Path().Dir()), contents); err != nil {
 			return err
 		}
 	}
 	value, err := json.Marshal(&scriptState{
-		Name:  t.name.String(),
+		Name:  string(t.name),
 		RunAt: runAt,
 	})
 	if err != nil {
