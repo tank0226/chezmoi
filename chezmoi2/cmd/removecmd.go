@@ -38,7 +38,7 @@ func (c *Config) runRemoveCmd(cmd *cobra.Command, args []string, sourceState *ch
 
 	for _, targetRelPath := range targetRelPaths {
 		destAbsPath := c.destDirAbsPath.Join(targetRelPath)
-		sourceAbsPath := sourceState.MustEntry(targetRelPath).SourceRelPath()
+		sourceAbsPath := c.sourceDirAbsPath.Join(sourceState.MustEntry(targetRelPath).SourceRelPath().RelPath())
 		if !c.force {
 			choice, err := c.prompt(fmt.Sprintf("Remove %s and %s", destAbsPath, sourceAbsPath), "ynqa")
 			if err != nil {
@@ -54,10 +54,10 @@ func (c *Config) runRemoveCmd(cmd *cobra.Command, args []string, sourceState *ch
 				c.force = true
 			}
 		}
-		if err := c.destSystem.RemoveAll(string(destAbsPath)); err != nil && !os.IsNotExist(err) {
+		if err := c.destSystem.RemoveAll(destAbsPath); err != nil && !os.IsNotExist(err) {
 			return err
 		}
-		if err := c.sourceSystem.RemoveAll(sourceAbsPath.String()); err != nil && !os.IsNotExist(err) {
+		if err := c.sourceSystem.RemoveAll(sourceAbsPath); err != nil && !os.IsNotExist(err) {
 			return err
 		}
 	}

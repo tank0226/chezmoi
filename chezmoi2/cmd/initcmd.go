@@ -104,12 +104,12 @@ func (c *Config) runInitCmd(cmd *cobra.Command, args []string) error {
 		case err != nil:
 			return err
 		case useBuiltinGit:
-			rawSourceDir, err := c.baseSystem.RawPath(string(c.sourceDirAbsPath))
+			rawSourceDir, err := c.baseSystem.RawPath(c.sourceDirAbsPath)
 			if err != nil {
 				return err
 			}
 			isBare := false
-			_, err = git.PlainInit(rawSourceDir, isBare)
+			_, err = git.PlainInit(string(rawSourceDir), isBare)
 			return err
 		default:
 			return c.run(c.sourceDirAbsPath, c.Git.Command, []string{"init"})
@@ -117,9 +117,9 @@ func (c *Config) runInitCmd(cmd *cobra.Command, args []string) error {
 	}
 
 	// Clone repo into source directory if it does not already exist.
-	switch _, err := c.baseSystem.Stat(string(c.sourceDirAbsPath.Join(chezmoi.RelPath(".git")))); {
+	switch _, err := c.baseSystem.Stat(c.sourceDirAbsPath.Join(chezmoi.RelPath(".git"))); {
 	case os.IsNotExist(err):
-		rawSourceDir, err := c.baseSystem.RawPath(string(c.sourceDirAbsPath))
+		rawSourceDir, err := c.baseSystem.RawPath(c.sourceDirAbsPath)
 		if err != nil {
 			return err
 		}
@@ -130,7 +130,7 @@ func (c *Config) runInitCmd(cmd *cobra.Command, args []string) error {
 			return err
 		case useBuiltinGit:
 			isBare := false
-			if _, err := git.PlainClone(rawSourceDir, isBare, &git.CloneOptions{
+			if _, err := git.PlainClone(string(rawSourceDir), isBare, &git.CloneOptions{
 				URL:               dotfilesRepoURL,
 				Depth:             c.init.depth,
 				RecurseSubmodules: git.DefaultSubmoduleRecursionDepth,
@@ -149,7 +149,7 @@ func (c *Config) runInitCmd(cmd *cobra.Command, args []string) error {
 			}
 			args = append(args,
 				dotfilesRepoURL,
-				rawSourceDir,
+				string(rawSourceDir),
 			)
 			if err := c.run("", c.Git.Command, args); err != nil {
 				return err
@@ -235,7 +235,7 @@ func (c *Config) createConfigFile(filename string, data []byte) ([]byte, error) 
 		return nil, err
 	}
 
-	configPath := filepath.Join(configDir, filename)
+	configPath := configDir.Join(filename)
 	if err := c.baseSystem.WriteFile(configPath, contents, 0o600); err != nil {
 		return nil, err
 	}
@@ -246,7 +246,7 @@ func (c *Config) createConfigFile(filename string, data []byte) ([]byte, error) 
 func (c *Config) findConfigTemplate() (string, string, []byte, error) {
 	for _, ext := range viper.SupportedExts {
 		filename := chezmoi.RelPath(chezmoi.Prefix + "." + ext + chezmoi.TemplateSuffix)
-		contents, err := c.baseSystem.ReadFile(string(c.sourceDirAbsPath.Join(filename)))
+		contents, err := c.baseSystem.ReadFile(c.sourceDirAbsPath.Join(filename))
 		switch {
 		case os.IsNotExist(err):
 			continue

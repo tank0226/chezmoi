@@ -73,7 +73,7 @@ type Config struct {
 	dryRun        bool
 	force         bool
 	keepGoing     bool
-	output        string
+	outputStr     string
 	verbose       bool
 	templateFuncs template.FuncMap
 
@@ -330,14 +330,14 @@ func (c *Config) applyArgs(targetSystem chezmoi.System, targetDirAbsPath chezmoi
 	return nil
 }
 
-func (c *Config) cmdOutput(dir chezmoi.AbsPath, name string, args []string) ([]byte, error) {
+func (c *Config) cmdOutput(dirAbsPath chezmoi.AbsPath, name string, args []string) ([]byte, error) {
 	cmd := exec.Command(name, args...)
-	if dir != "" {
-		var err error
-		cmd.Dir, err = c.baseSystem.RawPath(string(dir))
+	if dirAbsPath != "" {
+		dirRawAbsPath, err := c.baseSystem.RawPath(dirAbsPath)
 		if err != nil {
 			return nil, err
 		}
+		cmd.Dir = string(dirRawAbsPath)
 	}
 	return c.baseSystem.IdempotentCmdOutput(cmd)
 }
@@ -454,7 +454,7 @@ func (c *Config) destAbsPathInfos(sourceState *chezmoi.SourceState, args []strin
 					return err
 				}
 				if follow && info.Mode()&os.ModeType == os.ModeSymlink {
-					info, err = c.destSystem.Stat(string(destAbsPath))
+					info, err = c.destSystem.Stat(destAbsPath)
 					if err != nil {
 						return err
 					}
@@ -466,9 +466,9 @@ func (c *Config) destAbsPathInfos(sourceState *chezmoi.SourceState, args []strin
 		} else {
 			var info os.FileInfo
 			if follow {
-				info, err = c.destSystem.Stat(string(destAbsPath))
+				info, err = c.destSystem.Stat(destAbsPath)
 			} else {
-				info, err = c.destSystem.Lstat(string(destAbsPath))
+				info, err = c.destSystem.Lstat(destAbsPath)
 			}
 			if err != nil {
 				return nil, err
@@ -508,7 +508,7 @@ func (c *Config) doPurge(purgeOptions *purgeOptions) error {
 
 	// Remove all paths that exist.
 	for _, absPath := range absPaths {
-		switch _, err := c.baseSystem.Stat(string(absPath)); {
+		switch _, err := c.baseSystem.Stat(absPath); {
 		case os.IsNotExist(err):
 			continue
 		case err != nil:
@@ -528,7 +528,7 @@ func (c *Config) doPurge(purgeOptions *purgeOptions) error {
 			}
 		}
 
-		switch err := c.baseSystem.RemoveAll(string(absPath)); {
+		switch err := c.baseSystem.RemoveAll(absPath); {
 		case os.IsPermission(err):
 			continue
 		case err != nil:
@@ -706,7 +706,7 @@ func (c *Config) newRootCmd() (*cobra.Command, error) {
 	persistentFlags.BoolVar(&c.force, "force", c.force, "force")
 	persistentFlags.BoolVarP(&c.keepGoing, "keep-going", "k", c.keepGoing, "keep going as far as possible after an error")
 	persistentFlags.BoolVarP(&c.verbose, "verbose", "v", c.verbose, "verbose")
-	persistentFlags.StringVarP(&c.output, "output", "o", c.output, "output file")
+	persistentFlags.StringVarP(&c.outputStr, "output", "o", c.outputStr, "output file")
 	persistentFlags.BoolVar(&c.debug, "debug", c.debug, "write debug logs")
 
 	for _, err := range []error{
@@ -1035,11 +1035,11 @@ func (c *Config) readConfig() error {
 func (c *Config) run(dir chezmoi.AbsPath, name string, args []string) error {
 	cmd := exec.Command(name, args...)
 	if dir != "" {
-		var err error
-		cmd.Dir, err = c.baseSystem.RawPath(string(dir))
+		dirRawAbsPath, err := c.baseSystem.RawPath(dir)
 		if err != nil {
 			return err
 		}
+		cmd.Dir = string(dirRawAbsPath)
 	}
 	cmd.Stdin = c.stdin
 	cmd.Stdout = c.stdout
@@ -1150,11 +1150,11 @@ func (c *Config) validateData() error {
 }
 
 func (c *Config) writeOutput(data []byte) error {
-	if c.output == "" || c.output == "-" {
+	if c.outputStr == "" || c.outputStr == "-" {
 		_, err := c.stdout.Write(data)
 		return err
 	}
-	return c.baseSystem.WriteFile(c.output, data, 0o666)
+	return c.baseSystem.WriteFile(chezmoi.AbsPath(c.outputStr), data, 0o666)
 }
 
 func (c *Config) writeOutputString(data string) error {

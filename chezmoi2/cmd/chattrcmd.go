@@ -103,7 +103,7 @@ func (c *Config) runChattrCmd(cmd *cobra.Command, args []string, sourceState *ch
 			if newBaseNameRelPath := chezmoi.RelPath(am.modifyDirAttr(sourceStateEntry.Attr).SourceName()); newBaseNameRelPath != fileRelPath {
 				oldSourceAbsPath := c.sourceDirAbsPath.Join(parentRelPath, fileRelPath)
 				newSourceAbsPath := c.sourceDirAbsPath.Join(parentRelPath, newBaseNameRelPath)
-				if err := c.sourceSystem.Rename(string(oldSourceAbsPath), string(newSourceAbsPath)); err != nil {
+				if err := c.sourceSystem.Rename(oldSourceAbsPath, newSourceAbsPath); err != nil {
 					return err
 				}
 			}
@@ -113,7 +113,7 @@ func (c *Config) runChattrCmd(cmd *cobra.Command, args []string, sourceState *ch
 			if newBaseNameRelPath := chezmoi.RelPath(am.modifyFileAttr(sourceStateEntry.Attr).SourceName()); newBaseNameRelPath != fileRelPath {
 				oldSourceAbsPath := c.sourceDirAbsPath.Join(parentRelPath, fileRelPath)
 				newSourceAbsPath := c.sourceDirAbsPath.Join(parentRelPath, newBaseNameRelPath)
-				if err := c.sourceSystem.Rename(string(oldSourceAbsPath), string(newSourceAbsPath)); err != nil {
+				if err := c.sourceSystem.Rename(oldSourceAbsPath, newSourceAbsPath); err != nil {
 					return err
 				}
 			}
