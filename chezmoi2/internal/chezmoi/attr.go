@@ -20,14 +20,14 @@ const (
 
 // DirAttr holds attributes parsed from a source directory name.
 type DirAttr struct {
-	Name    string
-	Exact   bool
-	Private bool
+	TargetName string
+	Exact      bool
+	Private    bool
 }
 
 // A FileAttr holds attributes parsed from a source file name.
 type FileAttr struct {
-	Name       string
+	TargetName string
 	Type       SourceFileTargetType
 	Empty      bool
 	Encrypted  bool
@@ -57,9 +57,9 @@ func parseDirAttr(sourceName string) DirAttr {
 		name = "." + mustTrimPrefix(name, dotPrefix)
 	}
 	return DirAttr{
-		Name:    name,
-		Exact:   exact,
-		Private: private,
+		TargetName: name,
+		Exact:      exact,
+		Private:    private,
 	}
 }
 
@@ -72,10 +72,10 @@ func (da DirAttr) BaseName() string {
 	if da.Private {
 		sourceName += privatePrefix
 	}
-	if strings.HasPrefix(da.Name, ".") {
-		sourceName += dotPrefix + mustTrimPrefix(da.Name, ".")
+	if strings.HasPrefix(da.TargetName, ".") {
+		sourceName += dotPrefix + mustTrimPrefix(da.TargetName, ".")
 	} else {
-		sourceName += da.Name
+		sourceName += da.TargetName
 	}
 	return sourceName
 }
@@ -162,7 +162,7 @@ func parseFileAttr(sourceName string) FileAttr {
 		template = true
 	}
 	return FileAttr{
-		Name:       name,
+		TargetName: name,
 		Type:       sourceFileType,
 		Empty:      empty,
 		Encrypted:  encrypted,
@@ -216,10 +216,10 @@ func (fa FileAttr) BaseName() string {
 	case SourceFileTypeSymlink:
 		sourceName = symlinkPrefix
 	}
-	if strings.HasPrefix(fa.Name, ".") {
-		sourceName += dotPrefix + mustTrimPrefix(fa.Name, ".")
+	if strings.HasPrefix(fa.TargetName, ".") {
+		sourceName += dotPrefix + mustTrimPrefix(fa.TargetName, ".")
 	} else {
-		sourceName += fa.Name
+		sourceName += fa.TargetName
 	}
 	if fa.Template {
 		sourceName += TemplateSuffix

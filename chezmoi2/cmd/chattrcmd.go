@@ -226,9 +226,9 @@ func parseAttrModifier(s string) (*attrModifier, error) {
 
 func (am *attrModifier) modifyDirAttr(dirAttr chezmoi.DirAttr) chezmoi.DirAttr {
 	return chezmoi.DirAttr{
-		Name:    dirAttr.Name,
-		Exact:   am.exact.modify(dirAttr.Exact),
-		Private: am.private.modify(dirAttr.Private),
+		TargetName: dirAttr.TargetName,
+		Exact:      am.exact.modify(dirAttr.Exact),
+		Private:    am.private.modify(dirAttr.Private),
 	}
 }
 
@@ -236,7 +236,7 @@ func (am *attrModifier) modifyFileAttr(fileAttr chezmoi.FileAttr) chezmoi.FileAt
 	switch fileAttr.Type {
 	case chezmoi.SourceFileTypeFile:
 		return chezmoi.FileAttr{
-			Name:       fileAttr.Name,
+			TargetName: fileAttr.TargetName,
 			Type:       chezmoi.SourceFileTypeFile,
 			Empty:      am.empty.modify(fileAttr.Empty),
 			Encrypted:  am.encrypted.modify(fileAttr.Encrypted),
@@ -246,7 +246,7 @@ func (am *attrModifier) modifyFileAttr(fileAttr chezmoi.FileAttr) chezmoi.FileAt
 		}
 	case chezmoi.SourceFileTypePresent:
 		return chezmoi.FileAttr{
-			Name:       fileAttr.Name,
+			TargetName: fileAttr.TargetName,
 			Type:       chezmoi.SourceFileTypePresent,
 			Encrypted:  am.encrypted.modify(fileAttr.Encrypted),
 			Executable: am.executable.modify(fileAttr.Executable),
@@ -255,16 +255,16 @@ func (am *attrModifier) modifyFileAttr(fileAttr chezmoi.FileAttr) chezmoi.FileAt
 		}
 	case chezmoi.SourceFileTypeScript:
 		return chezmoi.FileAttr{
-			Name:  fileAttr.Name,
-			Type:  chezmoi.SourceFileTypeScript,
-			Once:  am.once.modify(fileAttr.Once),
-			Order: am.order.modify(fileAttr.Order),
+			TargetName: fileAttr.TargetName,
+			Type:       chezmoi.SourceFileTypeScript,
+			Once:       am.once.modify(fileAttr.Once),
+			Order:      am.order.modify(fileAttr.Order),
 		}
 	case chezmoi.SourceFileTypeSymlink:
 		return chezmoi.FileAttr{
-			Name:     fileAttr.Name,
-			Type:     chezmoi.SourceFileTypeSymlink,
-			Template: am.template.modify(fileAttr.Template),
+			TargetName: fileAttr.TargetName,
+			Type:       chezmoi.SourceFileTypeSymlink,
+			Template:   am.template.modify(fileAttr.Template),
 		}
 	default:
 		panic(fmt.Sprintf("%d: unknown source file type", fileAttr.Type))

@@ -10,11 +10,11 @@ import (
 
 func TestDirAttr(t *testing.T) {
 	testData := struct {
-		Name    []string
-		Exact   []bool
-		Private []bool
+		TargetName []string
+		Exact      []bool
+		Private    []bool
 	}{
-		Name: []string{
+		TargetName: []string{
 			".dir",
 			"dir.tmpl",
 			"dir",
@@ -43,7 +43,7 @@ func TestFileAttr(t *testing.T) {
 	var fas []FileAttr
 	require.NoError(t, combinator.Generate(&fas, struct {
 		Type       SourceFileTargetType
-		Name       []string
+		TargetName []string
 		Empty      []bool
 		Encrypted  []bool
 		Executable []bool
@@ -51,7 +51,7 @@ func TestFileAttr(t *testing.T) {
 		Template   []bool
 	}{
 		Type: SourceFileTypeFile,
-		Name: []string{
+		TargetName: []string{
 			".name",
 			"exact_name",
 			"name",
@@ -64,14 +64,14 @@ func TestFileAttr(t *testing.T) {
 	}))
 	require.NoError(t, combinator.Generate(&fas, struct {
 		Type       SourceFileTargetType
-		Name       []string
+		TargetName []string
 		Encrypted  []bool
 		Executable []bool
 		Private    []bool
 		Template   []bool
 	}{
 		Type: SourceFileTypePresent,
-		Name: []string{
+		TargetName: []string{
 			".name",
 			"exact_name",
 			"name",
@@ -82,13 +82,13 @@ func TestFileAttr(t *testing.T) {
 		Template:   []bool{false, true},
 	}))
 	require.NoError(t, combinator.Generate(&fas, struct {
-		Type  SourceFileTargetType
-		Name  []string
-		Once  []bool
-		Order []int
+		Type       SourceFileTargetType
+		TargetName []string
+		Once       []bool
+		Order      []int
 	}{
 		Type: SourceFileTypeScript,
-		Name: []string{
+		TargetName: []string{
 			".name",
 			"exact_name",
 			"name",
@@ -97,11 +97,11 @@ func TestFileAttr(t *testing.T) {
 		Order: []int{-1, 0, 1},
 	}))
 	require.NoError(t, combinator.Generate(&fas, struct {
-		Type SourceFileTargetType
-		Name []string
+		Type       SourceFileTargetType
+		TargetName []string
 	}{
 		Type: SourceFileTypeSymlink,
-		Name: []string{
+		TargetName: []string{
 			".name",
 			"exact_name",
 			"name",

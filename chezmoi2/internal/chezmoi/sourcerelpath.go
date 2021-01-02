@@ -73,15 +73,15 @@ func (p SourceRelPath) TargetRelPath() RelPath {
 	if p.isDir {
 		for _, sourceName := range sourceNames {
 			dirAttr := parseDirAttr(sourceName)
-			relPathNames = append(relPathNames, dirAttr.Name)
+			relPathNames = append(relPathNames, dirAttr.TargetName)
 		}
 	} else {
 		for _, sourceName := range sourceNames[:len(sourceNames)-1] {
 			dirAttr := parseDirAttr(sourceName)
-			relPathNames = append(relPathNames, dirAttr.Name)
+			relPathNames = append(relPathNames, dirAttr.TargetName)
 		}
 		fileAttr := parseFileAttr(sourceNames[len(sourceNames)-1])
-		relPathNames = append(relPathNames, fileAttr.Name)
+		relPathNames = append(relPathNames, fileAttr.TargetName)
 	}
 	return RelPath(strings.Join(relPathNames, "/"))
 }

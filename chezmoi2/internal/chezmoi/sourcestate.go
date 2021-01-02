@@ -494,7 +494,7 @@ func (s *SourceState) Read() error {
 			return nil
 		case info.IsDir():
 			da := parseDirAttr(sourceName.String())
-			targetRelPath := parentSourceRelPath.Dir().TargetRelPath().Join(RelPath(da.Name))
+			targetRelPath := parentSourceRelPath.Dir().TargetRelPath().Join(RelPath(da.TargetName))
 			if s.Ignored(targetRelPath) {
 				return vfs.SkipDir
 			}
@@ -503,7 +503,7 @@ func (s *SourceState) Read() error {
 			return nil
 		case info.Mode().IsRegular():
 			fa := parseFileAttr(sourceName.String())
-			targetRelPath := parentSourceRelPath.Dir().TargetRelPath().Join(RelPath(fa.Name))
+			targetRelPath := parentSourceRelPath.Dir().TargetRelPath().Join(RelPath(fa.TargetName))
 			if s.Ignored(targetRelPath) {
 				return nil
 			}
@@ -884,9 +884,9 @@ func (s *SourceState) sourceStateEntry(actualStateEntry ActualStateEntry, destAb
 		return nil, fmt.Errorf("%s: not found", destAbsPath)
 	case *ActualStateDir:
 		dirAttr := DirAttr{
-			Name:    info.Name(),
-			Exact:   options.Exact,
-			Private: isPrivate(info),
+			TargetName: info.Name(),
+			Exact:      options.Exact,
+			Private:    isPrivate(info),
 		}
 		return &SourceStateDir{
 			Attr:          dirAttr,
@@ -897,7 +897,7 @@ func (s *SourceState) sourceStateEntry(actualStateEntry ActualStateEntry, destAb
 		}, nil
 	case *ActualStateFile:
 		fileAttr := FileAttr{
-			Name:       info.Name(),
+			TargetName: info.Name(),
 			Empty:      options.Empty,
 			Encrypted:  options.Encrypt,
 			Executable: isExecutable(info),
@@ -933,9 +933,9 @@ func (s *SourceState) sourceStateEntry(actualStateEntry ActualStateEntry, destAb
 		}, nil
 	case *ActualStateSymlink:
 		fileAttr := FileAttr{
-			Name:     info.Name(),
-			Type:     SourceFileTypeSymlink,
-			Template: options.Template || options.AutoTemplate,
+			TargetName: info.Name(),
+			Type:       SourceFileTypeSymlink,
+			Template:   options.Template || options.AutoTemplate,
 		}
 		linkname, err := actualStateEntry.Linkname()
 		if err != nil {
