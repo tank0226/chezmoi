@@ -44,7 +44,7 @@ func (c *Config) runUpdateCmd(cmd *cobra.Command, args []string) error {
 	case err != nil:
 		return err
 	case useBuiltinGit:
-		rawSourceDir, err := c.baseSystem.RawPath(c.normalizedSourceDir.String())
+		rawSourceDir, err := c.baseSystem.RawPath(c.sourceDirAbsPath.String())
 		if err != nil {
 			return err
 		}
@@ -67,7 +67,7 @@ func (c *Config) runUpdateCmd(cmd *cobra.Command, args []string) error {
 			"--rebase",
 			"--recurse-submodules",
 		}
-		if err := c.run(c.normalizedSourceDir, c.Git.Command, args); err != nil {
+		if err := c.run(c.sourceDirAbsPath, c.Git.Command, args); err != nil {
 			return err
 		}
 	}
@@ -76,5 +76,5 @@ func (c *Config) runUpdateCmd(cmd *cobra.Command, args []string) error {
 		return nil
 	}
 
-	return c.applyArgs(c.destSystem, c.normalizedDestDir, args, c.update.include, c.update.recursive, c.Umask.FileMode(), c.preApply)
+	return c.applyArgs(c.destSystem, c.destDirAbsPath, args, c.update.include, c.update.recursive, c.Umask.FileMode(), c.preApply)
 }

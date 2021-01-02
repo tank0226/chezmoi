@@ -112,10 +112,10 @@ type Config struct {
 	verify          verifyCmdConfig
 
 	// Computed configuration.
-	normalizedConfigFile chezmoi.AbsPath
-	normalizedHomeDir    chezmoi.AbsPath
-	normalizedSourceDir  chezmoi.AbsPath
-	normalizedDestDir    chezmoi.AbsPath
+	configFileAbsPath chezmoi.AbsPath
+	homeDirAbsPath    chezmoi.AbsPath
+	sourceDirAbsPath  chezmoi.AbsPath
+	destDirAbsPath    chezmoi.AbsPath
 
 	stdin     io.Reader
 	stdout    io.Writer
@@ -238,7 +238,7 @@ func newConfig(options ...configOption) (*Config, error) {
 		stdout: os.Stdout,
 		stderr: os.Stderr,
 
-		normalizedHomeDir: normalizedHomeDir,
+		homeDirAbsPath: normalizedHomeDir,
 	}
 
 	for key, value := range map[string]interface{}{
@@ -276,7 +276,7 @@ func newConfig(options ...configOption) (*Config, error) {
 	c.configFile = defaultConfigFile(c.fs, c.bds).String()
 	c.SourceDir = defaultSourceDir(c.fs, c.bds).String()
 
-	c.normalizedHomeDir, err = chezmoi.NormalizePath(c.HomeDir)
+	c.homeDirAbsPath, err = chezmoi.NormalizePath(c.HomeDir)
 	if err != nil {
 		return nil, err
 	}
@@ -347,7 +347,7 @@ func (c *Config) defaultTemplateData() map[string]interface{} {
 		"arch":      runtime.GOARCH,
 		"homeDir":   c.HomeDir,
 		"os":        runtime.GOOS,
-		"sourceDir": c.normalizedSourceDir,
+		"sourceDir": c.sourceDirAbsPath,
 		"version": map[string]interface{}{
 			"builtBy": c.versionInfo.BuiltBy,
 			"commit":  c.versionInfo.Commit,
@@ -488,16 +488,16 @@ func (c *Config) doPurge(purgeOptions *purgeOptions) error {
 		}
 	}
 
-	absSlashPersistentStateFile, err := c.persistentStateFile().Normalize(c.normalizedHomeDir)
+	absSlashPersistentStateFile, err := c.persistentStateFile().Normalize(c.homeDirAbsPath)
 	if err != nil {
 		return err
 	}
 
 	absPaths := chezmoi.AbsPaths{
-		c.normalizedConfigFile.Dir(),
-		c.normalizedConfigFile,
+		c.configFileAbsPath.Dir(),
+		c.configFileAbsPath,
 		absSlashPersistentStateFile,
-		c.normalizedSourceDir,
+		c.sourceDirAbsPath,
 	}
 	if purgeOptions != nil && purgeOptions.binary {
 		executable, err := os.Executable()
@@ -589,7 +589,7 @@ func (c *Config) getTargetRelPath(arg *chezmoi.OSPath) (chezmoi.RelPath, error) 
 	if err != nil {
 		return "", err
 	}
-	return destAbsPath.TrimDirPrefix(c.normalizedDestDir)
+	return destAbsPath.TrimDirPrefix(c.destDirAbsPath)
 }
 
 func (c *Config) getTTY() (*bufio.Reader, io.Writer, error) {
@@ -612,10 +612,10 @@ func (c *Config) getTTY() (*bufio.Reader, io.Writer, error) {
 }
 
 func (c *Config) gitAutoAdd() (*git.Status, error) {
-	if err := c.run(c.normalizedSourceDir, c.Git.Command, []string{"add", "."}); err != nil {
+	if err := c.run(c.sourceDirAbsPath, c.Git.Command, []string{"add", "."}); err != nil {
 		return nil, err
 	}
-	output, err := c.cmdOutput(c.normalizedSourceDir, c.Git.Command, []string{"status", "--porcelain=v2"})
+	output, err := c.cmdOutput(c.sourceDirAbsPath, c.Git.Command, []string{"status", "--porcelain=v2"})
 	if err != nil {
 		return nil, err
 	}
@@ -638,14 +638,14 @@ func (c *Config) gitAutoCommit(status *git.Status) error {
 	if err := commitMessageTmpl.Execute(&commitMessage, status); err != nil {
 		return err
 	}
-	return c.run(c.normalizedSourceDir, c.Git.Command, []string{"commit", "--message", commitMessage.String()})
+	return c.run(c.sourceDirAbsPath, c.Git.Command, []string{"commit", "--message", commitMessage.String()})
 }
 
 func (c *Config) gitAutoPush(status *git.Status) error {
 	if status.Empty() {
 		return nil
 	}
-	return c.run(c.normalizedSourceDir, c.Git.Command, []string{"push"})
+	return c.run(c.sourceDirAbsPath, c.Git.Command, []string{"push"})
 }
 
 func (c *Config) makeRunEWithSourceState(runE func(*cobra.Command, []string, *chezmoi.SourceState) error) func(*cobra.Command, []string) error {
@@ -759,12 +759,12 @@ func (c *Config) newRootCmd() (*cobra.Command, error) {
 }
 
 func (c *Config) normalizedDestPath(arg *chezmoi.OSPath) (chezmoi.AbsPath, error) {
-	normalizedPath, err := arg.Normalize(c.normalizedHomeDir)
+	normalizedPath, err := arg.Normalize(c.homeDirAbsPath)
 	if err != nil {
 		return "", err
 	}
-	if _, err := chezmoi.TrimDirPrefix(normalizedPath, c.normalizedDestDir); err != nil {
-		return "", fmt.Errorf("%s: not in destination directory (%s)", arg, c.normalizedDestDir)
+	if _, err := chezmoi.TrimDirPrefix(normalizedPath, c.destDirAbsPath); err != nil {
+		return "", fmt.Errorf("%s: not in destination directory (%s)", arg, c.destDirAbsPath)
 	}
 	return normalizedPath, nil
 }
@@ -780,13 +780,13 @@ func (c *Config) persistentPostRunRootE(cmd *cobra.Command, args []string) error
 		// Warn the user of any errors reading the config file.
 		v := viper.New()
 		v.SetFs(vfsafero.NewAferoFS(c.fs))
-		v.SetConfigFile(c.normalizedConfigFile.String())
+		v.SetConfigFile(c.configFileAbsPath.String())
 		err := v.ReadInConfig()
 		if err == nil {
 			err = v.Unmarshal(&Config{})
 		}
 		if err != nil {
-			cmd.Printf("warning: %s: %v\n", c.normalizedConfigFile, err)
+			cmd.Printf("warning: %s: %v\n", c.configFileAbsPath, err)
 		}
 	}
 
@@ -816,7 +816,7 @@ func (c *Config) persistentPostRunRootE(cmd *cobra.Command, args []string) error
 
 func (c *Config) persistentPreRunRootE(cmd *cobra.Command, args []string) error {
 	var err error
-	c.normalizedConfigFile, err = chezmoi.NewOSPath(c.configFile).Normalize(c.normalizedHomeDir)
+	c.configFileAbsPath, err = chezmoi.NewOSPath(c.configFile).Normalize(c.homeDirAbsPath)
 	if err != nil {
 		return err
 	}
@@ -848,10 +848,10 @@ func (c *Config) persistentPreRunRootE(cmd *cobra.Command, args []string) error 
 		}
 	}
 
-	if c.normalizedSourceDir, err = chezmoi.NewOSPath(c.SourceDir).Normalize(c.normalizedHomeDir); err != nil {
+	if c.sourceDirAbsPath, err = chezmoi.NewOSPath(c.SourceDir).Normalize(c.homeDirAbsPath); err != nil {
 		return err
 	}
-	if c.normalizedDestDir, err = chezmoi.NewOSPath(c.DestDir).Normalize(c.normalizedHomeDir); err != nil {
+	if c.destDirAbsPath, err = chezmoi.NewOSPath(c.DestDir).Normalize(c.homeDirAbsPath); err != nil {
 		return err
 	}
 
@@ -921,18 +921,18 @@ func (c *Config) persistentPreRunRootE(cmd *cobra.Command, args []string) error 
 		c.destSystem = chezmoi.NewDryRunSystem(c.destSystem)
 	}
 	if c.verbose {
-		c.sourceSystem = chezmoi.NewGitDiffSystem(c.sourceSystem, c.stdout, c.normalizedSourceDir, c.color)
-		c.destSystem = chezmoi.NewGitDiffSystem(c.destSystem, c.stdout, c.normalizedDestDir, c.color)
+		c.sourceSystem = chezmoi.NewGitDiffSystem(c.sourceSystem, c.stdout, c.sourceDirAbsPath, c.color)
+		c.destSystem = chezmoi.NewGitDiffSystem(c.destSystem, c.stdout, c.destDirAbsPath, c.color)
 	}
 
 	if boolAnnotation(cmd, requiresConfigDirectory) {
-		if err := vfs.MkdirAll(c.baseSystem, c.normalizedConfigFile.Dir().String(), 0o777); err != nil {
+		if err := vfs.MkdirAll(c.baseSystem, c.configFileAbsPath.Dir().String(), 0o777); err != nil {
 			return err
 		}
 	}
 
 	if boolAnnotation(cmd, requiresSourceDirectory) {
-		if err := vfs.MkdirAll(c.baseSystem, c.normalizedSourceDir.String(), 0o777); err != nil {
+		if err := vfs.MkdirAll(c.baseSystem, c.sourceDirAbsPath.String(), 0o777); err != nil {
 			return err
 		}
 	}
@@ -1015,7 +1015,7 @@ func (c *Config) prompt(s, choices string) (byte, error) {
 
 func (c *Config) readConfig() error {
 	v := viper.New()
-	v.SetConfigFile(c.normalizedConfigFile.String())
+	v.SetConfigFile(c.configFileAbsPath.String())
 	v.SetFs(vfsafero.NewAferoFS(c.fs))
 	switch err := v.ReadInConfig(); {
 	case os.IsNotExist(err):
@@ -1062,7 +1062,7 @@ func (c *Config) sourceAbsPaths(s *chezmoi.SourceState, args []string) (chezmoi.
 	}
 	sourceAbsPaths := make(chezmoi.AbsPaths, 0, len(targetRelPaths))
 	for _, targetRelPath := range targetRelPaths {
-		sourceAbsPath := c.normalizedSourceDir.Join(s.MustEntry(targetRelPath).SourceRelPath().RelPath())
+		sourceAbsPath := c.sourceDirAbsPath.Join(s.MustEntry(targetRelPath).SourceRelPath().RelPath())
 		sourceAbsPaths = append(sourceAbsPaths, sourceAbsPath)
 	}
 	return sourceAbsPaths, nil
@@ -1071,9 +1071,9 @@ func (c *Config) sourceAbsPaths(s *chezmoi.SourceState, args []string) (chezmoi.
 func (c *Config) sourceState() (*chezmoi.SourceState, error) {
 	s := chezmoi.NewSourceState(
 		chezmoi.WithDefaultTemplateDataFunc(c.defaultTemplateData),
-		chezmoi.WithDestDir(c.normalizedDestDir),
+		chezmoi.WithDestDir(c.destDirAbsPath),
 		chezmoi.WithPriorityTemplateData(c.Data),
-		chezmoi.WithSourceDir(c.normalizedSourceDir),
+		chezmoi.WithSourceDir(c.sourceDirAbsPath),
 		chezmoi.WithSystem(c.sourceSystem),
 		chezmoi.WithTemplateFuncs(c.templateFuncs),
 		chezmoi.WithTemplateOptions(c.Template.Options),

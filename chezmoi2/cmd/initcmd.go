@@ -104,7 +104,7 @@ func (c *Config) runInitCmd(cmd *cobra.Command, args []string) error {
 		case err != nil:
 			return err
 		case useBuiltinGit:
-			rawSourceDir, err := c.baseSystem.RawPath(c.normalizedSourceDir.String())
+			rawSourceDir, err := c.baseSystem.RawPath(c.sourceDirAbsPath.String())
 			if err != nil {
 				return err
 			}
@@ -112,14 +112,14 @@ func (c *Config) runInitCmd(cmd *cobra.Command, args []string) error {
 			_, err = git.PlainInit(rawSourceDir, isBare)
 			return err
 		default:
-			return c.run(c.normalizedSourceDir, c.Git.Command, []string{"init"})
+			return c.run(c.sourceDirAbsPath, c.Git.Command, []string{"init"})
 		}
 	}
 
 	// Clone repo into source directory if it does not already exist.
-	switch _, err := c.baseSystem.Stat(c.normalizedSourceDir.Join(chezmoi.RelPath(".git")).String()); {
+	switch _, err := c.baseSystem.Stat(c.sourceDirAbsPath.Join(chezmoi.RelPath(".git")).String()); {
 	case os.IsNotExist(err):
-		rawSourceDir, err := c.baseSystem.RawPath(c.normalizedSourceDir.String())
+		rawSourceDir, err := c.baseSystem.RawPath(c.sourceDirAbsPath.String())
 		if err != nil {
 			return err
 		}
@@ -187,7 +187,7 @@ func (c *Config) runInitCmd(cmd *cobra.Command, args []string) error {
 	if c.init.apply {
 		var args []string
 		recursive := false
-		if err := c.applyArgs(c.destSystem, c.normalizedDestDir, args, chezmoi.NewIncludeSet(chezmoi.IncludeAll), recursive, c.Umask.FileMode(), c.preApply); err != nil {
+		if err := c.applyArgs(c.destSystem, c.destDirAbsPath, args, chezmoi.NewIncludeSet(chezmoi.IncludeAll), recursive, c.Umask.FileMode(), c.preApply); err != nil {
 			return err
 		}
 	}
@@ -246,7 +246,7 @@ func (c *Config) createConfigFile(filename string, data []byte) ([]byte, error) 
 func (c *Config) findConfigTemplate() (string, string, []byte, error) {
 	for _, ext := range viper.SupportedExts {
 		filename := chezmoi.RelPath(chezmoi.Prefix + "." + ext + chezmoi.TemplateSuffix)
-		contents, err := c.baseSystem.ReadFile(c.normalizedSourceDir.Join(filename).String())
+		contents, err := c.baseSystem.ReadFile(c.sourceDirAbsPath.Join(filename).String())
 		switch {
 		case os.IsNotExist(err):
 			continue

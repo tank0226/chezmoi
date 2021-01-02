@@ -23,7 +23,7 @@ func (c *Config) newSourcePathCmd() *cobra.Command {
 
 func (c *Config) runSourcePathCmd(cmd *cobra.Command, args []string, sourceState *chezmoi.SourceState) error {
 	if len(args) == 0 {
-		return c.writeOutputString(string(c.normalizedSourceDir) + "\n")
+		return c.writeOutputString(string(c.sourceDirAbsPath) + "\n")
 	}
 
 	sourceAbsPaths, err := c.sourceAbsPaths(sourceState, args)
