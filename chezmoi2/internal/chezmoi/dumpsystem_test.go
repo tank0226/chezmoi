@@ -19,14 +19,14 @@ func TestDumpSystem(t *testing.T) {
 			".chezmoiremove":  "*.txt\n",
 			".chezmoiversion": "1.2.3\n",
 			".chezmoitemplates": map[string]interface{}{
-				"foo": "bar",
+				"template": "# contents of .chezmoitemplates/template\n",
 			},
 			"README.md": "",
-			"dir": map[string]interface{}{
-				"foo": "bar",
+			"dot_dir": map[string]interface{}{
+				"file": "# contents of .dir/file\n",
 			},
-			"run_script":      "#!/bin/sh\n",
-			"symlink_symlink": "bar",
+			"run_script":      "# contents of script\n",
+			"symlink_symlink": ".dir/subdir/file\n",
 		},
 	}, func(fs vfs.FS) {
 		s := NewSourceState(
@@ -40,26 +40,26 @@ func TestDumpSystem(t *testing.T) {
 		persistentState := NewMockPersistentState()
 		require.NoError(t, s.applyAll(dumpSystem, persistentState, "", ApplyOptions{}))
 		expectedData := map[string]interface{}{
-			"dir": &dirData{
+			".dir": &dirData{
 				Type: dataTypeDir,
-				Name: "dir",
+				Name: ".dir",
 				Perm: 0o777,
 			},
-			"dir/foo": &fileData{
+			".dir/file": &fileData{
 				Type:     dataTypeFile,
-				Name:     "dir/foo",
-				Contents: "bar",
+				Name:     ".dir/file",
+				Contents: "# contents of .dir/file\n",
 				Perm:     0o666,
 			},
 			"script": &scriptData{
 				Type:     dataTypeScript,
 				Name:     "script",
-				Contents: "#!/bin/sh\n",
+				Contents: "# contents of script\n",
 			},
 			"symlink": &symlinkData{
 				Type:     dataTypeSymlink,
 				Name:     "symlink",
-				Linkname: "bar",
+				Linkname: ".dir/subdir/file",
 			},
 		}
 		actualData := dumpSystem.Data()

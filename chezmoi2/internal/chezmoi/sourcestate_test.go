@@ -442,12 +442,6 @@ func TestSourceStateAdd(t *testing.T) {
 			},
 		},
 	} {
-		// FIXME
-		if tc.name != "dir_change_attributes" {
-			// if tc.name != "file_in_dir_exact_subdir" {
-			// if tc.name != "file" {
-			// continue
-		}
 		t.Run(tc.name, func(t *testing.T) {
 			chezmoitest.SkipUnlessGOOS(t, tc.name)
 
@@ -531,12 +525,12 @@ func TestSourceStateApplyAll(t *testing.T) {
 			root: map[string]interface{}{
 				"/home/user": map[string]interface{}{
 					".local/share/chezmoi": map[string]interface{}{
-						"foo": &vfst.Dir{Perm: 0o777},
+						"dot_dir": &vfst.Dir{Perm: 0o777},
 					},
 				},
 			},
 			tests: []interface{}{
-				vfst.TestPath("/home/user/foo",
+				vfst.TestPath("/home/user/.dir",
 					vfst.TestIsDir,
 					vfst.TestModePerm(0o777&^GetUmask()),
 				),
@@ -546,20 +540,20 @@ func TestSourceStateApplyAll(t *testing.T) {
 			name: "dir_exact",
 			root: map[string]interface{}{
 				"/home/user": map[string]interface{}{
-					"foo": map[string]interface{}{
-						"bar": "",
+					".dir": map[string]interface{}{
+						"file": "# contents of .dir/file\n",
 					},
 					".local/share/chezmoi": map[string]interface{}{
-						"exact_foo": &vfst.Dir{Perm: 0o777},
+						"exact_dir": &vfst.Dir{Perm: 0o777},
 					},
 				},
 			},
 			tests: []interface{}{
-				vfst.TestPath("/home/user/foo",
+				vfst.TestPath("/home/user/.dir",
 					vfst.TestIsDir,
 					vfst.TestModePerm(0o777&^GetUmask()),
 				),
-				vfst.TestPath("/home/user/foo/bar",
+				vfst.TestPath("/home/user/.dir/file",
 					vfst.TestDoesNotExist,
 				),
 			},
@@ -569,15 +563,15 @@ func TestSourceStateApplyAll(t *testing.T) {
 			root: map[string]interface{}{
 				"/home/user": map[string]interface{}{
 					".local/share/chezmoi": map[string]interface{}{
-						"foo": "bar",
+						"dot_file": "# contents of .file\n",
 					},
 				},
 			},
 			tests: []interface{}{
-				vfst.TestPath("/home/user/foo",
+				vfst.TestPath("/home/user/.file",
 					vfst.TestModeIsRegular,
 					vfst.TestModePerm(0o666&^GetUmask()),
-					vfst.TestContentsString("bar"),
+					vfst.TestContentsString("# contents of .file\n"),
 				),
 			},
 		},
@@ -585,14 +579,14 @@ func TestSourceStateApplyAll(t *testing.T) {
 			name: "file_remove_empty",
 			root: map[string]interface{}{
 				"/home/user": map[string]interface{}{
-					"foo": "",
+					".empty": "# contents of .empty\n",
 					".local/share/chezmoi": map[string]interface{}{
-						"foo": "",
+						"dot_empty": "",
 					},
 				},
 			},
 			tests: []interface{}{
-				vfst.TestPath("/home/user/foo",
+				vfst.TestPath("/home/user/.empty",
 					vfst.TestDoesNotExist,
 				),
 			},
@@ -602,15 +596,15 @@ func TestSourceStateApplyAll(t *testing.T) {
 			root: map[string]interface{}{
 				"/home/user": map[string]interface{}{
 					".local/share/chezmoi": map[string]interface{}{
-						"empty_foo": "",
+						"empty_dot_empty": "",
 					},
 				},
 			},
 			tests: []interface{}{
-				vfst.TestPath("/home/user/foo",
+				vfst.TestPath("/home/user/.empty",
 					vfst.TestModeIsRegular,
 					vfst.TestModePerm(0o666&^GetUmask()),
-					vfst.TestContentsString(""),
+					vfst.TestContents(nil),
 				),
 			},
 		},
@@ -619,20 +613,20 @@ func TestSourceStateApplyAll(t *testing.T) {
 			root: map[string]interface{}{
 				"/home/user": map[string]interface{}{
 					".local/share/chezmoi": map[string]interface{}{
-						"foo.tmpl": "email = {{ .email }}",
+						"dot_template.tmpl": "key = {{ .variable }}\n",
 					},
 				},
 			},
 			sourceStateOptions: []SourceStateOption{
 				withUserTemplateData(map[string]interface{}{
-					"email": "you@example.com",
+					"variable": "value",
 				}),
 			},
 			tests: []interface{}{
-				vfst.TestPath("/home/user/foo",
+				vfst.TestPath("/home/user/.template",
 					vfst.TestModeIsRegular,
 					vfst.TestModePerm(0o666&^GetUmask()),
-					vfst.TestContentsString("email = you@example.com"),
+					vfst.TestContentsString("key = value\n"),
 				),
 			},
 		},
@@ -641,15 +635,15 @@ func TestSourceStateApplyAll(t *testing.T) {
 			root: map[string]interface{}{
 				"/home/user": map[string]interface{}{
 					".local/share/chezmoi": map[string]interface{}{
-						"exists_foo": "bar",
+						"exists_dot_exists": "# contents of .exists\n",
 					},
 				},
 			},
 			tests: []interface{}{
-				vfst.TestPath("/home/user/foo",
+				vfst.TestPath("/home/user/.exists",
 					vfst.TestModeIsRegular,
 					vfst.TestModePerm(0o666&^GetUmask()),
-					vfst.TestContentsString("bar"),
+					vfst.TestContentsString("# contents of .exists\n"),
 				),
 			},
 		},
@@ -658,16 +652,16 @@ func TestSourceStateApplyAll(t *testing.T) {
 			root: map[string]interface{}{
 				"/home/user": map[string]interface{}{
 					".local/share/chezmoi": map[string]interface{}{
-						"exists_foo": "bar",
+						"exists_dot_exists": "# contents of .exists\n",
 					},
-					"foo": "baz",
+					".exists": "# existing contents of .exists\n",
 				},
 			},
 			tests: []interface{}{
-				vfst.TestPath("/home/user/foo",
+				vfst.TestPath("/home/user/.exists",
 					vfst.TestModeIsRegular,
 					vfst.TestModePerm(0o666&^GetUmask()),
-					vfst.TestContentsString("baz"),
+					vfst.TestContentsString("# existing contents of .exists\n"),
 				),
 			},
 		},
@@ -676,14 +670,14 @@ func TestSourceStateApplyAll(t *testing.T) {
 			root: map[string]interface{}{
 				"/home/user": map[string]interface{}{
 					".local/share/chezmoi": map[string]interface{}{
-						"symlink_foo": "bar",
+						"symlink_dot_symlink": ".dir/subdir/file\n",
 					},
 				},
 			},
 			tests: []interface{}{
-				vfst.TestPath("/home/user/foo",
+				vfst.TestPath("/home/user/.symlink",
 					vfst.TestModeType(os.ModeSymlink),
-					vfst.TestSymlinkTarget("bar"),
+					vfst.TestSymlinkTarget(".dir/subdir/file"),
 				),
 			},
 		},
@@ -692,19 +686,14 @@ func TestSourceStateApplyAll(t *testing.T) {
 			root: map[string]interface{}{
 				"/home/user": map[string]interface{}{
 					".local/share/chezmoi": map[string]interface{}{
-						"symlink_foo.tmpl": "bar_{{ .os }}",
+						"symlink_dot_symlink.tmpl": `{{ ".dir/subdir/file" }}` + "\n",
 					},
 				},
 			},
-			sourceStateOptions: []SourceStateOption{
-				withUserTemplateData(map[string]interface{}{
-					"os": "linux",
-				}),
-			},
 			tests: []interface{}{
-				vfst.TestPath("/home/user/foo",
+				vfst.TestPath("/home/user/.symlink",
 					vfst.TestModeType(os.ModeSymlink),
-					vfst.TestSymlinkTarget("bar_linux"),
+					vfst.TestSymlinkTarget(".dir/subdir/file"),
 				),
 			},
 		},
@@ -799,7 +788,7 @@ func TestSourceStateRead(t *testing.T) {
 					"dot_file.tmpl": "# contents of .file\n",
 				},
 			},
-			expectedError: "foo: duplicate target (dot_file, dot_file.tmpl)",
+			expectedError: ".file: duplicate target (dot_file, dot_file.tmpl)",
 		},
 		{
 			name: "duplicate_target_dir",
@@ -809,7 +798,7 @@ func TestSourceStateRead(t *testing.T) {
 					"exact_dir": &vfst.Dir{Perm: 0o777},
 				},
 			},
-			expectedError: "foo: duplicate target (dir, exact_dir)",
+			expectedError: "dir: duplicate target (dir, exact_dir)",
 		},
 		{
 			name: "duplicate_target_script",
@@ -1079,7 +1068,7 @@ func TestSourceStateRead(t *testing.T) {
 				}),
 				withIgnore(
 					mustNewPatternSet(t, map[string]bool{
-						"file*": true,
+						"file2": true,
 					}),
 				),
 			),
@@ -1185,8 +1174,8 @@ func TestSourceStateRead(t *testing.T) {
 				}
 				require.NoError(t, err)
 				require.NoError(t, s.evaluateAll())
-				tc.expectedSourceState.destDir = "/home/user"
-				tc.expectedSourceState.sourceDir = "/home/user/.local/share/chezmoi"
+				tc.expectedSourceState.destDirAbsPath = "/home/user"
+				tc.expectedSourceState.sourceDirAbsPath = "/home/user/.local/share/chezmoi"
 				require.NoError(t, tc.expectedSourceState.evaluateAll())
 				s.system = nil
 				s.templateData = nil
@@ -1196,16 +1185,16 @@ func TestSourceStateRead(t *testing.T) {
 	}
 }
 
-func TestSourceStateSortedTargetNames(t *testing.T) {
+func TestSourceStateTargetRelPaths(t *testing.T) {
 	for _, tc := range []struct {
-		name                      string
-		root                      interface{}
-		expectedSortedTargetNames []string
+		name                   string
+		root                   interface{}
+		expectedTargetRelPaths RelPaths
 	}{
 		{
-			name:                      "empty",
-			root:                      nil,
-			expectedSortedTargetNames: []string{},
+			name:                   "empty",
+			root:                   nil,
+			expectedTargetRelPaths: RelPaths{},
 		},
 		{
 			name: "scripts",
@@ -1222,7 +1211,7 @@ func TestSourceStateSortedTargetNames(t *testing.T) {
 					"run_last_3last":   "",
 				},
 			},
-			expectedSortedTargetNames: []string{
+			expectedTargetRelPaths: RelPaths{
 				"1first",
 				"2first",
 				"3first",
@@ -1242,7 +1231,7 @@ func TestSourceStateSortedTargetNames(t *testing.T) {
 					WithSystem(NewRealSystem(fs)),
 				)
 				require.NoError(t, s.Read())
-				assert.Equal(t, tc.expectedSortedTargetNames, s.AllTargetNames())
+				assert.Equal(t, tc.expectedTargetRelPaths, s.TargetRelPaths())
 			})
 		})
 	}
@@ -1250,8 +1239,8 @@ func TestSourceStateSortedTargetNames(t *testing.T) {
 
 // evaluateAll evaluates every target state entry in s.
 func (s *SourceState) evaluateAll() error {
-	for _, targetName := range s.AllTargetNames() {
-		sourceStateEntry := s.entries[targetName]
+	for _, targetRelPath := range s.TargetRelPaths() {
+		sourceStateEntry := s.entries[targetRelPath]
 		if err := sourceStateEntry.Evaluate(); err != nil {
 			return err
 		}

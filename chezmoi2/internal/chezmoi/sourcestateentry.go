@@ -4,7 +4,7 @@ package chezmoi
 type SourceStateEntry interface {
 	Evaluate() error
 	Order() int
-	RelPath() SourceRelPath
+	SourceRelPath() SourceRelPath
 	TargetStateEntry() (TargetStateEntry, error)
 }
 
@@ -47,8 +47,8 @@ func (s *SourceStateDir) Order() int {
 	return 0
 }
 
-// RelPath returns s's relative path.
-func (s *SourceStateDir) RelPath() SourceRelPath {
+// SourceRelPath returns s's source relative path.
+func (s *SourceStateDir) SourceRelPath() SourceRelPath {
 	return s.sourceRelPath
 }
 
@@ -68,8 +68,8 @@ func (s *SourceStateFile) Order() int {
 	return s.Attr.Order
 }
 
-// RelPath returns s's relative path.
-func (s *SourceStateFile) RelPath() SourceRelPath {
+// SourceRelPath returns s's source relative path.
+func (s *SourceStateFile) SourceRelPath() SourceRelPath {
 	return s.sourceRelPath
 }
 
@@ -92,8 +92,8 @@ func (s *SourceStateRemove) Order() int {
 	return 0
 }
 
-// RelPath returns s's relative path.
-func (s *SourceStateRemove) RelPath() SourceRelPath {
+// SourceRelPath returns s's source relative path.
+func (s *SourceStateRemove) SourceRelPath() SourceRelPath {
 	return SourceRelPath{}
 }
 
@@ -112,8 +112,8 @@ func (s *SourceStateRenameDir) Order() int {
 	return -1
 }
 
-// RelPath returns s's relative path.
-func (s *SourceStateRenameDir) RelPath() SourceRelPath {
+// SourceRelPath returns s's source relative path.
+func (s *SourceStateRenameDir) SourceRelPath() SourceRelPath {
 	return s.newSourceRelPath
 }
 
