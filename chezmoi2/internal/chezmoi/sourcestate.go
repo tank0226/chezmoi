@@ -135,10 +135,10 @@ type AddOptions struct {
 	umask        os.FileMode
 }
 
-// Add adds destPathInfos to s.
+// Add adds destAbsPathInfos to s.
 func (s *SourceState) Add(sourceSystem System, persistentState PersistentState, destAbsPathInfos map[AbsPath]os.FileInfo, options *AddOptions) error {
 	type update struct {
-		destPath       AbsPath
+		destAbsPath    AbsPath
 		entryState     *EntryState
 		sourceRelPaths []SourceRelPath
 	}
@@ -161,11 +161,11 @@ func (s *SourceState) Add(sourceSystem System, persistentState PersistentState, 
 
 		// Find the target's parent directory in the source state.
 		var parentSourceRelPath SourceRelPath
-		if parentDirTargetName := targetRelPath.Dir(); parentDirTargetName == "." {
+		if targetParentRelPath := targetRelPath.Dir(); targetParentRelPath == "." {
 			parentSourceRelPath = SourceRelPath{}
-		} else if parentDirEntry, ok := newSourceStateEntriesByTargetRelPath[parentDirTargetName]; ok {
+		} else if parentDirEntry, ok := newSourceStateEntriesByTargetRelPath[targetParentRelPath]; ok {
 			parentSourceRelPath = parentDirEntry.SourceRelPath()
-		} else if parentDirEntry, ok := s.entries[parentDirTargetName]; ok {
+		} else if parentDirEntry, ok := s.entries[targetParentRelPath]; ok {
 			parentSourceRelPath = parentDirEntry.SourceRelPath()
 		} else {
 			return fmt.Errorf("%s: parent directory not in source state", destAbsPath)
@@ -190,7 +190,7 @@ func (s *SourceState) Add(sourceSystem System, persistentState PersistentState, 
 			return err
 		}
 		update := update{
-			destPath:       destAbsPath,
+			destAbsPath:    destAbsPath,
 			entryState:     entryState,
 			sourceRelPaths: []SourceRelPath{sourceEntryRelPath},
 		}
@@ -241,7 +241,7 @@ func (s *SourceState) Add(sourceSystem System, persistentState PersistentState, 
 		if err != nil {
 			return err
 		}
-		if err := persistentState.Set(EntryStateBucket, []byte(update.destPath), value); err != nil {
+		if err := persistentState.Set(EntryStateBucket, []byte(update.destAbsPath), value); err != nil {
 			return err
 		}
 	}
@@ -249,8 +249,8 @@ func (s *SourceState) Add(sourceSystem System, persistentState PersistentState, 
 	return nil
 }
 
-// AddDestPathInfos adds an os.FileInfo to destPathInfos for destPath and any of
-// its parents which are not already known.
+// AddDestPathInfos adds an os.FileInfo to destAbsPathInfos for destAbsPath and
+// any of its parents which are not already known.
 func (s *SourceState) AddDestPathInfos(destAbsPathInfos map[AbsPath]os.FileInfo, lstater Lstater, destAbsPath AbsPath, info os.FileInfo) error {
 	for {
 		if _, err := destAbsPath.TrimDirPrefix(s.destDirAbsPath); err != nil {
@@ -274,8 +274,8 @@ func (s *SourceState) AddDestPathInfos(destAbsPathInfos map[AbsPath]os.FileInfo,
 		if parentAbsPath == s.destDirAbsPath {
 			return nil
 		}
-		parentTargetName := parentAbsPath.MustTrimDirPrefix(s.destDirAbsPath)
-		if _, ok := s.entries[parentTargetName]; ok {
+		parentRelPath := parentAbsPath.MustTrimDirPrefix(s.destDirAbsPath)
+		if _, ok := s.entries[parentRelPath]; ok {
 			return nil
 		}
 
@@ -878,10 +878,10 @@ func (s *SourceState) newSourceStateFile(sourceRelPath SourceRelPath, fileAttr F
 }
 
 // sourceStateEntry returns a new SourceStateEntry based on actualStateEntry.
-func (s *SourceState) sourceStateEntry(actualStateEntry ActualStateEntry, destPath AbsPath, info os.FileInfo, parentSourceRelPath SourceRelPath, options *AddOptions) (SourceStateEntry, error) {
+func (s *SourceState) sourceStateEntry(actualStateEntry ActualStateEntry, destAbsPath AbsPath, info os.FileInfo, parentSourceRelPath SourceRelPath, options *AddOptions) (SourceStateEntry, error) {
 	switch actualStateEntry := actualStateEntry.(type) {
 	case *ActualStateAbsent:
-		return nil, fmt.Errorf("%s: not found", destPath)
+		return nil, fmt.Errorf("%s: not found", destAbsPath)
 	case *ActualStateDir:
 		dirAttr := DirAttr{
 			Name:    info.Name(),

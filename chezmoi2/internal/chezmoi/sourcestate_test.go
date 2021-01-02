@@ -16,15 +16,15 @@ import (
 
 func TestSourceStateAdd(t *testing.T) {
 	for _, tc := range []struct {
-		name       string
-		destPaths  []AbsPath
-		addOptions AddOptions
-		extraRoot  interface{}
-		tests      []interface{}
+		name         string
+		destAbsPaths AbsPaths
+		addOptions   AddOptions
+		extraRoot    interface{}
+		tests        []interface{}
 	}{
 		{
 			name: "dir",
-			destPaths: []AbsPath{
+			destAbsPaths: AbsPaths{
 				"/home/user/.dir",
 			},
 			addOptions: AddOptions{
@@ -45,7 +45,7 @@ func TestSourceStateAdd(t *testing.T) {
 		},
 		{
 			name: "dir_change_attributes",
-			destPaths: []AbsPath{
+			destAbsPaths: AbsPaths{
 				"/home/user/.dir",
 			},
 			addOptions: AddOptions{
@@ -73,7 +73,7 @@ func TestSourceStateAdd(t *testing.T) {
 		},
 		{
 			name: "dir_file",
-			destPaths: []AbsPath{
+			destAbsPaths: AbsPaths{
 				"/home/user/.dir/file",
 			},
 			addOptions: AddOptions{
@@ -93,7 +93,7 @@ func TestSourceStateAdd(t *testing.T) {
 		},
 		{
 			name: "dir_file_existing_dir",
-			destPaths: []AbsPath{
+			destAbsPaths: AbsPaths{
 				"/home/user/.dir/file",
 			},
 			addOptions: AddOptions{
@@ -111,7 +111,7 @@ func TestSourceStateAdd(t *testing.T) {
 		},
 		{
 			name: "dir_subdir",
-			destPaths: []AbsPath{
+			destAbsPaths: AbsPaths{
 				"/home/user/.dir/subdir",
 			},
 			addOptions: AddOptions{
@@ -133,7 +133,7 @@ func TestSourceStateAdd(t *testing.T) {
 		},
 		{
 			name: "dir_subdir_file",
-			destPaths: []AbsPath{
+			destAbsPaths: AbsPaths{
 				"/home/user/.dir/subdir/file",
 			},
 			addOptions: AddOptions{
@@ -160,7 +160,7 @@ func TestSourceStateAdd(t *testing.T) {
 		},
 		{
 			name: "dir_subdir_file_existing_dir_subdir",
-			destPaths: []AbsPath{
+			destAbsPaths: AbsPaths{
 				"/home/user/.dir/subdir/file",
 			},
 			addOptions: AddOptions{
@@ -178,7 +178,7 @@ func TestSourceStateAdd(t *testing.T) {
 		},
 		{
 			name: "empty",
-			destPaths: []AbsPath{
+			destAbsPaths: AbsPaths{
 				"/home/user/.empty",
 			},
 			addOptions: AddOptions{
@@ -192,7 +192,7 @@ func TestSourceStateAdd(t *testing.T) {
 		},
 		{
 			name: "empty_with_empty",
-			destPaths: []AbsPath{
+			destAbsPaths: AbsPaths{
 				"/home/user/.empty",
 			},
 			addOptions: AddOptions{
@@ -209,7 +209,7 @@ func TestSourceStateAdd(t *testing.T) {
 		},
 		{
 			name: "executable_unix",
-			destPaths: []AbsPath{
+			destAbsPaths: AbsPaths{
 				"/home/user/.executable",
 			},
 			addOptions: AddOptions{
@@ -225,7 +225,7 @@ func TestSourceStateAdd(t *testing.T) {
 		},
 		{
 			name: "executable_windows",
-			destPaths: []AbsPath{
+			destAbsPaths: AbsPaths{
 				"/home/user/.executable",
 			},
 			addOptions: AddOptions{
@@ -241,7 +241,7 @@ func TestSourceStateAdd(t *testing.T) {
 		},
 		{
 			name: "exists",
-			destPaths: []AbsPath{
+			destAbsPaths: AbsPaths{
 				"/home/user/.exists",
 			},
 			addOptions: AddOptions{
@@ -258,7 +258,7 @@ func TestSourceStateAdd(t *testing.T) {
 		},
 		{
 			name: "file",
-			destPaths: []AbsPath{
+			destAbsPaths: AbsPaths{
 				"/home/user/.file",
 			},
 			addOptions: AddOptions{
@@ -274,7 +274,7 @@ func TestSourceStateAdd(t *testing.T) {
 		},
 		{
 			name: "file_change_attributes",
-			destPaths: []AbsPath{
+			destAbsPaths: AbsPaths{
 				"/home/user/.file",
 			},
 			addOptions: AddOptions{
@@ -296,7 +296,7 @@ func TestSourceStateAdd(t *testing.T) {
 		},
 		{
 			name: "file_replace_contents",
-			destPaths: []AbsPath{
+			destAbsPaths: AbsPaths{
 				"/home/user/.file",
 			},
 			addOptions: AddOptions{
@@ -315,7 +315,7 @@ func TestSourceStateAdd(t *testing.T) {
 		},
 		{
 			name: "private_unix",
-			destPaths: []AbsPath{
+			destAbsPaths: AbsPaths{
 				"/home/user/.private",
 			},
 			addOptions: AddOptions{
@@ -331,7 +331,7 @@ func TestSourceStateAdd(t *testing.T) {
 		},
 		{
 			name: "private_windows",
-			destPaths: []AbsPath{
+			destAbsPaths: AbsPaths{
 				"/home/user/.private",
 			},
 			addOptions: AddOptions{
@@ -347,7 +347,7 @@ func TestSourceStateAdd(t *testing.T) {
 		},
 		{
 			name: "symlink",
-			destPaths: []AbsPath{
+			destAbsPaths: AbsPaths{
 				"/home/user/.symlink",
 			},
 			addOptions: AddOptions{
@@ -367,7 +367,7 @@ func TestSourceStateAdd(t *testing.T) {
 		},
 		{
 			name: "symlink_windows",
-			destPaths: []AbsPath{
+			destAbsPaths: AbsPaths{
 				"/home/user/.symlink_windows",
 			},
 			addOptions: AddOptions{
@@ -387,7 +387,7 @@ func TestSourceStateAdd(t *testing.T) {
 		},
 		{
 			name: "template",
-			destPaths: []AbsPath{
+			destAbsPaths: AbsPaths{
 				"/home/user/.template",
 			},
 			addOptions: AddOptions{
@@ -404,7 +404,7 @@ func TestSourceStateAdd(t *testing.T) {
 		},
 		{
 			name: "dir_and_dir_file",
-			destPaths: []AbsPath{
+			destAbsPaths: AbsPaths{
 				"/home/user/.dir",
 				"/home/user/.dir/file",
 			},
@@ -425,7 +425,7 @@ func TestSourceStateAdd(t *testing.T) {
 		},
 		{
 			name: "file_in_dir_exact_subdir",
-			destPaths: []AbsPath{
+			destAbsPaths: AbsPaths{
 				"/home/user/.dir/subdir/file",
 			},
 			addOptions: AddOptions{
@@ -490,11 +490,11 @@ func TestSourceStateAdd(t *testing.T) {
 				require.NoError(t, s.Read())
 				require.NoError(t, s.evaluateAll())
 
-				destPathInfos := make(map[AbsPath]os.FileInfo)
-				for _, destPath := range tc.destPaths {
-					require.NoError(t, s.AddDestPathInfos(destPathInfos, system, destPath, nil))
+				destAbsPathInfos := make(map[AbsPath]os.FileInfo)
+				for _, destAbsPath := range tc.destAbsPaths {
+					require.NoError(t, s.AddDestPathInfos(destAbsPathInfos, system, destAbsPath, nil))
 				}
-				require.NoError(t, s.Add(system, persistentState, destPathInfos, &tc.addOptions))
+				require.NoError(t, s.Add(system, persistentState, destAbsPathInfos, &tc.addOptions))
 
 				vfst.RunTests(t, fs, "", tc.tests...)
 			})
@@ -996,7 +996,7 @@ func TestSourceStateRead(t *testing.T) {
 			expectedSourceState: NewSourceState(
 				withEntries(map[RelPath]SourceStateEntry{
 					"dir": &SourceStateDir{
-						sourceRelPath: NewSourceRelDirPath("dir"),
+						sourceRelPath: NewSourceRelDirPath("exact_dir"),
 						Attr: DirAttr{
 							Name:  "dir",
 							Exact: true,
@@ -1006,7 +1006,7 @@ func TestSourceStateRead(t *testing.T) {
 						},
 					},
 					"dir/file1": &SourceStateFile{
-						sourceRelPath: NewSourceRelPath("dir/file1"),
+						sourceRelPath: NewSourceRelPath("exact_dir/file1"),
 						Attr: FileAttr{
 							Name: "file1",
 							Type: SourceFileTypeFile,
