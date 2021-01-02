@@ -40,8 +40,8 @@ type TargetStatePresent struct {
 // A TargetStateRenameDir represents the renaming of a directory in the target
 // state.
 type TargetStateRenameDir struct {
-	oldName RelPath
-	newName RelPath
+	oldRelPath RelPath
+	newRelPath RelPath
 }
 
 // A TargetStateScript represents the state of a script.
@@ -247,7 +247,7 @@ func (t *TargetStatePresent) Evaluate() error {
 // Apply renames actualStateEntry.
 func (t *TargetStateRenameDir) Apply(system System, persistentState PersistentState, actualStateEntry ActualStateEntry, umask os.FileMode) error {
 	dir := actualStateEntry.Path().Dir()
-	return system.Rename(dir.Join(t.oldName).String(), dir.Join(t.newName).String())
+	return system.Rename(dir.Join(t.oldRelPath).String(), dir.Join(t.newRelPath).String())
 }
 
 // EntryState returns t's entry state.

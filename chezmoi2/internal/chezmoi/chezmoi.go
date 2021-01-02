@@ -75,13 +75,13 @@ var modeTypeNames = map[os.FileMode]string{
 }
 
 type errDuplicateTarget struct {
-	targetRelPath RelPath
-	sourcePaths   []SourceRelPath
+	targetRelPath  RelPath
+	sourceRelPaths SourceRelPaths
 }
 
 func (e *errDuplicateTarget) Error() string {
-	sourcePathStrs := make([]string, 0, len(e.sourcePaths))
-	for _, sourcePath := range e.sourcePaths {
+	sourcePathStrs := make([]string, 0, len(e.sourceRelPaths))
+	for _, sourcePath := range e.sourceRelPaths {
 		sourcePathStrs = append(sourcePathStrs, sourcePath.String())
 	}
 	return fmt.Sprintf("%s: duplicate target (%s)", e.targetRelPath, strings.Join(sourcePathStrs, ", "))

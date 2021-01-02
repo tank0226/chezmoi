@@ -140,7 +140,7 @@ func (s *SourceState) Add(sourceSystem System, persistentState PersistentState, 
 	type update struct {
 		destAbsPath    AbsPath
 		entryState     *EntryState
-		sourceRelPaths []SourceRelPath
+		sourceRelPaths SourceRelPaths
 	}
 
 	destAbsPaths := make(AbsPaths, 0, len(destAbsPathInfos))
@@ -192,7 +192,7 @@ func (s *SourceState) Add(sourceSystem System, persistentState PersistentState, 
 		update := update{
 			destAbsPath:    destAbsPath,
 			entryState:     entryState,
-			sourceRelPaths: []SourceRelPath{sourceEntryRelPath},
+			sourceRelPaths: SourceRelPaths{sourceEntryRelPath},
 		}
 
 		if oldSourceStateEntry, ok := s.entries[targetRelPath]; ok {
@@ -222,7 +222,7 @@ func (s *SourceState) Add(sourceSystem System, persistentState PersistentState, 
 
 	entries := make(map[RelPath]SourceStateEntry)
 	for sourceRelPath, sourceStateEntry := range newSourceStateEntries {
-		entries[RelPath(sourceRelPath.String())] = sourceStateEntry
+		entries[sourceRelPath.RelPath()] = sourceStateEntry
 	}
 	targetSourceState := &SourceState{
 		entries: entries,
@@ -230,7 +230,7 @@ func (s *SourceState) Add(sourceSystem System, persistentState PersistentState, 
 
 	for _, update := range updates {
 		for _, sourceRelPath := range update.sourceRelPaths {
-			if err := targetSourceState.Apply(sourceSystem, NullPersistentState{}, s.sourceDirAbsPath, RelPath(sourceRelPath.String()), ApplyOptions{
+			if err := targetSourceState.Apply(sourceSystem, NullPersistentState{}, s.sourceDirAbsPath, sourceRelPath.RelPath(), ApplyOptions{
 				Include: options.Include,
 				Umask:   options.umask,
 			}); err != nil {
@@ -434,7 +434,7 @@ func (s *SourceState) Read() error {
 		parentSourceRelPath, sourceName := sourceRelPath.Split()
 		// Follow symlinks in the source directory.
 		if info.Mode()&os.ModeType == os.ModeSymlink {
-			info, err = s.system.Stat(sourceRelPath.String())
+			info, err = s.system.Stat(s.sourceDirAbsPath.Join(sourceRelPath.RelPath()).String())
 			if err != nil {
 				return err
 			}
@@ -583,8 +583,8 @@ func (s *SourceState) Read() error {
 		}
 		sort.Sort(sourceRelPaths)
 		err = multierr.Append(err, &errDuplicateTarget{
-			targetRelPath: targetRelPath,
-			sourcePaths:   sourceRelPaths,
+			targetRelPath:  targetRelPath,
+			sourceRelPaths: sourceRelPaths,
 		})
 	}
 	if err != nil {
@@ -781,7 +781,7 @@ func (s *SourceState) newSourceStateDir(sourceRelPath SourceRelPath, dirAttr Dir
 func (s *SourceState) newSourceStateFile(sourceRelPath SourceRelPath, fileAttr FileAttr, targetRelPath RelPath) *SourceStateFile {
 	lazyContents := &lazyContents{
 		contentsFunc: func() ([]byte, error) {
-			contents, err := s.system.ReadFile(s.sourceDirAbsPath.Join(RelPath(sourceRelPath.String())).String())
+			contents, err := s.system.ReadFile(s.sourceDirAbsPath.Join(sourceRelPath.RelPath()).String())
 			if err != nil {
 				return nil, err
 			}

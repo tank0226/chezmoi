@@ -42,7 +42,7 @@ func (p SourceRelPath) Dir() SourceRelPath {
 
 // Join appends elems to p.
 func (p SourceRelPath) Join(elems ...SourceRelPath) SourceRelPath {
-	elemRelPaths := make([]RelPath, 0, len(elems))
+	elemRelPaths := make(RelPaths, 0, len(elems))
 	for _, elem := range elems {
 		elemRelPaths = append(elemRelPaths, elem.relPath)
 	}
@@ -51,10 +51,19 @@ func (p SourceRelPath) Join(elems ...SourceRelPath) SourceRelPath {
 	}
 }
 
+// RelPath returns p as a relative path.
+func (p SourceRelPath) RelPath() RelPath {
+	return p.relPath
+}
+
 // Split returns the p's file and directory.
 func (p SourceRelPath) Split() (SourceRelPath, SourceRelPath) {
 	dir, file := p.relPath.Split()
 	return NewSourceRelDirPath(dir), NewSourceRelPath(file)
+}
+
+func (p SourceRelPath) String() string {
+	return p.relPath.String()
 }
 
 // TargetRelPath returns the relative path of p's target.
@@ -75,8 +84,4 @@ func (p SourceRelPath) TargetRelPath() RelPath {
 		relPathNames = append(relPathNames, fileAttr.Name)
 	}
 	return RelPath(strings.Join(relPathNames, "/"))
-}
-
-func (p SourceRelPath) String() string {
-	return p.relPath.String()
 }

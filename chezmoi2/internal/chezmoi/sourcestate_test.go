@@ -544,7 +544,7 @@ func TestSourceStateApplyAll(t *testing.T) {
 						"file": "# contents of .dir/file\n",
 					},
 					".local/share/chezmoi": map[string]interface{}{
-						"exact_dir": &vfst.Dir{Perm: 0o777},
+						"exact_dot_dir": &vfst.Dir{Perm: 0o777},
 					},
 				},
 			},
