@@ -95,14 +95,14 @@ func (c *Config) runChattrCmd(cmd *cobra.Command, args []string, sourceState *ch
 	for _, targetRelPath := range targetRelPaths {
 		sourceStateEntry := sourceState.MustEntry(targetRelPath)
 		sourceRelPath := sourceStateEntry.SourceRelPath()
-		parentDirSourceRelPath, baseName := sourceRelPath.Split()
-		parentDirRelPath := parentDirSourceRelPath.RelPath()
-		baseNameRelPath := baseName.RelPath()
+		parentSourceRelPath, fileSourceRelPath := sourceRelPath.Split()
+		parentRelPath := parentSourceRelPath.RelPath()
+		fileRelPath := fileSourceRelPath.RelPath()
 		switch sourceStateEntry := sourceStateEntry.(type) {
 		case *chezmoi.SourceStateDir:
-			if newBaseNameRelPath := chezmoi.RelPath(am.modifyDirAttr(sourceStateEntry.Attr).BaseName()); newBaseNameRelPath != baseNameRelPath {
-				oldSourcePath := c.normalizedSourceDir.Join(parentDirRelPath, baseNameRelPath)
-				newSourcePath := c.normalizedSourceDir.Join(parentDirRelPath, newBaseNameRelPath)
+			if newBaseNameRelPath := chezmoi.RelPath(am.modifyDirAttr(sourceStateEntry.Attr).SourceName()); newBaseNameRelPath != fileRelPath {
+				oldSourcePath := c.normalizedSourceDir.Join(parentRelPath, fileRelPath)
+				newSourcePath := c.normalizedSourceDir.Join(parentRelPath, newBaseNameRelPath)
 				if err := c.sourceSystem.Rename(string(oldSourcePath), string(newSourcePath)); err != nil {
 					return err
 				}
@@ -110,9 +110,9 @@ func (c *Config) runChattrCmd(cmd *cobra.Command, args []string, sourceState *ch
 		case *chezmoi.SourceStateFile:
 			// FIXME encrypted attribute changes
 			// FIXME when changing encrypted attribute add new file before removing old one
-			if newBaseNameRelPath := chezmoi.RelPath(am.modifyFileAttr(sourceStateEntry.Attr).BaseName()); newBaseNameRelPath != baseNameRelPath {
-				oldSourcePath := c.normalizedSourceDir.Join(parentDirRelPath, baseNameRelPath)
-				newSourcePath := c.normalizedSourceDir.Join(parentDirRelPath, newBaseNameRelPath)
+			if newBaseNameRelPath := chezmoi.RelPath(am.modifyFileAttr(sourceStateEntry.Attr).SourceName()); newBaseNameRelPath != fileRelPath {
+				oldSourcePath := c.normalizedSourceDir.Join(parentRelPath, fileRelPath)
+				newSourcePath := c.normalizedSourceDir.Join(parentRelPath, newBaseNameRelPath)
 				if err := c.sourceSystem.Rename(oldSourcePath.String(), newSourcePath.String()); err != nil {
 					return err
 				}

@@ -163,10 +163,10 @@ func (s *SourceState) Add(sourceSystem System, persistentState PersistentState, 
 		var parentSourceRelPath SourceRelPath
 		if targetParentRelPath := targetRelPath.Dir(); targetParentRelPath == "." {
 			parentSourceRelPath = SourceRelPath{}
-		} else if parentDirEntry, ok := newSourceStateEntriesByTargetRelPath[targetParentRelPath]; ok {
-			parentSourceRelPath = parentDirEntry.SourceRelPath()
-		} else if parentDirEntry, ok := s.entries[targetParentRelPath]; ok {
-			parentSourceRelPath = parentDirEntry.SourceRelPath()
+		} else if parentEntry, ok := newSourceStateEntriesByTargetRelPath[targetParentRelPath]; ok {
+			parentSourceRelPath = parentEntry.SourceRelPath()
+		} else if parentEntry, ok := s.entries[targetParentRelPath]; ok {
+			parentSourceRelPath = parentEntry.SourceRelPath()
 		} else {
 			return fmt.Errorf("%s: parent directory not in source state", destAbsPath)
 		}
@@ -890,7 +890,7 @@ func (s *SourceState) sourceStateEntry(actualStateEntry ActualStateEntry, destAb
 		}
 		return &SourceStateDir{
 			Attr:          dirAttr,
-			sourceRelPath: parentSourceRelPath.Join(NewSourceRelDirPath(RelPath(dirAttr.BaseName()))),
+			sourceRelPath: parentSourceRelPath.Join(NewSourceRelDirPath(RelPath(dirAttr.SourceName()))),
 			targetStateEntry: &TargetStateDir{
 				perm: 0o777,
 			},
@@ -924,7 +924,7 @@ func (s *SourceState) sourceStateEntry(actualStateEntry ActualStateEntry, destAb
 		}
 		return &SourceStateFile{
 			Attr:          fileAttr,
-			sourceRelPath: parentSourceRelPath.Join(NewSourceRelPath(RelPath(fileAttr.BaseName()))),
+			sourceRelPath: parentSourceRelPath.Join(NewSourceRelPath(RelPath(fileAttr.SourceName()))),
 			lazyContents:  lazyContents,
 			targetStateEntry: &TargetStateFile{
 				lazyContents: lazyContents,
@@ -951,7 +951,7 @@ func (s *SourceState) sourceStateEntry(actualStateEntry ActualStateEntry, destAb
 		}
 		return &SourceStateFile{
 			Attr:          fileAttr,
-			sourceRelPath: parentSourceRelPath.Join(NewSourceRelPath(RelPath(fileAttr.BaseName()))),
+			sourceRelPath: parentSourceRelPath.Join(NewSourceRelPath(RelPath(fileAttr.SourceName()))),
 			lazyContents:  lazyContents,
 			targetStateEntry: &TargetStateFile{
 				lazyContents: lazyContents,

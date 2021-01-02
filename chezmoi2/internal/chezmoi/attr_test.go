@@ -32,10 +32,10 @@ func TestDirAttr(t *testing.T) {
 	var das []DirAttr
 	require.NoError(t, combinator.Generate(&das, testData))
 	for _, da := range das {
-		actualSourceName := da.BaseName()
+		actualSourceName := da.SourceName()
 		actualDA := parseDirAttr(actualSourceName)
 		assert.Equal(t, da, actualDA)
-		assert.Equal(t, actualSourceName, actualDA.BaseName())
+		assert.Equal(t, actualSourceName, actualDA.SourceName())
 	}
 }
 
@@ -108,9 +108,9 @@ func TestFileAttr(t *testing.T) {
 		},
 	}))
 	for _, fa := range fas {
-		actualSourceName := fa.BaseName()
+		actualSourceName := fa.SourceName()
 		actualFA := parseFileAttr(actualSourceName)
 		assert.Equal(t, fa, actualFA)
-		assert.Equal(t, actualSourceName, actualFA.BaseName())
+		assert.Equal(t, actualSourceName, actualFA.SourceName())
 	}
 }

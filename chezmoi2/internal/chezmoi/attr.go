@@ -63,8 +63,8 @@ func parseDirAttr(sourceName string) DirAttr {
 	}
 }
 
-// BaseName returns da's source name.
-func (da DirAttr) BaseName() string {
+// SourceName returns da's source name.
+func (da DirAttr) SourceName() string {
 	sourceName := ""
 	if da.Exact {
 		sourceName += exactPrefix
@@ -174,8 +174,8 @@ func parseFileAttr(sourceName string) FileAttr {
 	}
 }
 
-// BaseName returns fa's source name.
-func (fa FileAttr) BaseName() string {
+// SourceName returns fa's source name.
+func (fa FileAttr) SourceName() string {
 	sourceName := ""
 	switch fa.Type {
 	case SourceFileTypeFile:
