@@ -442,15 +442,15 @@ func (c *Config) defaultTemplateData() map[string]interface{} {
 	}
 }
 
-func (c *Config) destPathInfos(sourceState *chezmoi.SourceState, args []string, recursive, follow bool) (map[string]os.FileInfo, error) {
-	destPathInfos := make(map[string]os.FileInfo)
+func (c *Config) destPathInfos(sourceState *chezmoi.SourceState, args []string, recursive, follow bool) (map[chezmoi.AbsPath]os.FileInfo, error) {
+	destPathInfos := make(map[chezmoi.AbsPath]os.FileInfo)
 	for _, arg := range args {
 		destPath, err := c.normalizedDestPath(chezmoi.NewOSPath(arg))
 		if err != nil {
 			return nil, err
 		}
 		if recursive {
-			if err := vfs.WalkSlash(c.destSystem, destPath, func(destPath string, info os.FileInfo, err error) error {
+			if err := vfs.WalkSlash(c.destSystem, destPath, func(destPathStr string, info os.FileInfo, err error) error {
 				if err != nil {
 					return err
 				}
@@ -460,7 +460,7 @@ func (c *Config) destPathInfos(sourceState *chezmoi.SourceState, args []string, 
 						return err
 					}
 				}
-				return sourceState.AddDestPathInfos(destPathInfos, c.destSystem, destPath, info)
+				return sourceState.AddDestPathInfos(destPathInfos, c.destSystem, destPathStr, info)
 			}); err != nil {
 				return nil, err
 			}
@@ -759,7 +759,7 @@ func (c *Config) newRootCmd() (*cobra.Command, error) {
 	return rootCmd, nil
 }
 
-func (c *Config) normalizedDestPath(arg *chezmoi.OSPath) (string, error) {
+func (c *Config) normalizedDestPath(arg *chezmoi.OSPath) (chezmoi.AbsPath, error) {
 	normalizedPath, err := arg.Normalize(c.normalizedHomeDir)
 	if err != nil {
 		return "", err

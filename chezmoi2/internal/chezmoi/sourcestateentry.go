@@ -3,15 +3,15 @@ package chezmoi
 // A SourceStateEntry represents the state of an entry in the source state.
 type SourceStateEntry interface {
 	Evaluate() error
-	Name() SourceStatePath
 	Order() int
+	RelPath() SourceRelPath
 	TargetStateEntry() (TargetStateEntry, error)
 }
 
 // A SourceStateDir represents the state of a directory in the source state.
 type SourceStateDir struct {
 	Attr             DirAttr
-	name             SourceStatePath
+	sourceRelPath    SourceRelPath
 	targetStateEntry TargetStateEntry
 }
 
@@ -19,7 +19,7 @@ type SourceStateDir struct {
 type SourceStateFile struct {
 	*lazyContents
 	Attr                 FileAttr
-	name                 SourceStatePath
+	sourceRelPath        SourceRelPath
 	targetStateEntryFunc func() (TargetStateEntry, error)
 	targetStateEntry     TargetStateEntry
 	targetStateEntryErr  error
@@ -27,14 +27,14 @@ type SourceStateFile struct {
 
 // A SourceStateRemove represents that an entry should be removed.
 type SourceStateRemove struct {
-	name SourceStatePath
+	targetRelPath RelPath
 }
 
 // A SourceStateRenameDir represents the renaming of a directory in the source
 // state.
 type SourceStateRenameDir struct {
-	oldName SourceStatePath
-	newName SourceStatePath
+	oldSourceRelPath SourceRelPath
+	newSourceRelPath SourceRelPath
 }
 
 // Evaluate evaluates s and returns any error.
@@ -42,14 +42,14 @@ func (s *SourceStateDir) Evaluate() error {
 	return nil
 }
 
-// Name returns s's name.
-func (s *SourceStateDir) Name() SourceStatePath {
-	return s.name
-}
-
 // Order returns s's order.
 func (s *SourceStateDir) Order() int {
 	return 0
+}
+
+// RelPath returns s's relative path.
+func (s *SourceStateDir) RelPath() SourceRelPath {
+	return s.sourceRelPath
 }
 
 // TargetStateEntry returns s's target state entry.
@@ -63,14 +63,14 @@ func (s *SourceStateFile) Evaluate() error {
 	return err
 }
 
-// Name returns s's name.
-func (s *SourceStateFile) Name() SourceStatePath {
-	return s.name
-}
-
 // Order returns s's order.
 func (s *SourceStateFile) Order() int {
 	return s.Attr.Order
+}
+
+// RelPath returns s's relative path.
+func (s *SourceStateFile) RelPath() SourceRelPath {
+	return s.sourceRelPath
 }
 
 // TargetStateEntry returns s's target state entry.
@@ -87,14 +87,14 @@ func (s *SourceStateRemove) Evaluate() error {
 	return nil
 }
 
-// Name returns s's name.
-func (s *SourceStateRemove) Name() SourceStatePath {
-	return s.name
-}
-
 // Order returns s's order.
 func (s *SourceStateRemove) Order() int {
 	return 0
+}
+
+// RelPath returns s's relative path.
+func (s *SourceStateRemove) RelPath() SourceRelPath {
+	return SourceRelPath{}
 }
 
 // TargetStateEntry returns s's target state entry.
@@ -112,15 +112,15 @@ func (s *SourceStateRenameDir) Order() int {
 	return -1
 }
 
-// Name returns s's name.
-func (s *SourceStateRenameDir) Name() SourceStatePath {
-	return s.newName
+// RelPath returns s's relative path.
+func (s *SourceStateRenameDir) RelPath() SourceRelPath {
+	return s.newSourceRelPath
 }
 
 // TargetStateEntry returns s's target state entry.
 func (s *SourceStateRenameDir) TargetStateEntry() (TargetStateEntry, error) {
 	return &TargetStateRenameDir{
-		oldName: RelPath(s.oldName.String()),
-		newName: RelPath(s.newName.String()),
+		oldName: RelPath(s.oldSourceRelPath.String()),
+		newName: RelPath(s.newSourceRelPath.String()),
 	}, nil
 }

@@ -756,7 +756,7 @@ func TestSourceStateRead(t *testing.T) {
 			expectedSourceState: NewSourceState(
 				withEntries(map[string]SourceStateEntry{
 					"foo": &SourceStateDir{
-						name: "/home/user/.local/share/chezmoi/foo",
+						sourceRelPath: "/home/user/.local/share/chezmoi/foo",
 						Attr: DirAttr{
 							Name: "foo",
 						},
@@ -777,7 +777,7 @@ func TestSourceStateRead(t *testing.T) {
 			expectedSourceState: NewSourceState(
 				withEntries(map[string]SourceStateEntry{
 					"foo": &SourceStateFile{
-						name: "/home/user/.local/share/chezmoi/foo",
+						sourceRelPath: "/home/user/.local/share/chezmoi/foo",
 						Attr: FileAttr{
 							Name: "foo",
 							Type: SourceFileTypeFile,
@@ -832,7 +832,7 @@ func TestSourceStateRead(t *testing.T) {
 			expectedSourceState: NewSourceState(
 				withEntries(map[string]SourceStateEntry{
 					"bar": &SourceStateFile{
-						name: "/home/user/.local/share/chezmoi/bar",
+						sourceRelPath: "/home/user/.local/share/chezmoi/bar",
 						Attr: FileAttr{
 							Name: "bar",
 							Type: SourceFileTypeFile,
@@ -844,7 +844,7 @@ func TestSourceStateRead(t *testing.T) {
 						},
 					},
 					"foo": &SourceStateFile{
-						name: "/home/user/.local/share/chezmoi/executable_foo",
+						sourceRelPath: "/home/user/.local/share/chezmoi/executable_foo",
 						Attr: FileAttr{
 							Name:       "foo",
 							Type:       SourceFileTypeFile,
@@ -870,7 +870,7 @@ func TestSourceStateRead(t *testing.T) {
 			expectedSourceState: NewSourceState(
 				withEntries(map[string]SourceStateEntry{
 					"bar": &SourceStateFile{
-						name: "/home/user/.local/share/chezmoi/bar",
+						sourceRelPath: "/home/user/.local/share/chezmoi/bar",
 						Attr: FileAttr{
 							Name: "bar",
 							Type: SourceFileTypeFile,
@@ -882,7 +882,7 @@ func TestSourceStateRead(t *testing.T) {
 						},
 					},
 					"foo": &SourceStateFile{
-						name: "/home/user/.local/share/chezmoi/run_foo",
+						sourceRelPath: "/home/user/.local/share/chezmoi/run_foo",
 						Attr: FileAttr{
 							Name: "foo",
 							Type: SourceFileTypeScript,
@@ -906,7 +906,7 @@ func TestSourceStateRead(t *testing.T) {
 			expectedSourceState: NewSourceState(
 				withEntries(map[string]SourceStateEntry{
 					"foo": &SourceStateFile{
-						name: "/home/user/.local/share/chezmoi/run_foo",
+						sourceRelPath: "/home/user/.local/share/chezmoi/run_foo",
 						Attr: FileAttr{
 							Name: "foo",
 							Type: SourceFileTypeScript,
@@ -930,7 +930,7 @@ func TestSourceStateRead(t *testing.T) {
 			expectedSourceState: NewSourceState(
 				withEntries(map[string]SourceStateEntry{
 					"foo": &SourceStateFile{
-						name: "/home/user/.local/share/chezmoi/symlink_foo",
+						sourceRelPath: "/home/user/.local/share/chezmoi/symlink_foo",
 						Attr: FileAttr{
 							Name: "foo",
 							Type: SourceFileTypeSymlink,
@@ -955,7 +955,7 @@ func TestSourceStateRead(t *testing.T) {
 			expectedSourceState: NewSourceState(
 				withEntries(map[string]SourceStateEntry{
 					"foo": &SourceStateDir{
-						name: "/home/user/.local/share/chezmoi/foo",
+						sourceRelPath: "/home/user/.local/share/chezmoi/foo",
 						Attr: DirAttr{
 							Name: "foo",
 						},
@@ -964,7 +964,7 @@ func TestSourceStateRead(t *testing.T) {
 						},
 					},
 					"foo/bar": &SourceStateFile{
-						name: "/home/user/.local/share/chezmoi/foo/bar",
+						sourceRelPath: "/home/user/.local/share/chezmoi/foo/bar",
 						Attr: FileAttr{
 							Name: "bar",
 							Type: SourceFileTypeFile,
@@ -1031,7 +1031,7 @@ func TestSourceStateRead(t *testing.T) {
 			expectedSourceState: NewSourceState(
 				withEntries(map[string]SourceStateEntry{
 					"dir": &SourceStateDir{
-						name: "/home/user/.local/share/chezmoi/exact_dir",
+						sourceRelPath: "/home/user/.local/share/chezmoi/exact_dir",
 						Attr: DirAttr{
 							Name:  "dir",
 							Exact: true,
@@ -1041,7 +1041,7 @@ func TestSourceStateRead(t *testing.T) {
 						},
 					},
 					"dir/bar": &SourceStateFile{
-						name: "/home/user/.local/share/chezmoi/exact_dir/bar",
+						sourceRelPath: "/home/user/.local/share/chezmoi/exact_dir/bar",
 						Attr: FileAttr{
 							Name: "bar",
 							Type: SourceFileTypeFile,
@@ -1057,7 +1057,7 @@ func TestSourceStateRead(t *testing.T) {
 						},
 					},
 					"dir/foo": &SourceStateRemove{
-						name: "/home/user/.local/share/chezmoi/exact_dir",
+						targetRelPath: "/home/user/.local/share/chezmoi/exact_dir",
 					},
 				}),
 				withIgnore(
@@ -1078,7 +1078,7 @@ func TestSourceStateRead(t *testing.T) {
 			expectedSourceState: NewSourceState(
 				withEntries(map[string]SourceStateEntry{
 					"foo": &SourceStateRemove{
-						name: "/home/user/.local/share/chezmoi/.chezmoiremove/foo",
+						targetRelPath: "/home/user/.local/share/chezmoi/.chezmoiremove/foo",
 					},
 				}),
 			),
@@ -1098,7 +1098,7 @@ func TestSourceStateRead(t *testing.T) {
 			expectedSourceState: NewSourceState(
 				withEntries(map[string]SourceStateEntry{
 					"bar": &SourceStateRemove{
-						name: "/home/user/.local/share/chezmoi/.chezmoiremove/bar",
+						targetRelPath: "/home/user/.local/share/chezmoi/.chezmoiremove/bar",
 					},
 				}),
 				withIgnore(
@@ -1155,7 +1155,7 @@ func TestSourceStateRead(t *testing.T) {
 			expectedSourceState: NewSourceState(
 				withEntries(map[string]SourceStateEntry{
 					"foo": &SourceStateDir{
-						name: "/home/user/.local/share/chezmoi/foo",
+						sourceRelPath: "/home/user/.local/share/chezmoi/foo",
 						Attr: DirAttr{
 							Name: "foo",
 						},

@@ -137,46 +137,46 @@ type AddOptions struct {
 }
 
 // Add adds destPathInfos to s.
-func (s *SourceState) Add(sourceSystem System, persistentState PersistentState, destPathInfos map[AbsPath]os.FileInfo, options *AddOptions) error {
+func (s *SourceState) Add(sourceSystem System, persistentState PersistentState, destAbsPathInfos map[AbsPath]os.FileInfo, options *AddOptions) error {
 	type update struct {
-		destPath              AbsPath
-		entryState            *EntryState
-		sourceStateEntryNames []RelPath
+		destPath       AbsPath
+		entryState     *EntryState
+		sourceRelPaths []SourceRelPath
 	}
 
-	destPaths := make([]AbsPath, 0, len(destPathInfos))
-	for destPath := range destPathInfos {
-		destPaths = append(destPaths, destPath)
+	destAbsPaths := make(AbsPaths, 0, len(destAbsPathInfos))
+	for destAbsPath := range destAbsPathInfos {
+		destAbsPaths = append(destAbsPaths, destAbsPath)
 	}
-	sort.Sort(absPathsByName(destPaths))
+	sort.Sort(destAbsPaths)
 
-	updates := make([]update, 0, len(destPathInfos))
-	newSourceStateEntries := make(map[RelPath]SourceStateEntry)
-	newSourceStateEntriesByTargetName := make(map[RelPath]SourceStateEntry)
-	for _, destPath := range destPaths {
-		destPathInfo := destPathInfos[destPath]
-		if !options.Include.IncludeFileInfo(destPathInfo) {
+	updates := make([]update, 0, len(destAbsPathInfos))
+	newSourceStateEntries := make(map[SourceRelPath]SourceStateEntry)
+	newSourceStateEntriesByTargetRelPath := make(map[RelPath]SourceStateEntry)
+	for _, destAbsPath := range destAbsPaths {
+		destAbsPathInfo := destAbsPathInfos[destAbsPath]
+		if !options.Include.IncludeFileInfo(destAbsPathInfo) {
 			continue
 		}
-		targetName := destPath.MustTrimDirPrefix(s.destDir)
+		targetRelPath := destAbsPath.MustTrimDirPrefix(s.destDir)
 
-		// Find the target's parent directory.
-		var parentDirName string
-		if parentDirTargetName := targetName.Dir(); parentDirTargetName == "." {
-			parentDirName = ""
-		} else if parentDirEntry, ok := newSourceStateEntriesByTargetName[parentDirTargetName]; ok {
-			parentDirName = parentDirEntry.Name()
+		// Find the target's parent directory in the source state.
+		var parentSourceRelPath SourceRelPath
+		if parentDirTargetName := targetRelPath.Dir(); parentDirTargetName == "." {
+			parentSourceRelPath = SourceRelPath{}
+		} else if parentDirEntry, ok := newSourceStateEntriesByTargetRelPath[parentDirTargetName]; ok {
+			parentSourceRelPath = parentDirEntry.RelPath()
 		} else if parentDirEntry, ok := s.entries[parentDirTargetName]; ok {
-			parentDirName = parentDirEntry.Name()
+			parentSourceRelPath = parentDirEntry.RelPath()
 		} else {
-			return fmt.Errorf("%s: parent directory not in source state", destPath)
+			return fmt.Errorf("%s: parent directory not in source state", destAbsPath)
 		}
 
-		actualStateEntry, err := NewActualStateEntry(sourceSystem, destPath, destPathInfo, nil)
+		actualStateEntry, err := NewActualStateEntry(sourceSystem, destAbsPath, destAbsPathInfo, nil)
 		if err != nil {
 			return err
 		}
-		newSourceStateEntry, err := s.sourceStateEntry(actualStateEntry, destPath, destPathInfo, parentDirName, options)
+		newSourceStateEntry, err := s.sourceStateEntry(actualStateEntry, destAbsPath, destAbsPathInfo, parentSourceRelPath, options)
 		if err != nil {
 			return err
 		}
@@ -184,49 +184,54 @@ func (s *SourceState) Add(sourceSystem System, persistentState PersistentState, 
 			continue
 		}
 
-		sourceEntryName := newSourceStateEntry.Name()
+		sourceEntryRelPath := newSourceStateEntry.RelPath()
 
 		entryState, err := actualStateEntry.EntryState()
 		if err != nil {
 			return err
 		}
 		update := update{
-			destPath:              destPath,
-			entryState:            entryState,
-			sourceStateEntryNames: []RelPath{sourceEntryName.RelPath()},
+			destPath:       destAbsPath,
+			entryState:     entryState,
+			sourceRelPaths: []SourceRelPath{sourceEntryRelPath},
 		}
 
-		if oldSourceStateEntry, ok := s.entries[targetName]; ok {
+		if oldSourceStateEntry, ok := s.entries[targetRelPath]; ok {
 			// If both the new and old source state entries are directories but the name has changed,
 			// rename to avoid losing the directory's contents. Otherwise,
 			// remove the old.``
-			if oldSourceEntryName := oldSourceStateEntry.Name(); sourceEntryName != oldSourceEntryName {
+			if oldSourceEntryRelPath := oldSourceStateEntry.RelPath(); sourceEntryRelPath != oldSourceEntryRelPath {
 				_, newIsDir := newSourceStateEntry.(*SourceStateDir)
 				_, oldIsDir := oldSourceStateEntry.(*SourceStateDir)
 				if newIsDir && oldIsDir {
 					newSourceStateEntry = &SourceStateRenameDir{
-						oldName: oldSourceEntryName,
-						newName: sourceEntryName,
+						oldSourceRelPath: oldSourceEntryRelPath,
+						newSourceRelPath: sourceEntryRelPath,
 					}
 				} else {
-					newSourceStateEntries[oldSourceEntryName.RelPath()] = &SourceStateRemove{}
-					update.sourceStateEntryNames = append(update.sourceStateEntryNames, oldSourceEntryName.RelPath())
+					newSourceStateEntries[oldSourceEntryRelPath] = &SourceStateRemove{}
+					update.sourceRelPaths = append(update.sourceRelPaths, oldSourceEntryRelPath)
 				}
 			}
 		}
 
-		newSourceStateEntries[sourceEntryName] = newSourceStateEntry
-		newSourceStateEntriesByTargetName[targetName] = newSourceStateEntry
+		newSourceStateEntries[sourceEntryRelPath] = newSourceStateEntry
+		newSourceStateEntriesByTargetRelPath[targetRelPath] = newSourceStateEntry
 
 		updates = append(updates, update)
 	}
 
-	targetSourceState := &SourceState{
-		entries: newSourceStateEntries,
+	entries := make(map[RelPath]SourceStateEntry)
+	for sourceRelPath, sourceStateEntry := range newSourceStateEntries {
+		entries[RelPath(sourceRelPath.String())] = sourceStateEntry
 	}
+	targetSourceState := &SourceState{
+		entries: entries,
+	}
+
 	for _, update := range updates {
-		for _, sourceEntryName := range update.sourceStateEntryNames {
-			if err := targetSourceState.Apply(sourceSystem, NullPersistentState{}, s.sourceDir, sourceEntryName, ApplyOptions{
+		for _, sourceRelPath := range update.sourceRelPaths {
+			if err := targetSourceState.Apply(sourceSystem, NullPersistentState{}, s.sourceDir, RelPath(sourceRelPath.String()), ApplyOptions{
 				Include: options.Include,
 				Umask:   options.umask,
 			}); err != nil {
@@ -302,7 +307,7 @@ func (s *SourceState) AllTargetNames() []RelPath {
 }
 
 // A PreApplyFunc is called before a target is applied.
-type PreApplyFunc func(targetName string, targetEntryState, lastWrittenEntryState, actualEntryState *EntryState) error
+type PreApplyFunc func(targetName RelPath, targetEntryState, lastWrittenEntryState, actualEntryState *EntryState) error
 
 // ApplyOptions are options to SourceState.ApplyAll and SourceState.ApplyOne.
 type ApplyOptions struct {
@@ -312,8 +317,8 @@ type ApplyOptions struct {
 }
 
 // Apply updates targetName in targetDir in targetSystem to match s.
-func (s *SourceState) Apply(targetSystem System, persistentState PersistentState, targetDir AbsPath, targetName RelPath, options ApplyOptions) error {
-	targetStateEntry, err := s.entries[targetName].TargetStateEntry()
+func (s *SourceState) Apply(targetSystem System, persistentState PersistentState, targetDir AbsPath, targetRelPath RelPath, options ApplyOptions) error {
+	targetStateEntry, err := s.entries[targetRelPath].TargetStateEntry()
 	if err != nil {
 		return err
 	}
@@ -322,21 +327,21 @@ func (s *SourceState) Apply(targetSystem System, persistentState PersistentState
 		return nil
 	}
 
-	targetPath := targetDir.Join(targetName)
+	targetAbsPath := targetDir.Join(targetRelPath)
 
 	targetEntryState, err := targetStateEntry.EntryState()
 	if err != nil {
 		return err
 	}
 
-	actualStateEntry, err := NewActualStateEntry(targetSystem, targetPath, nil, nil)
+	actualStateEntry, err := NewActualStateEntry(targetSystem, targetAbsPath, nil, nil)
 	if err != nil {
 		return err
 	}
 
 	if options.PreApplyFunc != nil {
 		var lastWrittenEntryState *EntryState
-		switch data, err := persistentState.Get(EntryStateBucket, []byte(targetPath)); {
+		switch data, err := persistentState.Get(EntryStateBucket, []byte(targetAbsPath)); {
 		case err != nil:
 			return err
 		case data != nil:
@@ -352,7 +357,7 @@ func (s *SourceState) Apply(targetSystem System, persistentState PersistentState
 			return err
 		}
 
-		if err := options.PreApplyFunc(targetName, targetEntryState, lastWrittenEntryState, actualEntryState); err != nil {
+		if err := options.PreApplyFunc(targetRelPath, targetEntryState, lastWrittenEntryState, actualEntryState); err != nil {
 			return err
 		}
 	}
@@ -365,7 +370,7 @@ func (s *SourceState) Apply(targetSystem System, persistentState PersistentState
 	if err != nil {
 		return err
 	}
-	return persistentState.Set(EntryStateBucket, []byte(targetPath), data)
+	return persistentState.Set(EntryStateBucket, []byte(targetAbsPath), data)
 }
 
 // Entries returns s's source state entries.
@@ -402,8 +407,8 @@ func (s *SourceState) ExecuteTemplateData(name string, data []byte) ([]byte, err
 }
 
 // Ignored returns if targetName is ignored.
-func (s *SourceState) Ignored(targetName string) bool {
-	return s.ignore.match(targetName)
+func (s *SourceState) Ignored(targetRelPath RelPath) bool {
+	return s.ignore.match(targetRelPath.String())
 }
 
 // MinVersion returns the minimum version for which s is valid.
@@ -434,27 +439,32 @@ func (s *SourceState) Read() error {
 	}
 
 	// Read all source entries.
-	allSourceStateEntries := make(map[SourceStatePath][]SourceStateEntry)
-	if err := vfs.WalkSlash(s.system, s.sourceDir.String(), func(sourcePath string, info os.FileInfo, err error) error {
+	allSourceStateEntries := make(map[RelPath][]SourceStateEntry)
+	if err := vfs.WalkSlash(s.system, s.sourceDir.String(), func(sourceAbsPathStr string, info os.FileInfo, err error) error {
 		if err != nil {
 			return err
 		}
-		if sourcePath == s.sourceDir.String() {
+		sourceAbsPath := AbsPath(sourceAbsPathStr)
+		if sourceAbsPath == s.sourceDir {
 			return nil
 		}
-		relPath := MustTrimDirPrefix(sourcePath, s.sourceDir)
-		sourceDirName, sourceName := path.Split(relPath)
-		targetDirName := getTargetDirName(sourceDirName)
-		// Follow symlinks from the source directory.
+		sourceRelPath := SourceRelPath{
+			relPath: sourceAbsPath.MustTrimDirPrefix(s.sourceDir),
+			isDir:   info.IsDir(),
+		}
+		targetRelPath := sourceRelPath.TargetRelPath()
+
+		parentSourceRelPath, sourceName := sourceRelPath.Split()
+		// Follow symlinks in the source directory.
 		if info.Mode()&os.ModeType == os.ModeSymlink {
-			info, err = s.system.Stat(sourcePath)
+			info, err = s.system.Stat(sourceRelPath.String())
 			if err != nil {
 				return err
 			}
 		}
 		switch {
 		case strings.HasPrefix(info.Name(), dataName):
-			return s.addTemplateData(sourcePath)
+			return s.addTemplateData(sourceAbsPath)
 		case info.Name() == ignoreName:
 			// .chezmoiignore is interpreted as a template. vfs.WalkSlash walks
 			// in alphabetical order, so, luckily for us, .chezmoidata will be
@@ -462,12 +472,12 @@ func (s *SourceState) Read() error {
 			// to be used in .chezmoiignore. Unluckily for us, .chezmoitemplates
 			// will be read afterwards so partial templates will not be
 			// available in .chezmoiignore.
-			return s.addPatterns(s.ignore, sourcePath, sourceDirName)
+			return s.addPatterns(s.ignore, sourceAbsPath, parentSourceRelPath)
 		case info.Name() == removeName:
 			// The comment about .chezmoiignore and templates applies to
 			// .chezmoiremove too.
 			removePatterns := newPatternSet()
-			if err := s.addPatterns(removePatterns, sourcePath, targetDirName); err != nil {
+			if err := s.addPatterns(removePatterns, sourceAbsPath, sourceRelPath); err != nil {
 				return err
 			}
 			matches, err := removePatterns.glob(s.system.UnderlyingFS(), s.destDir.String()+"/")
@@ -476,26 +486,27 @@ func (s *SourceState) Read() error {
 			}
 			n := 0
 			for _, match := range matches {
-				if !s.Ignored(match) {
+				if !s.Ignored(RelPath(match)) {
 					matches[n] = match
 					n++
 				}
 			}
 			matches = matches[:n]
 			for _, match := range matches {
+				targetRelPath := targetRelPath.Dir().Join(RelPath(match))
 				sourceStateEntry := &SourceStateRemove{
-					name: path.Join(sourcePath, match),
+					targetRelPath: targetRelPath,
 				}
-				allSourceStateEntries[match] = append(allSourceStateEntries[match], sourceStateEntry)
+				allSourceStateEntries[targetRelPath] = append(allSourceStateEntries[targetRelPath], sourceStateEntry)
 			}
 			return nil
 		case info.Name() == templatesDirName:
-			if err := s.addTemplatesDir(sourcePath); err != nil {
+			if err := s.addTemplatesDir(sourceAbsPath); err != nil {
 				return err
 			}
 			return vfs.SkipDir
 		case info.Name() == versionName:
-			return s.addVersionFile(sourcePath)
+			return s.addVersionFile(sourceAbsPath)
 		case strings.HasPrefix(info.Name(), Prefix):
 			fallthrough
 		case strings.HasPrefix(info.Name(), ignorePrefix):
@@ -504,27 +515,27 @@ func (s *SourceState) Read() error {
 			}
 			return nil
 		case info.IsDir():
-			da := parseDirAttr(sourceName)
-			targetName := path.Join(targetDirName, da.Name)
-			if s.Ignored(targetName) {
+			da := parseDirAttr(sourceName.String())
+			targetRelPath := parentSourceRelPath.Dir().TargetRelPath().Join(RelPath(da.Name))
+			if s.Ignored(targetRelPath) {
 				return vfs.SkipDir
 			}
-			sourceStateEntry := s.newSourceStateDir(sourcePath, da)
-			allSourceStateEntries[targetName] = append(allSourceStateEntries[targetName], sourceStateEntry)
+			sourceStateEntry := s.newSourceStateDir(sourceRelPath, da)
+			allSourceStateEntries[targetRelPath] = append(allSourceStateEntries[targetRelPath], sourceStateEntry)
 			return nil
 		case info.Mode().IsRegular():
-			fa := parseFileAttr(sourceName)
-			targetName := path.Join(targetDirName, fa.Name)
-			if s.Ignored(targetName) {
-				return nil
+			fa := parseFileAttr(sourceName.String())
+			targetRelPath := parentSourceRelPath.Dir().TargetRelPath().Join(RelPath(fa.Name))
+			if s.Ignored(targetRelPath) {
+				return vfs.SkipDir
 			}
-			sourceStateEntry := s.newSourceStateFile(sourcePath, fa, targetName)
-			allSourceStateEntries[targetName] = append(allSourceStateEntries[targetName], sourceStateEntry)
+			sourceStateEntry := s.newSourceStateFile(sourceRelPath, fa, targetRelPath)
+			allSourceStateEntries[targetRelPath] = append(allSourceStateEntries[targetRelPath], sourceStateEntry)
 			return nil
 		default:
 			return &errUnsupportedFileType{
-				path: sourcePath,
-				mode: info.Mode(),
+				absPath: sourceAbsPath,
+				mode:    info.Mode(),
 			}
 		}
 	}); err != nil {
@@ -532,14 +543,14 @@ func (s *SourceState) Read() error {
 	}
 
 	// Remove all ignored targets.
-	for targetName := range allSourceStateEntries {
-		if s.Ignored(targetName) {
-			delete(allSourceStateEntries, targetName)
+	for targetRelPath := range allSourceStateEntries {
+		if s.Ignored(targetRelPath) {
+			delete(allSourceStateEntries, targetRelPath)
 		}
 	}
 
 	// Generate SourceStateRemoves for exact directories.
-	for targetName, sourceStateEntries := range allSourceStateEntries {
+	for targetRelPath, sourceStateEntries := range allSourceStateEntries {
 		if len(sourceStateEntries) != 1 {
 			continue
 		}
@@ -551,9 +562,9 @@ func (s *SourceState) Read() error {
 			continue
 		}
 		sourceStateRemove := &SourceStateRemove{
-			name: sourceStateDir.Name(),
+			targetRelPath: sourceStateDir.Name(),
 		}
-		infos, err := s.system.ReadDir(path.Join(s.destDir, targetName))
+		infos, err := s.system.ReadDir(path.Join(s.destDir, targetRelPath))
 		switch {
 		case err == nil:
 			for _, info := range infos {
@@ -561,7 +572,7 @@ func (s *SourceState) Read() error {
 				if name == "." || name == ".." {
 					continue
 				}
-				targetEntryName := path.Join(targetName, name)
+				targetEntryName := path.Join(targetRelPath, name)
 				if _, ok := allSourceStateEntries[targetEntryName]; ok {
 					continue
 				}
@@ -579,7 +590,7 @@ func (s *SourceState) Read() error {
 
 	// Check for duplicate source entries with the same target name. Iterate
 	// over the target names in order so that any error is deterministic.
-	targetNames := make([]SourceStatePath, 0, len(allSourceStateEntries))
+	targetNames := make([]SourceRelPath, 0, len(allSourceStateEntries))
 	for targetName := range allSourceStateEntries {
 		targetNames = append(targetNames, targetName)
 	}
@@ -589,7 +600,7 @@ func (s *SourceState) Read() error {
 		if len(sourceStateEntries) == 1 {
 			continue
 		}
-		sourcePaths := make([]SourceStatePath, 0, len(sourceStateEntries))
+		sourcePaths := make([]SourceRelPath, 0, len(sourceStateEntries))
 		for _, sourceStateEntry := range sourceStateEntries {
 			sourcePaths = append(sourcePaths, sourceStateEntry.Name())
 		}
@@ -611,13 +622,13 @@ func (s *SourceState) Read() error {
 }
 
 // TargetNames returns all of s's target names in alphabetical order.
-func (s *SourceState) TargetNames() []string {
-	targetNames := make([]string, 0, len(s.entries))
-	for sourceStatePath := range s.entries {
-		targetNames = append(targetNames, sourceStatePath.RelPath())
+func (s *SourceState) TargetNames() RelPaths {
+	targetRelPaths := make(RelPaths, 0, len(s.entries))
+	for targetRelPath := range s.entries {
+		targetRelPaths = append(targetRelPaths, targetRelPath)
 	}
-	sort.Strings(targetNames)
-	return targetNames
+	sort.Sort(targetRelPaths)
+	return targetRelPaths
 }
 
 // TemplateData returns s's template data.
@@ -636,12 +647,12 @@ func (s *SourceState) TemplateData() map[string]interface{} {
 
 // addPatterns executes the template at sourcePath, interprets the result as a
 // list of patterns, and adds all patterns found to patternSet.
-func (s *SourceState) addPatterns(patternSet *patternSet, sourcePath, relPath string) error {
-	data, err := s.executeTemplate(sourcePath)
+func (s *SourceState) addPatterns(patternSet *patternSet, sourceAbsPath AbsPath, sourceRelPath SourceRelPath) error {
+	data, err := s.executeTemplate(sourceAbsPath)
 	if err != nil {
 		return err
 	}
-	dir := path.Dir(relPath)
+	dir := sourceRelPath.Dir().TargetRelPath()
 	scanner := bufio.NewScanner(bytes.NewReader(data))
 	var lineNumber int
 	for scanner.Scan() {
@@ -659,26 +670,26 @@ func (s *SourceState) addPatterns(patternSet *patternSet, sourcePath, relPath st
 			include = false
 			text = mustTrimPrefix(text, "!")
 		}
-		pattern := path.Join(dir, text)
+		pattern := dir.Join(RelPath(text)).String()
 		if err := patternSet.add(pattern, include); err != nil {
-			return fmt.Errorf("%s:%d: %w", sourcePath, lineNumber, err)
+			return fmt.Errorf("%s:%d: %w", sourceAbsPath, lineNumber, err)
 		}
 	}
 	if err := scanner.Err(); err != nil {
-		return fmt.Errorf("%s: %w", sourcePath, err)
+		return fmt.Errorf("%s: %w", sourceAbsPath, err)
 	}
 	return nil
 }
 
 // addTemplateData adds all template data in sourcePath to s.
-func (s *SourceState) addTemplateData(sourcePath string) error {
-	_, name := path.Split(sourcePath)
-	suffix := mustTrimPrefix(name, dataName+".")
+func (s *SourceState) addTemplateData(sourcePath AbsPath) error {
+	_, name := sourcePath.Split()
+	suffix := mustTrimPrefix(name.String(), dataName+".")
 	format, ok := Formats[suffix]
 	if !ok {
 		return fmt.Errorf("%s: unknown format", sourcePath)
 	}
-	data, err := s.system.ReadFile(sourcePath)
+	data, err := s.system.ReadFile(sourcePath.String())
 	if err != nil {
 		return fmt.Errorf("%s: %w", sourcePath, err)
 	}
@@ -691,18 +702,20 @@ func (s *SourceState) addTemplateData(sourcePath string) error {
 }
 
 // addTemplatesDir adds all templates in templateDir to s.
-func (s *SourceState) addTemplatesDir(templateDir string) error {
-	return vfs.WalkSlash(s.system, templateDir, func(templatePath string, info os.FileInfo, err error) error {
+func (s *SourceState) addTemplatesDir(templateAbsDir AbsPath) error {
+	return vfs.WalkSlash(s.system, templateAbsDir.String(), func(templateAbsPathStr string, info os.FileInfo, err error) error {
 		if err != nil {
 			return err
 		}
+		templateAbsPath := AbsPath(templateAbsPathStr)
 		switch {
 		case info.Mode().IsRegular():
-			contents, err := s.system.ReadFile(templatePath)
+			contents, err := s.system.ReadFile(templateAbsPathStr)
 			if err != nil {
 				return err
 			}
-			name := MustTrimDirPrefix(templatePath, templateDir)
+			templateRelPath := templateAbsPath.MustTrimDirPrefix(templateAbsDir)
+			name := templateRelPath.String()
 			tmpl, err := template.New(name).Option(s.templateOptions...).Funcs(s.templateFuncs).Parse(string(contents))
 			if err != nil {
 				return err
@@ -716,8 +729,8 @@ func (s *SourceState) addTemplatesDir(templateDir string) error {
 			return nil
 		default:
 			return &errUnsupportedFileType{
-				path: templatePath,
-				mode: info.Mode(),
+				absPath: templateAbsPath,
+				mode:    info.Mode(),
 			}
 		}
 	})
@@ -726,8 +739,8 @@ func (s *SourceState) addTemplatesDir(templateDir string) error {
 // addVersionFile reads a .chezmoiversion file from source path and updates s's
 // minimum version if it contains a more recent version than the current minimum
 // version.
-func (s *SourceState) addVersionFile(sourcePath string) error {
-	data, err := s.system.ReadFile(sourcePath)
+func (s *SourceState) addVersionFile(sourceAbsPath AbsPath) error {
+	data, err := s.system.ReadFile(sourceAbsPath.String())
 	if err != nil {
 		return err
 	}
@@ -742,7 +755,7 @@ func (s *SourceState) addVersionFile(sourcePath string) error {
 }
 
 // applyAll updates targetDir in fs to match s.
-func (s *SourceState) applyAll(targetSystem System, persistentState PersistentState, targetDir string, options ApplyOptions) error {
+func (s *SourceState) applyAll(targetSystem System, persistentState PersistentState, targetDir AbsPath, options ApplyOptions) error {
 	for _, targetName := range s.AllTargetNames() {
 		switch err := s.Apply(targetSystem, persistentState, targetDir, targetName, options); {
 		case errors.Is(err, Skip):
@@ -755,38 +768,38 @@ func (s *SourceState) applyAll(targetSystem System, persistentState PersistentSt
 }
 
 // executeTemplate executes the template at path and returns the result.
-func (s *SourceState) executeTemplate(path string) ([]byte, error) {
-	data, err := s.system.ReadFile(path)
+func (s *SourceState) executeTemplate(path AbsPath) ([]byte, error) {
+	data, err := s.system.ReadFile(path.String())
 	if err != nil {
 		return nil, err
 	}
-	return s.ExecuteTemplateData(path, data)
+	return s.ExecuteTemplateData(path.String(), data)
 }
 
 // newSourceStateDir returns a new SourceStateDir.
-func (s *SourceState) newSourceStateDir(sourcePath string, dirAttr DirAttr) *SourceStateDir {
+func (s *SourceState) newSourceStateDir(sourceRelPath SourceRelPath, dirAttr DirAttr) *SourceStateDir {
 	targetStateDir := &TargetStateDir{
 		perm: dirAttr.perm(),
 	}
 	return &SourceStateDir{
-		name:             sourcePath,
+		sourceRelPath:    sourceRelPath,
 		Attr:             dirAttr,
 		targetStateEntry: targetStateDir,
 	}
 }
 
 // newSourceStateFile returns a new SourceStateFile.
-func (s *SourceState) newSourceStateFile(sourcePath string, fileAttr FileAttr, targetName string) *SourceStateFile {
+func (s *SourceState) newSourceStateFile(sourceRelPath SourceRelPath, fileAttr FileAttr, targetRelPath RelPath) *SourceStateFile {
 	lazyContents := &lazyContents{
 		contentsFunc: func() ([]byte, error) {
-			contents, err := s.system.ReadFile(sourcePath)
+			contents, err := s.system.ReadFile(sourceRelPath.String())
 			if err != nil {
 				return nil, err
 			}
 			if !fileAttr.Encrypted {
 				return contents, nil
 			}
-			return s.encryptionTool.Decrypt(path.Base(targetName), contents)
+			return s.encryptionTool.Decrypt(targetRelPath.Base(), contents)
 		},
 	}
 
@@ -799,7 +812,7 @@ func (s *SourceState) newSourceStateFile(sourcePath string, fileAttr FileAttr, t
 				return nil, err
 			}
 			if fileAttr.Template {
-				contents, err = s.ExecuteTemplateData(sourcePath, contents)
+				contents, err = s.ExecuteTemplateData(sourceRelPath.String(), contents)
 				if err != nil {
 					return nil, err
 				}
@@ -819,7 +832,7 @@ func (s *SourceState) newSourceStateFile(sourcePath string, fileAttr FileAttr, t
 				return nil, err
 			}
 			if fileAttr.Template {
-				contents, err = s.ExecuteTemplateData(sourcePath, contents)
+				contents, err = s.ExecuteTemplateData(sourceRelPath.String(), contents)
 				if err != nil {
 					return nil, err
 				}
@@ -836,14 +849,14 @@ func (s *SourceState) newSourceStateFile(sourcePath string, fileAttr FileAttr, t
 				return nil, err
 			}
 			if fileAttr.Template {
-				contents, err = s.ExecuteTemplateData(sourcePath, contents)
+				contents, err = s.ExecuteTemplateData(sourceRelPath.String(), contents)
 				if err != nil {
 					return nil, err
 				}
 			}
 			return &TargetStateScript{
 				lazyContents: newLazyContents(contents),
-				name:         targetName,
+				name:         targetRelPath,
 				once:         fileAttr.Once,
 			}, nil
 		}
@@ -854,7 +867,7 @@ func (s *SourceState) newSourceStateFile(sourcePath string, fileAttr FileAttr, t
 				return nil, err
 			}
 			if fileAttr.Template {
-				linknameBytes, err = s.ExecuteTemplateData(sourcePath, linknameBytes)
+				linknameBytes, err = s.ExecuteTemplateData(sourceRelPath.String(), linknameBytes)
 				if err != nil {
 					return nil, err
 				}
@@ -869,14 +882,14 @@ func (s *SourceState) newSourceStateFile(sourcePath string, fileAttr FileAttr, t
 
 	return &SourceStateFile{
 		lazyContents:         lazyContents,
-		name:                 sourcePath,
+		sourceRelPath:        sourceRelPath,
 		Attr:                 fileAttr,
 		targetStateEntryFunc: targetStateEntryFunc,
 	}
 }
 
 // sourceStateEntry returns a new SourceStateEntry based on actualStateEntry.
-func (s *SourceState) sourceStateEntry(actualStateEntry ActualStateEntry, destPath AbsPath, info os.FileInfo, parentDirName string, options *AddOptions) (SourceStateEntry, error) {
+func (s *SourceState) sourceStateEntry(actualStateEntry ActualStateEntry, destPath AbsPath, info os.FileInfo, parentSourceRelPath SourceRelPath, options *AddOptions) (SourceStateEntry, error) {
 	switch actualStateEntry := actualStateEntry.(type) {
 	case *ActualStateAbsent:
 		return nil, fmt.Errorf("%s: not found", destPath)
@@ -887,8 +900,8 @@ func (s *SourceState) sourceStateEntry(actualStateEntry ActualStateEntry, destPa
 			Private: isPrivate(info),
 		}
 		return &SourceStateDir{
-			name: path.Join(parentDirName, dirAttr.BaseName()),
-			Attr: dirAttr,
+			Attr:          dirAttr,
+			sourceRelPath: parentSourceRelPath.Join(NewSourceRelDirPath(RelPath(dirAttr.BaseName()))),
 			targetStateEntry: &TargetStateDir{
 				perm: 0o777,
 			},
@@ -921,9 +934,9 @@ func (s *SourceState) sourceStateEntry(actualStateEntry ActualStateEntry, destPa
 			contents: contents,
 		}
 		return &SourceStateFile{
-			name:         path.Join(parentDirName, fileAttr.BaseName()),
-			Attr:         fileAttr,
-			lazyContents: lazyContents,
+			Attr:          fileAttr,
+			sourceRelPath: parentSourceRelPath.Join(NewSourceRelPath(RelPath(fileAttr.BaseName()))),
+			lazyContents:  lazyContents,
 			targetStateEntry: &TargetStateFile{
 				lazyContents: lazyContents,
 				perm:         0o666,
@@ -948,9 +961,9 @@ func (s *SourceState) sourceStateEntry(actualStateEntry ActualStateEntry, destPa
 			contents: contents,
 		}
 		return &SourceStateFile{
-			name:         path.Join(parentDirName, fileAttr.BaseName()),
-			Attr:         fileAttr,
-			lazyContents: lazyContents,
+			Attr:          fileAttr,
+			sourceRelPath: parentSourceRelPath.Join(NewSourceRelPath(RelPath(fileAttr.BaseName()))),
+			lazyContents:  lazyContents,
 			targetStateEntry: &TargetStateFile{
 				lazyContents: lazyContents,
 				perm:         0o666,
@@ -959,15 +972,4 @@ func (s *SourceState) sourceStateEntry(actualStateEntry ActualStateEntry, destPa
 	default:
 		panic(fmt.Sprintf("%T: unsupported type", actualStateEntry))
 	}
-}
-
-// getTargetDirName returns the target directory name of sourceDirName.
-func getTargetDirName(sourceDirName string) string {
-	sourceNames := strings.Split(sourceDirName, "/")
-	targetNames := make([]string, 0, len(sourceNames))
-	for _, sourceName := range sourceNames {
-		da := parseDirAttr(sourceName)
-		targetNames = append(targetNames, da.Name)
-	}
-	return strings.Join(targetNames, "/")
 }

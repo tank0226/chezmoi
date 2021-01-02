@@ -73,15 +73,15 @@ func SetUmask(newUmask os.FileMode) {
 
 // TrimDirPrefix returns path p with the directory prefix dir stripped. path must
 // be an absolute path with forward slashes.
-func TrimDirPrefix(p, dir AbsPath) (AbsPath, error) {
-	dirStr := dir.String()
-	if pathStr := p.String(); !strings.HasPrefix(pathStr, dirStr+"/") {
-		return "", &errNotInDir{
-			path: pathStr,
-			dir:  dirStr,
+func TrimDirPrefix(pathAbsPath, dirAbsPath AbsPath) (AbsPath, error) {
+	dirStr := dirAbsPath.String()
+	if pathStr := pathAbsPath.String(); !strings.HasPrefix(pathStr, dirStr+"/") {
+		return "", &errNotInAbsDir{
+			pathAbsPath: pathAbsPath,
+			dirAbsPath:  dirAbsPath,
 		}
 	}
-	return AbsPath(p[len(dirStr)+1:]), nil
+	return AbsPath(pathAbsPath[len(dirStr)+1:]), nil
 }
 
 // etcHostsFQDNHostname returns the FQDN hostname from parsing /etc/hosts.

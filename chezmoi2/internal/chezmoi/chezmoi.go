@@ -76,7 +76,7 @@ var modeTypeNames = map[os.FileMode]string{
 
 type errDuplicateTarget struct {
 	targetName  string
-	sourcePaths []SourceStatePath
+	sourcePaths []SourceRelPath
 }
 
 func (e *errDuplicateTarget) Error() string {
@@ -87,22 +87,31 @@ func (e *errDuplicateTarget) Error() string {
 	return fmt.Sprintf("%s: duplicate target (%s)", e.targetName, strings.Join(sourcePathStrs, ", "))
 }
 
-type errNotInDir struct {
-	path string
-	dir  string
+type errNotInAbsDir struct {
+	pathAbsPath AbsPath
+	dirAbsPath  AbsPath
 }
 
-func (e *errNotInDir) Error() string {
-	return fmt.Sprintf("%s: not in %s", e.path, e.dir)
+func (e *errNotInAbsDir) Error() string {
+	return fmt.Sprintf("%s: not in %s", e.pathAbsPath, e.dirAbsPath)
+}
+
+type errNotInRelDir struct {
+	pathRelPath RelPath
+	dirRelPath  RelPath
+}
+
+func (e *errNotInRelDir) Error() string {
+	return fmt.Sprintf("%s: not in %s", e.pathRelPath, e.dirRelPath)
 }
 
 type errUnsupportedFileType struct {
-	path string
-	mode os.FileMode
+	absPath AbsPath
+	mode    os.FileMode
 }
 
 func (e *errUnsupportedFileType) Error() string {
-	return fmt.Sprintf("%s: unsupported file type %s", e.path, modeTypeName(e.mode))
+	return fmt.Sprintf("%s: unsupported file type %s", e.absPath, modeTypeName(e.mode))
 }
 
 // An AbsPath is an absolute path.
@@ -132,45 +141,80 @@ func (p AbsPath) MustTrimDirPrefix(dirPrefix AbsPath) RelPath {
 	return relPath
 }
 
+// Split returns p's directory and file.
+func (p AbsPath) Split() (AbsPath, RelPath) {
+	dir, file := path.Split(string(p))
+	return AbsPath(dir), RelPath(file)
+}
+
 func (p AbsPath) String() string { return string(p) }
 
 // TrimDirPrefix trims prefix from p.
-func (p AbsPath) TrimDirPrefix(dirPrefix AbsPath) (RelPath, error) {
-	if !strings.HasPrefix(string(p), string(dirPrefix+"/")) {
-		return "", &errNotInDir{
-			path: string(p),
-			dir:  string(dirPrefix),
+func (p AbsPath) TrimDirPrefix(dirPrefixAbsPath AbsPath) (RelPath, error) {
+	if !strings.HasPrefix(string(p), string(dirPrefixAbsPath+"/")) {
+		return "", &errNotInAbsDir{
+			pathAbsPath: p,
+			dirAbsPath:  dirPrefixAbsPath,
 		}
 	}
-	return RelPath(p[len(dirPrefix)+1:]), nil
+	return RelPath(p[len(dirPrefixAbsPath)+1:]), nil
 }
 
-type absPathsByName []AbsPath
+// AbsPaths is a slice of AbsPaths that implements sort.Interface.
+type AbsPaths []AbsPath
 
-func (a absPathsByName) Len() int           { return len(a) }
-func (a absPathsByName) Less(i, j int) bool { return string(a[i]) < string(a[j]) }
-func (a absPathsByName) Swap(i, j int)      { a[i], a[j] = a[j], a[i] }
+func (a AbsPaths) Len() int           { return len(a) }
+func (a AbsPaths) Less(i, j int) bool { return string(a[i]) < string(a[j]) }
+func (a AbsPaths) Swap(i, j int)      { a[i], a[j] = a[j], a[i] }
 
 // A RelPath is a relative path.
 type RelPath string
+
+// Base returns p's base name.
+func (p RelPath) Base() string {
+	return path.Base(string(p))
+}
 
 // Dir returns p's directory.
 func (p RelPath) Dir() RelPath {
 	return RelPath(path.Dir(string(p)))
 }
 
+// Join appends elems to p.
+func (p RelPath) Join(elems ...RelPath) RelPath {
+	elemStrs := make([]string, 0, len(elems)+1)
+	elemStrs = append(elemStrs, string(p))
+	for _, elem := range elems {
+		elemStrs = append(elemStrs, string(elem))
+	}
+	return RelPath(path.Join(elemStrs...))
+}
+
+// Split returns p's directory and path.
+func (p RelPath) Split() (RelPath, RelPath) {
+	dir, file := path.Split(string(p))
+	return RelPath(dir), RelPath(file)
+}
+
 func (p RelPath) String() string { return string(p) }
 
 // TrimDirPrefix trims prefix from p.
-func (p RelPath) TrimDirPrefix(prefix RelPath) (RelPath, error) {
-	if !strings.HasPrefix(string(p), string(prefix+"/")) {
-		return "", &errNotInDir{
-			path: string(p),
-			dir:  string(prefix),
+func (p RelPath) TrimDirPrefix(dirPrefix RelPath) (RelPath, error) {
+	if !strings.HasPrefix(string(p), string(dirPrefix+"/")) {
+		return "", &errNotInRelDir{
+			pathRelPath: p,
+			dirRelPath:  dirPrefix,
 		}
 	}
-	return RelPath(p[len(prefix)+1:]), nil
+	return RelPath(p[len(dirPrefix)+1:]), nil
 }
+
+// RelPaths is a slice of RelPaths that implements sort.Interface.
+type RelPaths []RelPath
+
+func (a RelPaths) Len() int           { return len(a) }
+func (a RelPaths) Less(i, j int) bool { return string(a[i]) < string(a[j]) }
+func (a RelPaths) Swap(i, j int)      { a[i], a[j] = a[j], a[i] }
 
 // StateData returns the state data in bucket in s.
 func StateData(s PersistentState, bucket []byte) (map[string]interface{}, error) {
