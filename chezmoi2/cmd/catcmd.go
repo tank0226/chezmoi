@@ -23,7 +23,7 @@ func (c *Config) newCatCmd() *cobra.Command {
 }
 
 func (c *Config) runCatCmd(cmd *cobra.Command, args []string, sourceState *chezmoi.SourceState) error {
-	targetNames, err := c.targetNames(sourceState, args, targetNamesOptions{
+	targetRelPaths, err := c.targetRelPaths(sourceState, args, targetRelPathsOptions{
 		mustBeInSourceState: true,
 		recursive:           false,
 	})
@@ -32,32 +32,32 @@ func (c *Config) runCatCmd(cmd *cobra.Command, args []string, sourceState *chezm
 	}
 
 	sb := strings.Builder{}
-	for _, targetName := range targetNames {
-		targetStateEntry, err := sourceState.MustEntry(targetName).TargetStateEntry()
+	for _, targetRelPath := range targetRelPaths {
+		targetStateEntry, err := sourceState.MustEntry(targetRelPath).TargetStateEntry()
 		if err != nil {
-			return fmt.Errorf("%s: %w", targetName, err)
+			return fmt.Errorf("%s: %w", targetRelPath, err)
 		}
 		switch targetStateEntry := targetStateEntry.(type) {
 		case *chezmoi.TargetStateFile:
 			contents, err := targetStateEntry.Contents()
 			if err != nil {
-				return fmt.Errorf("%s: %w", targetName, err)
+				return fmt.Errorf("%s: %w", targetRelPath, err)
 			}
 			sb.Write(contents)
 		case *chezmoi.TargetStatePresent:
 			contents, err := targetStateEntry.Contents()
 			if err != nil {
-				return fmt.Errorf("%s: %w", targetName, err)
+				return fmt.Errorf("%s: %w", targetRelPath, err)
 			}
 			sb.Write(contents)
 		case *chezmoi.TargetStateSymlink:
 			linkname, err := targetStateEntry.Linkname()
 			if err != nil {
-				return fmt.Errorf("%s: %w", targetName, err)
+				return fmt.Errorf("%s: %w", targetRelPath, err)
 			}
 			sb.WriteString(linkname + "\n")
 		default:
-			return fmt.Errorf("%s: not a file or symlink", targetName)
+			return fmt.Errorf("%s: not a file or symlink", targetRelPath)
 		}
 	}
 	return c.writeOutputString(sb.String())

@@ -28,7 +28,7 @@ func (c *Config) newRemoveCmd() *cobra.Command {
 }
 
 func (c *Config) runRemoveCmd(cmd *cobra.Command, args []string, sourceState *chezmoi.SourceState) error {
-	targetNames, err := c.targetNames(sourceState, args, targetNamesOptions{
+	targetRelPaths, err := c.targetRelPaths(sourceState, args, targetRelPathsOptions{
 		recursive:           false,
 		mustBeInSourceState: true,
 	})
@@ -36,9 +36,9 @@ func (c *Config) runRemoveCmd(cmd *cobra.Command, args []string, sourceState *ch
 		return err
 	}
 
-	for _, targetName := range targetNames {
-		destAbsPath := c.normalizedDestDir.Join(targetName)
-		sourceAbsPath := sourceState.MustEntry(targetName).SourceRelPath()
+	for _, targetRelPath := range targetRelPaths {
+		destAbsPath := c.normalizedDestDir.Join(targetRelPath)
+		sourceAbsPath := sourceState.MustEntry(targetRelPath).SourceRelPath()
 		if !c.force {
 			choice, err := c.prompt(fmt.Sprintf("Remove %s and %s", destAbsPath, sourceAbsPath), "ynqa")
 			if err != nil {

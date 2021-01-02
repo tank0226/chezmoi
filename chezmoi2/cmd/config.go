@@ -303,11 +303,11 @@ func (c *Config) applyArgs(targetSystem chezmoi.System, targetDirAbsPath chezmoi
 		Umask:        umask,
 	}
 
-	var targetNames chezmoi.RelPaths
+	var targetRelPaths chezmoi.RelPaths
 	if len(args) == 0 {
-		targetNames = s.TargetRelPaths()
+		targetRelPaths = s.TargetRelPaths()
 	} else {
-		targetNames, err = c.targetNames(s, args, targetNamesOptions{
+		targetRelPaths, err = c.targetRelPaths(s, args, targetRelPathsOptions{
 			mustBeInSourceState: true,
 			recursive:           recursive,
 		})
@@ -316,8 +316,8 @@ func (c *Config) applyArgs(targetSystem chezmoi.System, targetDirAbsPath chezmoi
 		}
 	}
 
-	for _, targetName := range targetNames {
-		switch err := s.Apply(targetSystem, c.persistentState, targetDirAbsPath, targetName, applyOptions); {
+	for _, targetRelPath := range targetRelPaths {
+		switch err := s.Apply(targetSystem, c.persistentState, targetDirAbsPath, targetRelPath, applyOptions); {
 		case errors.Is(err, chezmoi.Skip):
 			continue
 		case err != nil && c.keepGoing:
@@ -584,7 +584,7 @@ func (c *Config) execute(args []string) error {
 	return rootCmd.Execute()
 }
 
-func (c *Config) getTargetName(arg *chezmoi.OSPath) (chezmoi.RelPath, error) {
+func (c *Config) getTargetRelPath(arg *chezmoi.OSPath) (chezmoi.RelPath, error) {
 	destAbsPath, err := c.normalizedDestPath(arg)
 	if err != nil {
 		return "", err
@@ -1053,16 +1053,16 @@ func (c *Config) runEditor(args []string) error {
 }
 
 func (c *Config) sourceAbsPaths(s *chezmoi.SourceState, args []string) (chezmoi.AbsPaths, error) {
-	targetNames, err := c.targetNames(s, args, targetNamesOptions{
+	targetRelPaths, err := c.targetRelPaths(s, args, targetRelPathsOptions{
 		mustBeInSourceState: true,
 		recursive:           false,
 	})
 	if err != nil {
 		return nil, err
 	}
-	sourceAbsPaths := make(chezmoi.AbsPaths, 0, len(targetNames))
-	for _, targetName := range targetNames {
-		sourceAbsPath := c.normalizedSourceDir.Join(s.MustEntry(targetName).SourceRelPath().RelPath())
+	sourceAbsPaths := make(chezmoi.AbsPaths, 0, len(targetRelPaths))
+	for _, targetRelPath := range targetRelPaths {
+		sourceAbsPath := c.normalizedSourceDir.Join(s.MustEntry(targetRelPath).SourceRelPath().RelPath())
 		sourceAbsPaths = append(sourceAbsPaths, sourceAbsPath)
 	}
 	return sourceAbsPaths, nil
@@ -1090,49 +1090,49 @@ func (c *Config) sourceState() (*chezmoi.SourceState, error) {
 	return s, nil
 }
 
-type targetNamesOptions struct {
+type targetRelPathsOptions struct {
 	mustBeInSourceState bool
 	recursive           bool
 }
 
-func (c *Config) targetNames(s *chezmoi.SourceState, args []string, options targetNamesOptions) (chezmoi.RelPaths, error) {
-	targetNames := make(chezmoi.RelPaths, 0, len(args))
+func (c *Config) targetRelPaths(s *chezmoi.SourceState, args []string, options targetRelPathsOptions) (chezmoi.RelPaths, error) {
+	targetRelPaths := make(chezmoi.RelPaths, 0, len(args))
 	for _, arg := range args {
-		targetName, err := c.getTargetName(chezmoi.NewOSPath(arg))
+		targetRelPath, err := c.getTargetRelPath(chezmoi.NewOSPath(arg))
 		if err != nil {
 			return nil, err
 		}
 		if options.mustBeInSourceState {
-			if _, ok := s.Entry(targetName); !ok {
+			if _, ok := s.Entry(targetRelPath); !ok {
 				return nil, fmt.Errorf("%s: not in source state", arg)
 			}
 		}
-		targetNames = append(targetNames, targetName)
+		targetRelPaths = append(targetRelPaths, targetRelPath)
 		// FIXME this needs work
 		if options.recursive {
-			targetNamePrefix := targetName.String() + "/"
+			targetNamePrefix := targetRelPath.String() + "/"
 			for _, targetName := range s.TargetRelPaths() {
 				if strings.HasPrefix(targetName.String(), targetNamePrefix) {
-					targetNames = append(targetNames, targetName)
+					targetRelPaths = append(targetRelPaths, targetName)
 				}
 			}
 		}
 	}
 
-	if len(targetNames) == 0 {
+	if len(targetRelPaths) == 0 {
 		return nil, nil
 	}
 
-	// Sort and de-duplicate targetNames in place.
-	sort.Sort(targetNames)
+	// Sort and de-duplicate targetRelPaths in place.
+	sort.Sort(targetRelPaths)
 	n := 1
-	for i := 1; i < len(targetNames); i++ {
-		if targetNames[i] != targetNames[i-1] {
-			targetNames[n] = targetNames[i]
+	for i := 1; i < len(targetRelPaths); i++ {
+		if targetRelPaths[i] != targetRelPaths[i-1] {
+			targetRelPaths[n] = targetRelPaths[i]
 			n++
 		}
 	}
-	return targetNames[:n], nil
+	return targetRelPaths[:n], nil
 }
 
 func (c *Config) useBuiltinGit() (bool, error) {

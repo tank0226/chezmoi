@@ -19,6 +19,69 @@ func TestAddCmd(t *testing.T) {
 		tests []interface{}
 	}{
 		{
+			name: "dir",
+			root: map[string]interface{}{
+				"/home/user": map[string]interface{}{
+					".dir": &vfst.Dir{Perm: 0o777},
+				},
+			},
+			args: []string{"~/.dir"},
+			tests: []interface{}{
+				vfst.TestPath("/home/user/.local/share/chezmoi/dot_dir",
+					vfst.TestIsDir,
+					vfst.TestModePerm(0o777&^chezmoi.GetUmask()),
+				),
+			},
+		},
+		{
+			name: "dir_with_file",
+			root: map[string]interface{}{
+				"/home/user": map[string]interface{}{
+					".dir": &vfst.Dir{
+						Perm: 0o777,
+						Entries: map[string]interface{}{
+							"file": "# contents of .dir/file\n",
+						},
+					},
+				},
+			},
+			args: []string{"~/.dir"},
+			tests: []interface{}{
+				vfst.TestPath("/home/user/.local/share/chezmoi/dot_dir",
+					vfst.TestIsDir,
+					vfst.TestModePerm(0o777&^chezmoi.GetUmask()),
+				),
+				vfst.TestPath("/home/user/.local/share/chezmoi/dot_dir/file",
+					vfst.TestModeIsRegular,
+					vfst.TestModePerm(0o666&^chezmoi.GetUmask()),
+					vfst.TestContentsString("# contents of .dir/file\n"),
+				),
+			},
+		},
+		{
+			name: "dir_with_file_with_--recursive=false",
+			root: map[string]interface{}{
+				"/home/user": map[string]interface{}{
+					".dir": &vfst.Dir{
+						Perm: 0o777,
+						Entries: map[string]interface{}{
+							"file": "# contents of .dir/file\n",
+						},
+					},
+				},
+			},
+			args: []string{"~/.dir", "--recursive=false"},
+			tests: []interface{}{
+				vfst.TestPath("/home/user/.local/share/chezmoi/dot_dir",
+					vfst.TestIsDir,
+					vfst.TestModePerm(0o777&^chezmoi.GetUmask()),
+				),
+				vfst.TestPath("/home/user/.local/share/chezmoi/dot_dir/file",
+					vfst.TestDoesNotExist,
+				),
+			},
+		},
+		{
 			name: "dir_private_unix",
 			root: map[string]interface{}{
 				"/home/user": map[string]interface{}{

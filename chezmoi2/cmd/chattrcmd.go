@@ -80,7 +80,7 @@ func (c *Config) runChattrCmd(cmd *cobra.Command, args []string, sourceState *ch
 		return err
 	}
 
-	targetNames, err := c.targetNames(sourceState, args[1:], targetNamesOptions{
+	targetRelPaths, err := c.targetRelPaths(sourceState, args[1:], targetRelPathsOptions{
 		mustBeInSourceState: true,
 		recursive:           false,
 	})
@@ -90,12 +90,12 @@ func (c *Config) runChattrCmd(cmd *cobra.Command, args []string, sourceState *ch
 
 	// Sort targets in reverse so we update children before their parent
 	// directories.
-	sort.Sort(sort.Reverse(targetNames))
+	sort.Sort(sort.Reverse(targetRelPaths))
 
-	for _, targetName := range targetNames {
-		sourceStateEntry := sourceState.MustEntry(targetName)
-		sourceName := sourceStateEntry.SourceRelPath()
-		parentDirSourceRelPath, baseName := sourceName.Split()
+	for _, targetRelPath := range targetRelPaths {
+		sourceStateEntry := sourceState.MustEntry(targetRelPath)
+		sourceRelPath := sourceStateEntry.SourceRelPath()
+		parentDirSourceRelPath, baseName := sourceRelPath.Split()
 		parentDirRelPath := parentDirSourceRelPath.RelPath()
 		baseNameRelPath := baseName.RelPath()
 		switch sourceStateEntry := sourceStateEntry.(type) {

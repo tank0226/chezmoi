@@ -71,7 +71,7 @@ func TestDataCmd(t *testing.T) {
 				assert.NoError(t, chezmoi.Formats[tc.format].Decode([]byte(sb.String()), &data))
 				normalizedSourceDir, err := chezmoi.NormalizePath("/tmp/source")
 				require.NoError(t, err)
-				assert.Equal(t, normalizedSourceDir, data.Chezmoi.SourceDir)
+				assert.Equal(t, string(normalizedSourceDir), data.Chezmoi.SourceDir)
 				assert.True(t, data.Test)
 			})
 		})

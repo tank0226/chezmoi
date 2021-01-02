@@ -33,7 +33,7 @@ func (c *Config) newMergeCmd() *cobra.Command {
 }
 
 func (c *Config) runMergeCmd(cmd *cobra.Command, args []string, sourceState *chezmoi.SourceState) error {
-	targetNames, err := c.targetNames(sourceState, args, targetNamesOptions{
+	targetRelPaths, err := c.targetRelPaths(sourceState, args, targetRelPathsOptions{
 		mustBeInSourceState: false,
 		recursive:           true,
 	})
@@ -51,37 +51,37 @@ func (c *Config) runMergeCmd(cmd *cobra.Command, args []string, sourceState *che
 	defer os.RemoveAll(tempDir)
 	tempDirAbsPath := chezmoi.AbsPath(tempDir)
 
-	for _, targetName := range targetNames {
-		sourceStateEntry := sourceState.MustEntry(targetName)
+	for _, targetRelPath := range targetRelPaths {
+		sourceStateEntry := sourceState.MustEntry(targetRelPath)
 		// FIXME sourceStateEntry.TargetStateEntry eagerly evaluates the return
 		// targetStateEntry's contents, which means that we cannot fallback to a
 		// two-way merge if the source state's contents cannot be decrypted or
 		// are an invalid template
 		targetStateEntry, err := sourceStateEntry.TargetStateEntry()
 		if err != nil {
-			return fmt.Errorf("%s: %w", targetName, err)
+			return fmt.Errorf("%s: %w", targetRelPath, err)
 		}
 		targetStateFile, ok := targetStateEntry.(*chezmoi.TargetStateFile)
 		if !ok {
 			// LATER consider handling symlinks?
-			return fmt.Errorf("%s: not a file", targetName)
+			return fmt.Errorf("%s: not a file", targetRelPath)
 		}
 		contents, err := targetStateFile.Contents()
 		if err != nil {
 			return err
 		}
-		targetStatePath := tempDirAbsPath.Join(chezmoi.RelPath(targetName.Base()))
+		targetStatePath := tempDirAbsPath.Join(chezmoi.RelPath(targetRelPath.Base()))
 		if err := c.baseSystem.WriteFile(targetStatePath.String(), contents, 0o600); err != nil {
 			return err
 		}
 		args := append(
 			append([]string{}, c.Merge.Args...),
-			c.normalizedDestDir.Join(targetName).String(),
+			c.normalizedDestDir.Join(targetRelPath).String(),
 			c.normalizedSourceDir.Join(sourceStateEntry.SourceRelPath().RelPath()).String(),
 			targetStatePath.String(),
 		)
 		if err := c.run(c.normalizedDestDir, c.Merge.Command, args); err != nil {
-			return fmt.Errorf("%s: %w", targetName, err)
+			return fmt.Errorf("%s: %w", targetRelPath, err)
 		}
 	}
 
