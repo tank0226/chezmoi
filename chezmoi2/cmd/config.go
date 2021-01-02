@@ -441,7 +441,7 @@ func (c *Config) defaultTemplateData() map[string]interface{} {
 	}
 }
 
-func (c *Config) destPathInfos(sourceState *chezmoi.SourceState, args []string, recursive, follow bool) (map[chezmoi.AbsPath]os.FileInfo, error) {
+func (c *Config) destAbsPathInfos(sourceState *chezmoi.SourceState, args []string, recursive, follow bool) (map[chezmoi.AbsPath]os.FileInfo, error) {
 	destAbsPathInfos := make(map[chezmoi.AbsPath]os.FileInfo)
 	for _, arg := range args {
 		destAbsPath, err := c.normalizedDestPath(chezmoi.NewOSPath(arg))
@@ -449,7 +449,7 @@ func (c *Config) destPathInfos(sourceState *chezmoi.SourceState, args []string, 
 			return nil, err
 		}
 		if recursive {
-			if err := vfs.WalkSlash(c.destSystem, destAbsPath.String(), func(destPathStr string, info os.FileInfo, err error) error {
+			if err := vfs.WalkSlash(c.destSystem, destAbsPath.String(), func(destAbsPathStr string, info os.FileInfo, err error) error {
 				if err != nil {
 					return err
 				}
