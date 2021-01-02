@@ -404,7 +404,7 @@ func (s *SourceState) MustEntry(targetRelPath RelPath) SourceStateEntry {
 	return sourceStateEntry
 }
 
-// Read reads a source state from sourcePath.
+// Read reads the source state from the source directory.
 func (s *SourceState) Read() error {
 	info, err := s.system.Lstat(string(s.sourceDirAbsPath))
 	switch {
@@ -634,8 +634,8 @@ func (s *SourceState) TemplateData() map[string]interface{} {
 	return s.templateData
 }
 
-// addPatterns executes the template at sourcePath, interprets the result as a
-// list of patterns, and adds all patterns found to patternSet.
+// addPatterns executes the template at sourceAbsPath, interprets the result as
+// a list of patterns, and adds all patterns found to patternSet.
 func (s *SourceState) addPatterns(patternSet *patternSet, sourceAbsPath AbsPath, sourceRelPath SourceRelPath) error {
 	data, err := s.executeTemplate(sourceAbsPath)
 	if err != nil {
@@ -670,7 +670,7 @@ func (s *SourceState) addPatterns(patternSet *patternSet, sourceAbsPath AbsPath,
 	return nil
 }
 
-// addTemplateData adds all template data in sourcePath to s.
+// addTemplateData adds all template data in sourceAbsPath to s.
 func (s *SourceState) addTemplateData(sourceAbsPath AbsPath) error {
 	_, name := sourceAbsPath.Split()
 	suffix := mustTrimPrefix(string(name), dataName+".")

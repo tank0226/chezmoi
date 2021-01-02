@@ -80,11 +80,11 @@ type errDuplicateTarget struct {
 }
 
 func (e *errDuplicateTarget) Error() string {
-	sourcePathStrs := make([]string, 0, len(e.sourceRelPaths))
-	for _, sourcePath := range e.sourceRelPaths {
-		sourcePathStrs = append(sourcePathStrs, sourcePath.String())
+	sourceRelPathStrs := make([]string, 0, len(e.sourceRelPaths))
+	for _, sourceRelPath := range e.sourceRelPaths {
+		sourceRelPathStrs = append(sourceRelPathStrs, sourceRelPath.String())
 	}
-	return fmt.Sprintf("%s: duplicate target (%s)", e.targetRelPath, strings.Join(sourcePathStrs, ", "))
+	return fmt.Sprintf("%s: duplicate target (%s)", e.targetRelPath, strings.Join(sourceRelPathStrs, ", "))
 }
 
 type errNotInAbsDir struct {
