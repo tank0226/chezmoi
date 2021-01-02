@@ -7,7 +7,6 @@ import (
 	"errors"
 	"fmt"
 	"os"
-	"path"
 	"sort"
 	"strings"
 	"text/template"
@@ -554,32 +553,31 @@ func (s *SourceState) Read() error {
 		if len(sourceStateEntries) != 1 {
 			continue
 		}
-		sourceStateDir, ok := sourceStateEntries[0].(*SourceStateDir)
-		if !ok {
+
+		switch sourceStateDir, ok := sourceStateEntries[0].(*SourceStateDir); {
+		case !ok:
+			continue
+		case !sourceStateDir.Attr.Exact:
 			continue
 		}
-		if !sourceStateDir.Attr.Exact {
-			continue
-		}
-		sourceStateRemove := &SourceStateRemove{
-			targetRelPath: sourceStateDir.Name(),
-		}
-		infos, err := s.system.ReadDir(path.Join(s.destDir, targetRelPath))
-		switch {
+
+		switch infos, err := s.system.ReadDir(string(s.destDir.Join(targetRelPath))); {
 		case err == nil:
 			for _, info := range infos {
 				name := info.Name()
 				if name == "." || name == ".." {
 					continue
 				}
-				targetEntryName := path.Join(targetRelPath, name)
-				if _, ok := allSourceStateEntries[targetEntryName]; ok {
+				destEntryRelPath := targetRelPath.Join(RelPath(name))
+				if _, ok := allSourceStateEntries[destEntryRelPath]; ok {
 					continue
 				}
-				if s.Ignored(targetEntryName) {
+				if s.Ignored(destEntryRelPath) {
 					continue
 				}
-				allSourceStateEntries[targetEntryName] = append(allSourceStateEntries[targetEntryName], sourceStateRemove)
+				allSourceStateEntries[destEntryRelPath] = append(allSourceStateEntries[destEntryRelPath], &SourceStateRemove{
+					targetRelPath: destEntryRelPath,
+				})
 			}
 		case os.IsNotExist(err):
 			// Do nothing.
@@ -590,23 +588,24 @@ func (s *SourceState) Read() error {
 
 	// Check for duplicate source entries with the same target name. Iterate
 	// over the target names in order so that any error is deterministic.
-	targetNames := make([]SourceRelPath, 0, len(allSourceStateEntries))
-	for targetName := range allSourceStateEntries {
-		targetNames = append(targetNames, targetName)
+	targetRelPaths := make(RelPaths, 0, len(allSourceStateEntries))
+	for targetRelPath := range allSourceStateEntries {
+		targetRelPaths = append(targetRelPaths, targetRelPath)
 	}
-	sort.Strings(targetNames)
-	for _, targetName := range targetNames {
-		sourceStateEntries := allSourceStateEntries[targetName]
+	sort.Sort(targetRelPaths)
+	for _, targetRelPath := range targetRelPaths {
+		sourceStateEntries := allSourceStateEntries[targetRelPath]
 		if len(sourceStateEntries) == 1 {
 			continue
 		}
-		sourcePaths := make([]SourceRelPath, 0, len(sourceStateEntries))
+		sourceRelPaths := make(SourceRelPaths, 0, len(sourceStateEntries))
 		for _, sourceStateEntry := range sourceStateEntries {
-			sourcePaths = append(sourcePaths, sourceStateEntry.Name())
+			sourceRelPaths = append(sourceRelPaths, sourceStateEntry.RelPath())
 		}
+		sort.Sort(sourceRelPaths)
 		err = multierr.Append(err, &errDuplicateTarget{
-			targetName:  targetName,
-			sourcePaths: sourcePaths,
+			targetRelPath: targetRelPath,
+			sourcePaths:   sourceRelPaths,
 		})
 	}
 	if err != nil {

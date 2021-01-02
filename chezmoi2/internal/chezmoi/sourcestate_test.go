@@ -750,15 +750,15 @@ func TestSourceStateRead(t *testing.T) {
 			name: "dir",
 			root: map[string]interface{}{
 				"/home/user/.local/share/chezmoi": map[string]interface{}{
-					"foo": &vfst.Dir{Perm: 0o777},
+					"dir": &vfst.Dir{Perm: 0o777},
 				},
 			},
 			expectedSourceState: NewSourceState(
-				withEntries(map[string]SourceStateEntry{
-					"foo": &SourceStateDir{
-						sourceRelPath: "/home/user/.local/share/chezmoi/foo",
+				withEntries(map[RelPath]SourceStateEntry{
+					"dir": &SourceStateDir{
+						sourceRelPath: NewSourceRelDirPath("dir"),
 						Attr: DirAttr{
-							Name: "foo",
+							Name: "dir",
 						},
 						targetStateEntry: &TargetStateDir{
 							perm: 0o777,
@@ -771,21 +771,21 @@ func TestSourceStateRead(t *testing.T) {
 			name: "file",
 			root: map[string]interface{}{
 				"/home/user/.local/share/chezmoi": map[string]interface{}{
-					"foo": "bar",
+					"dot_file": "# contents of .file\n",
 				},
 			},
 			expectedSourceState: NewSourceState(
-				withEntries(map[string]SourceStateEntry{
-					"foo": &SourceStateFile{
-						sourceRelPath: "/home/user/.local/share/chezmoi/foo",
+				withEntries(map[RelPath]SourceStateEntry{
+					".file": &SourceStateFile{
+						sourceRelPath: NewSourceRelPath("dot_file"),
 						Attr: FileAttr{
-							Name: "foo",
+							Name: ".file",
 							Type: SourceFileTypeFile,
 						},
-						lazyContents: newLazyContents([]byte("bar")),
+						lazyContents: newLazyContents([]byte("# contents of .file\n")),
 						targetStateEntry: &TargetStateFile{
 							perm:         0o666,
-							lazyContents: newLazyContents([]byte("bar")),
+							lazyContents: newLazyContents([]byte("# contents of .file\n")),
 						},
 					},
 				}),
@@ -795,21 +795,21 @@ func TestSourceStateRead(t *testing.T) {
 			name: "duplicate_target_file",
 			root: map[string]interface{}{
 				"/home/user/.local/share/chezmoi": map[string]interface{}{
-					"foo":      "bar",
-					"foo.tmpl": "bar",
+					"dot_file":      "# contents of .file\n",
+					"dot_file.tmpl": "# contents of .file\n",
 				},
 			},
-			expectedError: "foo: duplicate target (/home/user/.local/share/chezmoi/foo, /home/user/.local/share/chezmoi/foo.tmpl)",
+			expectedError: "foo: duplicate target (dot_file, dot_file.tmpl)",
 		},
 		{
 			name: "duplicate_target_dir",
 			root: map[string]interface{}{
 				"/home/user/.local/share/chezmoi": map[string]interface{}{
-					"foo":       "bar",
-					"exact_foo": &vfst.Dir{Perm: 0o777},
+					"dir":       &vfst.Dir{Perm: 0o777},
+					"exact_dir": &vfst.Dir{Perm: 0o777},
 				},
 			},
-			expectedError: "foo: duplicate target (/home/user/.local/share/chezmoi/exact_foo, /home/user/.local/share/chezmoi/foo)",
+			expectedError: "foo: duplicate target (dir, exact_dir)",
 		},
 		{
 			name: "duplicate_target_script",
@@ -819,41 +819,29 @@ func TestSourceStateRead(t *testing.T) {
 					"run_once_script": "#!/bin/sh\n",
 				},
 			},
-			expectedError: "script: duplicate target (/home/user/.local/share/chezmoi/run_once_script, /home/user/.local/share/chezmoi/run_script)",
+			expectedError: "script: duplicate target (run_once_script, run_script)",
 		},
 		{
 			name: "symlink_with_attr",
 			root: map[string]interface{}{
 				"/home/user/.local/share/chezmoi": map[string]interface{}{
-					"bar":            "baz",
-					"executable_foo": &vfst.Symlink{Target: "bar"},
+					".file":               "# contents of .file\n",
+					"executable_dot_file": &vfst.Symlink{Target: ".file"},
 				},
 			},
 			expectedSourceState: NewSourceState(
-				withEntries(map[string]SourceStateEntry{
-					"bar": &SourceStateFile{
-						sourceRelPath: "/home/user/.local/share/chezmoi/bar",
+				withEntries(map[RelPath]SourceStateEntry{
+					".file": &SourceStateFile{
+						sourceRelPath: NewSourceRelPath("executable_dot_file"),
 						Attr: FileAttr{
-							Name: "bar",
-							Type: SourceFileTypeFile,
-						},
-						lazyContents: newLazyContents([]byte("baz")),
-						targetStateEntry: &TargetStateFile{
-							perm:         0o666,
-							lazyContents: newLazyContents([]byte("baz")),
-						},
-					},
-					"foo": &SourceStateFile{
-						sourceRelPath: "/home/user/.local/share/chezmoi/executable_foo",
-						Attr: FileAttr{
-							Name:       "foo",
+							Name:       ".file",
 							Type:       SourceFileTypeFile,
 							Executable: true,
 						},
-						lazyContents: newLazyContents([]byte("baz")),
+						lazyContents: newLazyContents([]byte("# contents of .file\n")),
 						targetStateEntry: &TargetStateFile{
 							perm:         0o777,
-							lazyContents: newLazyContents([]byte("baz")),
+							lazyContents: newLazyContents([]byte("# contents of .file\n")),
 						},
 					},
 				}),
@@ -863,34 +851,22 @@ func TestSourceStateRead(t *testing.T) {
 			name: "symlink_script",
 			root: map[string]interface{}{
 				"/home/user/.local/share/chezmoi": map[string]interface{}{
-					"bar":     "baz",
-					"run_foo": &vfst.Symlink{Target: "bar"},
+					".script":    "# contents of .script\n",
+					"run_script": &vfst.Symlink{Target: ".script"},
 				},
 			},
 			expectedSourceState: NewSourceState(
-				withEntries(map[string]SourceStateEntry{
-					"bar": &SourceStateFile{
-						sourceRelPath: "/home/user/.local/share/chezmoi/bar",
+				withEntries(map[RelPath]SourceStateEntry{
+					"script": &SourceStateFile{
+						sourceRelPath: NewSourceRelPath("run_script"),
 						Attr: FileAttr{
-							Name: "bar",
-							Type: SourceFileTypeFile,
-						},
-						lazyContents: newLazyContents([]byte("baz")),
-						targetStateEntry: &TargetStateFile{
-							perm:         0o666,
-							lazyContents: newLazyContents([]byte("baz")),
-						},
-					},
-					"foo": &SourceStateFile{
-						sourceRelPath: "/home/user/.local/share/chezmoi/run_foo",
-						Attr: FileAttr{
-							Name: "foo",
+							Name: "script",
 							Type: SourceFileTypeScript,
 						},
-						lazyContents: newLazyContents([]byte("baz")),
+						lazyContents: newLazyContents([]byte("# contents of .script\n")),
 						targetStateEntry: &TargetStateScript{
-							name:         "foo",
-							lazyContents: newLazyContents([]byte("baz")),
+							name:         "script",
+							lazyContents: newLazyContents([]byte("# contents of .script\n")),
 						},
 					},
 				}),
@@ -900,21 +876,21 @@ func TestSourceStateRead(t *testing.T) {
 			name: "script",
 			root: map[string]interface{}{
 				"/home/user/.local/share/chezmoi": map[string]interface{}{
-					"run_foo": "bar",
+					"run_script": "# contents of script\n",
 				},
 			},
 			expectedSourceState: NewSourceState(
-				withEntries(map[string]SourceStateEntry{
-					"foo": &SourceStateFile{
-						sourceRelPath: "/home/user/.local/share/chezmoi/run_foo",
+				withEntries(map[RelPath]SourceStateEntry{
+					"script": &SourceStateFile{
+						sourceRelPath: NewSourceRelPath("run_script"),
 						Attr: FileAttr{
-							Name: "foo",
+							Name: "script",
 							Type: SourceFileTypeScript,
 						},
-						lazyContents: newLazyContents([]byte("bar")),
+						lazyContents: newLazyContents([]byte("# contents of script\n")),
 						targetStateEntry: &TargetStateScript{
-							name:         "foo",
-							lazyContents: newLazyContents([]byte("bar")),
+							name:         "script",
+							lazyContents: newLazyContents([]byte("# contents of script\n")),
 						},
 					},
 				}),
@@ -924,20 +900,20 @@ func TestSourceStateRead(t *testing.T) {
 			name: "symlink",
 			root: map[string]interface{}{
 				"/home/user/.local/share/chezmoi": map[string]interface{}{
-					"symlink_foo": "bar",
+					"symlink_dot_symlink": ".dir/subdir/file",
 				},
 			},
 			expectedSourceState: NewSourceState(
-				withEntries(map[string]SourceStateEntry{
-					"foo": &SourceStateFile{
-						sourceRelPath: "/home/user/.local/share/chezmoi/symlink_foo",
+				withEntries(map[RelPath]SourceStateEntry{
+					".symlink": &SourceStateFile{
+						sourceRelPath: NewSourceRelPath("symlink_dot_symlink"),
 						Attr: FileAttr{
-							Name: "foo",
+							Name: ".symlink",
 							Type: SourceFileTypeSymlink,
 						},
-						lazyContents: newLazyContents([]byte("bar")),
+						lazyContents: newLazyContents([]byte(".dir/subdir/file")),
 						targetStateEntry: &TargetStateSymlink{
-							lazyLinkname: newLazyLinkname("bar"),
+							lazyLinkname: newLazyLinkname(".dir/subdir/file"),
 						},
 					},
 				}),
@@ -947,35 +923,35 @@ func TestSourceStateRead(t *testing.T) {
 			name: "file_in_dir",
 			root: map[string]interface{}{
 				"/home/user/.local/share/chezmoi": map[string]interface{}{
-					"foo": map[string]interface{}{
-						"bar": "baz",
+					"dir": map[string]interface{}{
+						"file": "# contents of .dir/file\n",
 					},
 				},
 			},
 			expectedSourceState: NewSourceState(
-				withEntries(map[string]SourceStateEntry{
-					"foo": &SourceStateDir{
-						sourceRelPath: "/home/user/.local/share/chezmoi/foo",
+				withEntries(map[RelPath]SourceStateEntry{
+					"dir": &SourceStateDir{
+						sourceRelPath: NewSourceRelDirPath("dir"),
 						Attr: DirAttr{
-							Name: "foo",
+							Name: "dir",
 						},
 						targetStateEntry: &TargetStateDir{
 							perm: 0o777,
 						},
 					},
-					"foo/bar": &SourceStateFile{
-						sourceRelPath: "/home/user/.local/share/chezmoi/foo/bar",
+					"dir/file": &SourceStateFile{
+						sourceRelPath: NewSourceRelPath("dir/file"),
 						Attr: FileAttr{
-							Name: "bar",
+							Name: "file",
 							Type: SourceFileTypeFile,
 						},
 						lazyContents: &lazyContents{
-							contents: []byte("baz"),
+							contents: []byte("# contents of .dir/file\n"),
 						},
 						targetStateEntry: &TargetStateFile{
 							perm: 0o666,
 							lazyContents: &lazyContents{
-								contents: []byte("baz"),
+								contents: []byte("# contents of .dir/file\n"),
 							},
 						},
 					},
@@ -1017,21 +993,21 @@ func TestSourceStateRead(t *testing.T) {
 			name: "chezmoiignore_exact_dir",
 			root: map[string]interface{}{
 				"/home/user/dir": map[string]interface{}{
-					"bar": "# contents of dir/bar\n",
-					"baz": "# contents of dir/baz\n",
-					"foo": "# contents of dir/foo\n",
+					"file1": "# contents of dir/file1\n",
+					"file2": "# contents of dir/file2\n",
+					"file3": "# contents of dir/file3\n",
 				},
 				"/home/user/.local/share/chezmoi": map[string]interface{}{
-					".chezmoiignore": "dir/baz\n",
+					".chezmoiignore": "dir/file3\n",
 					"exact_dir": map[string]interface{}{
-						"bar": "# contents of dir/bar\n",
+						"file1": "# contents of dir/file1\n",
 					},
 				},
 			},
 			expectedSourceState: NewSourceState(
-				withEntries(map[string]SourceStateEntry{
+				withEntries(map[RelPath]SourceStateEntry{
 					"dir": &SourceStateDir{
-						sourceRelPath: "/home/user/.local/share/chezmoi/exact_dir",
+						sourceRelPath: NewSourceRelDirPath("dir"),
 						Attr: DirAttr{
 							Name:  "dir",
 							Exact: true,
@@ -1040,29 +1016,29 @@ func TestSourceStateRead(t *testing.T) {
 							perm: 0o777,
 						},
 					},
-					"dir/bar": &SourceStateFile{
-						sourceRelPath: "/home/user/.local/share/chezmoi/exact_dir/bar",
+					"dir/file1": &SourceStateFile{
+						sourceRelPath: NewSourceRelPath("dir/file1"),
 						Attr: FileAttr{
-							Name: "bar",
+							Name: "file1",
 							Type: SourceFileTypeFile,
 						},
 						lazyContents: &lazyContents{
-							contents: []byte("# contents of dir/bar\n"),
+							contents: []byte("# contents of dir/file1\n"),
 						},
 						targetStateEntry: &TargetStateFile{
 							perm: 0o666,
 							lazyContents: &lazyContents{
-								contents: []byte("# contents of dir/bar\n"),
+								contents: []byte("# contents of dir/file1\n"),
 							},
 						},
 					},
-					"dir/foo": &SourceStateRemove{
-						targetRelPath: "/home/user/.local/share/chezmoi/exact_dir",
+					"dir/file2": &SourceStateRemove{
+						targetRelPath: "dir/file2",
 					},
 				}),
 				withIgnore(
 					mustNewPatternSet(t, map[string]bool{
-						"dir/baz": true,
+						"dir/file3": true,
 					}),
 				),
 			),
@@ -1070,15 +1046,15 @@ func TestSourceStateRead(t *testing.T) {
 		{
 			name: "chezmoiremove",
 			root: map[string]interface{}{
-				"/home/user/foo": "",
+				"/home/user/file": "",
 				"/home/user/.local/share/chezmoi": map[string]interface{}{
-					".chezmoiremove": "foo\n",
+					".chezmoiremove": "file\n",
 				},
 			},
 			expectedSourceState: NewSourceState(
-				withEntries(map[string]SourceStateEntry{
-					"foo": &SourceStateRemove{
-						targetRelPath: "/home/user/.local/share/chezmoi/.chezmoiremove/foo",
+				withEntries(map[RelPath]SourceStateEntry{
+					"file": &SourceStateRemove{
+						targetRelPath: "file",
 					},
 				}),
 			),
@@ -1087,23 +1063,23 @@ func TestSourceStateRead(t *testing.T) {
 			name: "chezmoiremove_and_ignore",
 			root: map[string]interface{}{
 				"/home/user": map[string]interface{}{
-					"bar": "",
-					"baz": "",
+					"file1": "",
+					"file2": "",
 				},
 				"/home/user/.local/share/chezmoi": map[string]interface{}{
-					".chezmoiignore": "baz\n",
-					".chezmoiremove": "b*\n",
+					".chezmoiignore": "file2\n",
+					".chezmoiremove": "file*\n",
 				},
 			},
 			expectedSourceState: NewSourceState(
-				withEntries(map[string]SourceStateEntry{
-					"bar": &SourceStateRemove{
-						targetRelPath: "/home/user/.local/share/chezmoi/.chezmoiremove/bar",
+				withEntries(map[RelPath]SourceStateEntry{
+					"file1": &SourceStateRemove{
+						targetRelPath: "file1",
 					},
 				}),
 				withIgnore(
 					mustNewPatternSet(t, map[string]bool{
-						"baz": true,
+						"file*": true,
 					}),
 				),
 			),
@@ -1113,14 +1089,14 @@ func TestSourceStateRead(t *testing.T) {
 			root: map[string]interface{}{
 				"/home/user/.local/share/chezmoi": map[string]interface{}{
 					".chezmoitemplates": map[string]interface{}{
-						"foo": "bar",
+						"template": "# contents of .chezmoitemplates/template\n",
 					},
 				},
 			},
 			expectedSourceState: NewSourceState(
 				withTemplates(
 					map[string]*template.Template{
-						"foo": template.Must(template.New("foo").Option("missingkey=error").Parse("bar")),
+						"template": template.Must(template.New("template").Option("missingkey=error").Parse("# contents of .chezmoitemplates/template\n")),
 					},
 				),
 			),
@@ -1147,17 +1123,17 @@ func TestSourceStateRead(t *testing.T) {
 			root: map[string]interface{}{
 				"/home/user/.local/share/chezmoi": map[string]interface{}{
 					".chezmoiversion": "1.2.3\n",
-					"foo": map[string]interface{}{
+					"dir": map[string]interface{}{
 						".chezmoiversion": "2.3.4\n",
 					},
 				},
 			},
 			expectedSourceState: NewSourceState(
-				withEntries(map[string]SourceStateEntry{
-					"foo": &SourceStateDir{
-						sourceRelPath: "/home/user/.local/share/chezmoi/foo",
+				withEntries(map[RelPath]SourceStateEntry{
+					"dir": &SourceStateDir{
+						sourceRelPath: NewSourceRelDirPath("dir"),
 						Attr: DirAttr{
-							Name: "foo",
+							Name: "dir",
 						},
 						targetStateEntry: &TargetStateDir{
 							perm: 0o777,
@@ -1177,8 +1153,8 @@ func TestSourceStateRead(t *testing.T) {
 			name: "ignore_dir",
 			root: map[string]interface{}{
 				"/home/user/.local/share/chezmoi": map[string]interface{}{
-					".ignore": map[string]interface{}{
-						"foo": "bar",
+					".dir": map[string]interface{}{
+						"file": "# contents of .dir/file\n",
 					},
 				},
 			},
@@ -1188,7 +1164,7 @@ func TestSourceStateRead(t *testing.T) {
 			name: "ignore_file",
 			root: map[string]interface{}{
 				"/home/user/.local/share/chezmoi": map[string]interface{}{
-					".ignore": "",
+					".file": "# contents of .file\n",
 				},
 			},
 			expectedSourceState: NewSourceState(),
@@ -1290,7 +1266,7 @@ func (s *SourceState) evaluateAll() error {
 	return nil
 }
 
-func withEntries(sourceEntries map[string]SourceStateEntry) SourceStateOption {
+func withEntries(sourceEntries map[RelPath]SourceStateEntry) SourceStateOption {
 	return func(s *SourceState) {
 		s.entries = sourceEntries
 	}

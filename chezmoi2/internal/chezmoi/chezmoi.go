@@ -75,8 +75,8 @@ var modeTypeNames = map[os.FileMode]string{
 }
 
 type errDuplicateTarget struct {
-	targetName  string
-	sourcePaths []SourceRelPath
+	targetRelPath RelPath
+	sourcePaths   []SourceRelPath
 }
 
 func (e *errDuplicateTarget) Error() string {
@@ -84,7 +84,7 @@ func (e *errDuplicateTarget) Error() string {
 	for _, sourcePath := range e.sourcePaths {
 		sourcePathStrs = append(sourcePathStrs, sourcePath.String())
 	}
-	return fmt.Sprintf("%s: duplicate target (%s)", e.targetName, strings.Join(sourcePathStrs, ", "))
+	return fmt.Sprintf("%s: duplicate target (%s)", e.targetRelPath, strings.Join(sourcePathStrs, ", "))
 }
 
 type errNotInAbsDir struct {
@@ -163,9 +163,9 @@ func (p AbsPath) TrimDirPrefix(dirPrefixAbsPath AbsPath) (RelPath, error) {
 // AbsPaths is a slice of AbsPaths that implements sort.Interface.
 type AbsPaths []AbsPath
 
-func (a AbsPaths) Len() int           { return len(a) }
-func (a AbsPaths) Less(i, j int) bool { return string(a[i]) < string(a[j]) }
-func (a AbsPaths) Swap(i, j int)      { a[i], a[j] = a[j], a[i] }
+func (ps AbsPaths) Len() int           { return len(ps) }
+func (ps AbsPaths) Less(i, j int) bool { return string(ps[i]) < string(ps[j]) }
+func (ps AbsPaths) Swap(i, j int)      { ps[i], ps[j] = ps[j], ps[i] }
 
 // A RelPath is a relative path.
 type RelPath string
@@ -212,9 +212,9 @@ func (p RelPath) TrimDirPrefix(dirPrefix RelPath) (RelPath, error) {
 // RelPaths is a slice of RelPaths that implements sort.Interface.
 type RelPaths []RelPath
 
-func (a RelPaths) Len() int           { return len(a) }
-func (a RelPaths) Less(i, j int) bool { return string(a[i]) < string(a[j]) }
-func (a RelPaths) Swap(i, j int)      { a[i], a[j] = a[j], a[i] }
+func (ps RelPaths) Len() int           { return len(ps) }
+func (ps RelPaths) Less(i, j int) bool { return string(ps[i]) < string(ps[j]) }
+func (ps RelPaths) Swap(i, j int)      { ps[i], ps[j] = ps[j], ps[i] }
 
 // StateData returns the state data in bucket in s.
 func StateData(s PersistentState, bucket []byte) (map[string]interface{}, error) {
