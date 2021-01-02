@@ -1108,12 +1108,12 @@ func (c *Config) targetRelPaths(s *chezmoi.SourceState, args []string, options t
 			}
 		}
 		targetRelPaths = append(targetRelPaths, targetRelPath)
-		// FIXME this needs work
 		if options.recursive {
-			targetNamePrefix := targetRelPath.String() + "/"
-			for _, targetName := range s.TargetRelPaths() {
-				if strings.HasPrefix(targetName.String(), targetNamePrefix) {
-					targetRelPaths = append(targetRelPaths, targetName)
+			parentRelPath := targetRelPath
+			// FIXME we should not call s.TargetRelPaths() here - risk of accidentally quadratic
+			for _, targetRelPath := range s.TargetRelPaths() {
+				if _, err := targetRelPath.TrimDirPrefix(parentRelPath); err == nil {
+					targetRelPaths = append(targetRelPaths, targetRelPath)
 				}
 			}
 		}
