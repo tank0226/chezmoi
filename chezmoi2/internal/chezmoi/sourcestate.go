@@ -418,11 +418,10 @@ func (s *SourceState) Read() error {
 
 	// Read all source entries.
 	allSourceStateEntries := make(map[RelPath][]SourceStateEntry)
-	if err := vfs.WalkSlash(s.system.UnderlyingFS(), string(s.sourceDirAbsPath), func(sourceAbsPathStr string, info os.FileInfo, err error) error {
+	if err := Walk(s.system, s.sourceDirAbsPath, func(sourceAbsPath AbsPath, info os.FileInfo, err error) error {
 		if err != nil {
 			return err
 		}
-		sourceAbsPath := AbsPath(sourceAbsPathStr)
 		if sourceAbsPath == s.sourceDirAbsPath {
 			return nil
 		}
@@ -443,12 +442,12 @@ func (s *SourceState) Read() error {
 		case strings.HasPrefix(info.Name(), dataName):
 			return s.addTemplateData(sourceAbsPath)
 		case info.Name() == ignoreName:
-			// .chezmoiignore is interpreted as a template. vfs.WalkSlash walks
-			// in alphabetical order, so, luckily for us, .chezmoidata will be
-			// read before .chezmoiignore, so data in .chezmoidata is available
-			// to be used in .chezmoiignore. Unluckily for us, .chezmoitemplates
-			// will be read afterwards so partial templates will not be
-			// available in .chezmoiignore.
+			// .chezmoiignore is interpreted as a template. we walk the
+			// filesystem in alphabetical order, so, luckily for us,
+			// .chezmoidata will be read before .chezmoiignore, so data in
+			// .chezmoidata is available to be used in .chezmoiignore. Unluckily
+			// for us, .chezmoitemplates will be read afterwards so partial
+			// templates will not be available in .chezmoiignore.
 			return s.addPatterns(s.ignore, sourceAbsPath, parentSourceRelPath)
 		case info.Name() == removeName:
 			// The comment about .chezmoiignore and templates applies to
@@ -692,11 +691,10 @@ func (s *SourceState) addTemplateData(sourceAbsPath AbsPath) error {
 
 // addTemplatesDir adds all templates in templateDir to s.
 func (s *SourceState) addTemplatesDir(templatesDirAbsPath AbsPath) error {
-	return vfs.WalkSlash(s.system.UnderlyingFS(), string(templatesDirAbsPath), func(templateAbsPathStr string, info os.FileInfo, err error) error {
+	return Walk(s.system, templatesDirAbsPath, func(templateAbsPath AbsPath, info os.FileInfo, err error) error {
 		if err != nil {
 			return err
 		}
-		templateAbsPath := AbsPath(templateAbsPathStr)
 		switch {
 		case info.Mode().IsRegular():
 			contents, err := s.system.ReadFile(templateAbsPath)

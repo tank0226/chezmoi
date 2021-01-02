@@ -63,7 +63,7 @@ func (c *Config) runStateDataCmd(cmd *cobra.Command, args []string) error {
 
 func (c *Config) runStateResetCmd(cmd *cobra.Command, args []string) error {
 	path := c.persistentStateFile()
-	_, err := c.baseSystem.Stat(path.String())
+	_, err := c.baseSystem.Stat(path)
 	if os.IsNotExist(err) {
 		return nil
 	} else if err != nil {
@@ -78,5 +78,5 @@ func (c *Config) runStateResetCmd(cmd *cobra.Command, args []string) error {
 			return nil
 		}
 	}
-	return c.baseSystem.RemoveAll(path.String())
+	return c.baseSystem.RemoveAll(path)
 }

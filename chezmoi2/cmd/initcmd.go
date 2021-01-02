@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"fmt"
 	"os"
-	"path/filepath"
 	"regexp"
 	"runtime"
 	"strconv"
@@ -14,7 +13,6 @@ import (
 	"github.com/go-git/go-git/v5"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
-	"github.com/twpayne/go-vfs"
 
 	"github.com/twpayne/chezmoi/chezmoi2/internal/chezmoi"
 )
@@ -206,7 +204,7 @@ func (c *Config) runInitCmd(cmd *cobra.Command, args []string) error {
 
 // createConfigFile creates a config file using a template and returns its
 // contents.
-func (c *Config) createConfigFile(filename string, data []byte) ([]byte, error) {
+func (c *Config) createConfigFile(filename chezmoi.RelPath, data []byte) ([]byte, error) {
 	funcMap := make(template.FuncMap)
 	for key, value := range c.templateFuncs {
 		funcMap[key] = value
@@ -219,7 +217,7 @@ func (c *Config) createConfigFile(filename string, data []byte) ([]byte, error) 
 		funcMap[name] = f
 	}
 
-	t, err := template.New(filename).Funcs(funcMap).Parse(string(data))
+	t, err := template.New(string(filename)).Funcs(funcMap).Parse(string(data))
 	if err != nil {
 		return nil, err
 	}
@@ -230,8 +228,8 @@ func (c *Config) createConfigFile(filename string, data []byte) ([]byte, error) 
 	}
 	contents := []byte(sb.String())
 
-	configDir := filepath.Join(c.bds.ConfigHome, "chezmoi")
-	if err := vfs.MkdirAll(c.baseSystem, configDir, 0o777); err != nil {
+	configDir := chezmoi.AbsPath(c.bds.ConfigHome).Join("chezmoi")
+	if err := chezmoi.MkdirAll(c.baseSystem, configDir, 0o777); err != nil {
 		return nil, err
 	}
 
@@ -243,7 +241,7 @@ func (c *Config) createConfigFile(filename string, data []byte) ([]byte, error) 
 	return contents, nil
 }
 
-func (c *Config) findConfigTemplate() (string, string, []byte, error) {
+func (c *Config) findConfigTemplate() (chezmoi.RelPath, string, []byte, error) {
 	for _, ext := range viper.SupportedExts {
 		filename := chezmoi.RelPath(chezmoi.Prefix + "." + ext + chezmoi.TemplateSuffix)
 		contents, err := c.baseSystem.ReadFile(c.sourceDirAbsPath.Join(filename))
@@ -253,7 +251,7 @@ func (c *Config) findConfigTemplate() (string, string, []byte, error) {
 		case err != nil:
 			return "", "", nil, err
 		}
-		return "chezmoi." + ext, ext, contents, nil
+		return chezmoi.RelPath("chezmoi." + ext), ext, contents, nil
 	}
 	return "", "", nil, nil
 }

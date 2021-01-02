@@ -449,7 +449,7 @@ func (c *Config) destAbsPathInfos(sourceState *chezmoi.SourceState, args []strin
 			return nil, err
 		}
 		if recursive {
-			if err := vfs.WalkSlash(c.destSystem, string(destAbsPath), func(destAbsPathStr string, info os.FileInfo, err error) error {
+			if err := chezmoi.Walk(c.destSystem, destAbsPath, func(destAbsPath chezmoi.AbsPath, info os.FileInfo, err error) error {
 				if err != nil {
 					return err
 				}
@@ -488,7 +488,7 @@ func (c *Config) doPurge(purgeOptions *purgeOptions) error {
 		}
 	}
 
-	absSlashPersistentStateFile, err := c.persistentStateFile().Normalize(c.homeDirAbsPath)
+	absSlashPersistentStateFile, err := c.persistentStateFile()
 	if err != nil {
 		return err
 	}
@@ -869,7 +869,7 @@ func (c *Config) persistentPreRunRootE(cmd *cobra.Command, args []string) error 
 	case cmd.Annotations[persistentStateMode] == persistentStateModeEmpty:
 		c.persistentState = chezmoi.NewMockPersistentState()
 	case cmd.Annotations[persistentStateMode] == persistentStateModeReadOnly:
-		persistentStateFile := c.persistentStateFile().String()
+		persistentStateFile := c.persistentStateFile()
 		c.persistentState, err = chezmoi.NewBoltPersistentState(c.fs, persistentStateFile, chezmoi.BoltPersistentStateReadOnly)
 		if err != nil {
 			return err
@@ -877,7 +877,7 @@ func (c *Config) persistentPreRunRootE(cmd *cobra.Command, args []string) error 
 	case cmd.Annotations[persistentStateMode] == persistentStateModeReadMockWrite:
 		fallthrough
 	case cmd.Annotations[persistentStateMode] == persistentStateModeReadWrite && c.dryRun:
-		persistentStateFile := c.persistentStateFile().String()
+		persistentStateFile := c.persistentStateFile()
 		persistentState, err := chezmoi.NewBoltPersistentState(c.fs, persistentStateFile, chezmoi.BoltPersistentStateReadOnly)
 		if err != nil {
 			return err
@@ -891,7 +891,7 @@ func (c *Config) persistentPreRunRootE(cmd *cobra.Command, args []string) error 
 		}
 		c.persistentState = dryRunPeristentState
 	case cmd.Annotations[persistentStateMode] == persistentStateModeReadWrite:
-		persistentStateFile := c.persistentStateFile().String()
+		persistentStateFile := c.persistentStateFile()
 		c.persistentState, err = chezmoi.NewBoltPersistentState(c.fs, persistentStateFile, chezmoi.BoltPersistentStateReadWrite)
 		if err != nil {
 			return err
@@ -926,13 +926,13 @@ func (c *Config) persistentPreRunRootE(cmd *cobra.Command, args []string) error 
 	}
 
 	if boolAnnotation(cmd, requiresConfigDirectory) {
-		if err := vfs.MkdirAll(c.baseSystem, string(c.configFileAbsPath.Dir()), 0o777); err != nil {
+		if err := chezmoi.MkdirAll(c.baseSystem, c.configFileAbsPath.Dir(), 0o777); err != nil {
 			return err
 		}
 	}
 
 	if boolAnnotation(cmd, requiresSourceDirectory) {
-		if err := vfs.MkdirAll(c.baseSystem, string(c.sourceDirAbsPath), 0o777); err != nil {
+		if err := chezmoi.MkdirAll(c.baseSystem, c.sourceDirAbsPath, 0o777); err != nil {
 			return err
 		}
 	}
@@ -945,7 +945,7 @@ func (c *Config) persistentPreRunRootE(cmd *cobra.Command, args []string) error 
 			// $XDG_DATA_DIR will fail. As a work-around, create the directory
 			// if it does not exist. See
 			// https://forum.snapcraft.io/t/wayland-dconf-and-xdg-runtime-dir/186/13.
-			if err := vfs.MkdirAll(c.baseSystem, c.bds.RuntimeDir, 0o700); err != nil {
+			if err := chezmoi.MkdirAll(c.baseSystem, chezmoi.AbsPath(c.bds.RuntimeDir), 0o700); err != nil {
 				return err
 			}
 		}
@@ -954,14 +954,14 @@ func (c *Config) persistentPreRunRootE(cmd *cobra.Command, args []string) error 
 	return nil
 }
 
-func (c *Config) persistentStateFile() *chezmoi.OSPath {
+func (c *Config) persistentStateFile() chezmoi.AbsPath {
 	if c.configFile != "" {
-		return chezmoi.NewOSPath(c.configFile).Dir().Join(persistentStateFilename)
+		return chezmoi.NewOSPath(c.configFile).Dir().Join(persistentStateFilename).AbsPath()
 	}
 	for _, configDir := range c.bds.ConfigDirs {
 		persistentStateFile := filepath.Join(configDir, "chezmoi", persistentStateFilename)
 		if _, err := os.Stat(persistentStateFile); err == nil {
-			return chezmoi.NewOSPath(persistentStateFile)
+			return chezmoi.NewOSPath(persistentStateFile).AbsPath()
 		}
 	}
 	return defaultConfigFile(c.fs, c.bds).Dir().Join(persistentStateFilename)
