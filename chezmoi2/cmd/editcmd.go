@@ -52,7 +52,7 @@ func (c *Config) runEditCmd(cmd *cobra.Command, args []string, s *chezmoi.Source
 
 	sourceAbsPathStrs := make([]string, 0, len(sourceAbsPaths))
 	for _, sourceAbsPath := range sourceAbsPaths {
-		sourceAbsPathStrs = append(sourceAbsPathStrs, sourceAbsPath.String())
+		sourceAbsPathStrs = append(sourceAbsPathStrs, string(sourceAbsPath))
 	}
 	if err := c.runEditor(sourceAbsPathStrs); err != nil {
 		return err

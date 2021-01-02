@@ -17,7 +17,7 @@ type ioregData struct {
 }
 
 func (c *Config) includeTemplateFunc(filename string) string {
-	contents, err := c.fs.ReadFile(c.sourceDirAbsPath.Join(chezmoi.RelPath(filename)).String())
+	contents, err := c.fs.ReadFile(string(c.sourceDirAbsPath.Join(chezmoi.RelPath(filename))))
 	if err != nil {
 		returnTemplateError(err)
 		return ""

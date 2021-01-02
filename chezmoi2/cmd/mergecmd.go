@@ -71,14 +71,14 @@ func (c *Config) runMergeCmd(cmd *cobra.Command, args []string, sourceState *che
 			return err
 		}
 		targetStatePath := tempDirAbsPath.Join(chezmoi.RelPath(targetRelPath.Base()))
-		if err := c.baseSystem.WriteFile(targetStatePath.String(), contents, 0o600); err != nil {
+		if err := c.baseSystem.WriteFile(string(targetStatePath), contents, 0o600); err != nil {
 			return err
 		}
 		args := append(
 			append([]string{}, c.Merge.Args...),
-			c.destDirAbsPath.Join(targetRelPath).String(),
-			c.sourceDirAbsPath.Join(sourceStateEntry.SourceRelPath().RelPath()).String(),
-			targetStatePath.String(),
+			string(c.destDirAbsPath.Join(targetRelPath)),
+			string(c.sourceDirAbsPath.Join(sourceStateEntry.SourceRelPath().RelPath())),
+			string(targetStatePath),
 		)
 		if err := c.run(c.destDirAbsPath, c.Merge.Command, args); err != nil {
 			return fmt.Errorf("%s: %w", targetRelPath, err)

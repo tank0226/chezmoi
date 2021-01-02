@@ -47,7 +47,7 @@ func (c *Config) runForgetCmd(cmd *cobra.Command, args []string, sourceState *ch
 				c.force = false
 			}
 		}
-		if err := c.sourceSystem.RemoveAll(sourceAbsPath.String()); err != nil {
+		if err := c.sourceSystem.RemoveAll(string(sourceAbsPath)); err != nil {
 			return err
 		}
 	}

@@ -263,7 +263,7 @@ func (s *SourceState) AddDestPathInfos(destAbsPathInfos map[AbsPath]os.FileInfo,
 
 		if info == nil {
 			var err error
-			info, err = lstater.Lstat(destAbsPath.String())
+			info, err = lstater.Lstat(string(destAbsPath))
 			if err != nil {
 				return err
 			}
@@ -406,7 +406,7 @@ func (s *SourceState) MustEntry(targetRelPath RelPath) SourceStateEntry {
 
 // Read reads a source state from sourcePath.
 func (s *SourceState) Read() error {
-	info, err := s.system.Lstat(s.sourceDirAbsPath.String())
+	info, err := s.system.Lstat(string(s.sourceDirAbsPath))
 	switch {
 	case os.IsNotExist(err):
 		return nil
@@ -418,7 +418,7 @@ func (s *SourceState) Read() error {
 
 	// Read all source entries.
 	allSourceStateEntries := make(map[RelPath][]SourceStateEntry)
-	if err := vfs.WalkSlash(s.system, s.sourceDirAbsPath.String(), func(sourceAbsPathStr string, info os.FileInfo, err error) error {
+	if err := vfs.WalkSlash(s.system, string(s.sourceDirAbsPath), func(sourceAbsPathStr string, info os.FileInfo, err error) error {
 		if err != nil {
 			return err
 		}
@@ -434,7 +434,7 @@ func (s *SourceState) Read() error {
 		parentSourceRelPath, sourceName := sourceRelPath.Split()
 		// Follow symlinks in the source directory.
 		if info.Mode()&os.ModeType == os.ModeSymlink {
-			info, err = s.system.Stat(s.sourceDirAbsPath.Join(sourceRelPath.RelPath()).String())
+			info, err = s.system.Stat(string(s.sourceDirAbsPath.Join(sourceRelPath.RelPath())))
 			if err != nil {
 				return err
 			}
@@ -457,7 +457,7 @@ func (s *SourceState) Read() error {
 			if err := s.addPatterns(removePatterns, sourceAbsPath, sourceRelPath); err != nil {
 				return err
 			}
-			matches, err := removePatterns.glob(s.system.UnderlyingFS(), s.destDirAbsPath.String()+"/")
+			matches, err := removePatterns.glob(s.system.UnderlyingFS(), string(s.destDirAbsPath)+"/")
 			if err != nil {
 				return err
 			}
@@ -678,7 +678,7 @@ func (s *SourceState) addTemplateData(sourceAbsPath AbsPath) error {
 	if !ok {
 		return fmt.Errorf("%s: unknown format", sourceAbsPath)
 	}
-	data, err := s.system.ReadFile(sourceAbsPath.String())
+	data, err := s.system.ReadFile(string(sourceAbsPath))
 	if err != nil {
 		return fmt.Errorf("%s: %w", sourceAbsPath, err)
 	}
@@ -692,7 +692,7 @@ func (s *SourceState) addTemplateData(sourceAbsPath AbsPath) error {
 
 // addTemplatesDir adds all templates in templateDir to s.
 func (s *SourceState) addTemplatesDir(templatesDirAbsPath AbsPath) error {
-	return vfs.WalkSlash(s.system, templatesDirAbsPath.String(), func(templateAbsPathStr string, info os.FileInfo, err error) error {
+	return vfs.WalkSlash(s.system, string(templatesDirAbsPath), func(templateAbsPathStr string, info os.FileInfo, err error) error {
 		if err != nil {
 			return err
 		}
@@ -729,7 +729,7 @@ func (s *SourceState) addTemplatesDir(templatesDirAbsPath AbsPath) error {
 // minimum version if it contains a more recent version than the current minimum
 // version.
 func (s *SourceState) addVersionFile(sourceAbsPath AbsPath) error {
-	data, err := s.system.ReadFile(sourceAbsPath.String())
+	data, err := s.system.ReadFile(string(sourceAbsPath))
 	if err != nil {
 		return err
 	}
@@ -758,11 +758,11 @@ func (s *SourceState) applyAll(targetSystem System, persistentState PersistentSt
 
 // executeTemplate executes the template at path and returns the result.
 func (s *SourceState) executeTemplate(templateAbsPath AbsPath) ([]byte, error) {
-	data, err := s.system.ReadFile(templateAbsPath.String())
+	data, err := s.system.ReadFile(string(templateAbsPath))
 	if err != nil {
 		return nil, err
 	}
-	return s.ExecuteTemplateData(templateAbsPath.String(), data)
+	return s.ExecuteTemplateData(string(templateAbsPath), data)
 }
 
 // newSourceStateDir returns a new SourceStateDir.
@@ -781,7 +781,7 @@ func (s *SourceState) newSourceStateDir(sourceRelPath SourceRelPath, dirAttr Dir
 func (s *SourceState) newSourceStateFile(sourceRelPath SourceRelPath, fileAttr FileAttr, targetRelPath RelPath) *SourceStateFile {
 	lazyContents := &lazyContents{
 		contentsFunc: func() ([]byte, error) {
-			contents, err := s.system.ReadFile(s.sourceDirAbsPath.Join(sourceRelPath.RelPath()).String())
+			contents, err := s.system.ReadFile(string(s.sourceDirAbsPath.Join(sourceRelPath.RelPath())))
 			if err != nil {
 				return nil, err
 			}

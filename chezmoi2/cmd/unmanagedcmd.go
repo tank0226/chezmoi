@@ -25,7 +25,7 @@ func (c *Config) newUnmanagedCmd() *cobra.Command {
 
 func (c *Config) runUnmanagedCmd(cmd *cobra.Command, args []string, sourceState *chezmoi.SourceState) error {
 	sb := strings.Builder{}
-	if err := vfs.WalkSlash(c.destSystem, c.destDirAbsPath.String(), func(destAbsPathStr string, info os.FileInfo, err error) error {
+	if err := vfs.WalkSlash(c.destSystem, string(c.destDirAbsPath), func(destAbsPathStr string, info os.FileInfo, err error) error {
 		if err != nil {
 			return err
 		}

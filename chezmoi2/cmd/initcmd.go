@@ -104,7 +104,7 @@ func (c *Config) runInitCmd(cmd *cobra.Command, args []string) error {
 		case err != nil:
 			return err
 		case useBuiltinGit:
-			rawSourceDir, err := c.baseSystem.RawPath(c.sourceDirAbsPath.String())
+			rawSourceDir, err := c.baseSystem.RawPath(string(c.sourceDirAbsPath))
 			if err != nil {
 				return err
 			}
@@ -117,9 +117,9 @@ func (c *Config) runInitCmd(cmd *cobra.Command, args []string) error {
 	}
 
 	// Clone repo into source directory if it does not already exist.
-	switch _, err := c.baseSystem.Stat(c.sourceDirAbsPath.Join(chezmoi.RelPath(".git")).String()); {
+	switch _, err := c.baseSystem.Stat(string(c.sourceDirAbsPath.Join(chezmoi.RelPath(".git")))); {
 	case os.IsNotExist(err):
-		rawSourceDir, err := c.baseSystem.RawPath(c.sourceDirAbsPath.String())
+		rawSourceDir, err := c.baseSystem.RawPath(string(c.sourceDirAbsPath))
 		if err != nil {
 			return err
 		}
@@ -246,7 +246,7 @@ func (c *Config) createConfigFile(filename string, data []byte) ([]byte, error) 
 func (c *Config) findConfigTemplate() (string, string, []byte, error) {
 	for _, ext := range viper.SupportedExts {
 		filename := chezmoi.RelPath(chezmoi.Prefix + "." + ext + chezmoi.TemplateSuffix)
-		contents, err := c.baseSystem.ReadFile(c.sourceDirAbsPath.Join(filename).String())
+		contents, err := c.baseSystem.ReadFile(string(c.sourceDirAbsPath.Join(filename)))
 		switch {
 		case os.IsNotExist(err):
 			continue

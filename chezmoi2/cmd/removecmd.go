@@ -54,7 +54,7 @@ func (c *Config) runRemoveCmd(cmd *cobra.Command, args []string, sourceState *ch
 				c.force = true
 			}
 		}
-		if err := c.destSystem.RemoveAll(destAbsPath.String()); err != nil && !os.IsNotExist(err) {
+		if err := c.destSystem.RemoveAll(string(destAbsPath)); err != nil && !os.IsNotExist(err) {
 			return err
 		}
 		if err := c.sourceSystem.RemoveAll(sourceAbsPath.String()); err != nil && !os.IsNotExist(err) {

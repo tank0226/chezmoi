@@ -147,8 +147,6 @@ func (p AbsPath) Split() (AbsPath, RelPath) {
 	return AbsPath(dir), RelPath(file)
 }
 
-func (p AbsPath) String() string { return string(p) }
-
 // TrimDirPrefix trims prefix from p.
 func (p AbsPath) TrimDirPrefix(dirPrefixAbsPath AbsPath) (RelPath, error) {
 	if !strings.HasPrefix(string(p), string(dirPrefixAbsPath+"/")) {

@@ -334,7 +334,7 @@ func (c *Config) cmdOutput(dir chezmoi.AbsPath, name string, args []string) ([]b
 	cmd := exec.Command(name, args...)
 	if dir != "" {
 		var err error
-		cmd.Dir, err = c.baseSystem.RawPath(dir.String())
+		cmd.Dir, err = c.baseSystem.RawPath(string(dir))
 		if err != nil {
 			return nil, err
 		}
@@ -449,12 +449,12 @@ func (c *Config) destAbsPathInfos(sourceState *chezmoi.SourceState, args []strin
 			return nil, err
 		}
 		if recursive {
-			if err := vfs.WalkSlash(c.destSystem, destAbsPath.String(), func(destAbsPathStr string, info os.FileInfo, err error) error {
+			if err := vfs.WalkSlash(c.destSystem, string(destAbsPath), func(destAbsPathStr string, info os.FileInfo, err error) error {
 				if err != nil {
 					return err
 				}
 				if follow && info.Mode()&os.ModeType == os.ModeSymlink {
-					info, err = c.destSystem.Stat(destAbsPath.String())
+					info, err = c.destSystem.Stat(string(destAbsPath))
 					if err != nil {
 						return err
 					}
@@ -466,9 +466,9 @@ func (c *Config) destAbsPathInfos(sourceState *chezmoi.SourceState, args []strin
 		} else {
 			var info os.FileInfo
 			if follow {
-				info, err = c.destSystem.Stat(destAbsPath.String())
+				info, err = c.destSystem.Stat(string(destAbsPath))
 			} else {
-				info, err = c.destSystem.Lstat(destAbsPath.String())
+				info, err = c.destSystem.Lstat(string(destAbsPath))
 			}
 			if err != nil {
 				return nil, err
@@ -508,7 +508,7 @@ func (c *Config) doPurge(purgeOptions *purgeOptions) error {
 
 	// Remove all paths that exist.
 	for _, absPath := range absPaths {
-		switch _, err := c.baseSystem.Stat(absPath.String()); {
+		switch _, err := c.baseSystem.Stat(string(absPath)); {
 		case os.IsNotExist(err):
 			continue
 		case err != nil:
@@ -528,7 +528,7 @@ func (c *Config) doPurge(purgeOptions *purgeOptions) error {
 			}
 		}
 
-		switch err := c.baseSystem.RemoveAll(absPath.String()); {
+		switch err := c.baseSystem.RemoveAll(string(absPath)); {
 		case os.IsPermission(err):
 			continue
 		case err != nil:
@@ -780,7 +780,7 @@ func (c *Config) persistentPostRunRootE(cmd *cobra.Command, args []string) error
 		// Warn the user of any errors reading the config file.
 		v := viper.New()
 		v.SetFs(vfsafero.NewAferoFS(c.fs))
-		v.SetConfigFile(c.configFileAbsPath.String())
+		v.SetConfigFile(string(c.configFileAbsPath))
 		err := v.ReadInConfig()
 		if err == nil {
 			err = v.Unmarshal(&Config{})
@@ -926,13 +926,13 @@ func (c *Config) persistentPreRunRootE(cmd *cobra.Command, args []string) error 
 	}
 
 	if boolAnnotation(cmd, requiresConfigDirectory) {
-		if err := vfs.MkdirAll(c.baseSystem, c.configFileAbsPath.Dir().String(), 0o777); err != nil {
+		if err := vfs.MkdirAll(c.baseSystem, string(c.configFileAbsPath.Dir()), 0o777); err != nil {
 			return err
 		}
 	}
 
 	if boolAnnotation(cmd, requiresSourceDirectory) {
-		if err := vfs.MkdirAll(c.baseSystem, c.sourceDirAbsPath.String(), 0o777); err != nil {
+		if err := vfs.MkdirAll(c.baseSystem, string(c.sourceDirAbsPath), 0o777); err != nil {
 			return err
 		}
 	}
@@ -1015,7 +1015,7 @@ func (c *Config) prompt(s, choices string) (byte, error) {
 
 func (c *Config) readConfig() error {
 	v := viper.New()
-	v.SetConfigFile(c.configFileAbsPath.String())
+	v.SetConfigFile(string(c.configFileAbsPath))
 	v.SetFs(vfsafero.NewAferoFS(c.fs))
 	switch err := v.ReadInConfig(); {
 	case os.IsNotExist(err):
@@ -1036,7 +1036,7 @@ func (c *Config) run(dir chezmoi.AbsPath, name string, args []string) error {
 	cmd := exec.Command(name, args...)
 	if dir != "" {
 		var err error
-		cmd.Dir, err = c.baseSystem.RawPath(dir.String())
+		cmd.Dir, err = c.baseSystem.RawPath(string(dir))
 		if err != nil {
 			return err
 		}

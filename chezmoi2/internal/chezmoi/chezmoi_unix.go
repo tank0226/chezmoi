@@ -38,9 +38,9 @@ func NewAbsPath(path string) (AbsPath, error) {
 func ExpandTilde(path string, homeDirAbsPath AbsPath) string {
 	switch {
 	case path == "~":
-		return homeDirAbsPath.String()
+		return string(homeDirAbsPath)
 	case strings.HasPrefix(path, "~/"):
-		return homeDirAbsPath.Join(RelPath(path[2:])).String()
+		return string(homeDirAbsPath.Join(RelPath(path[2:])))
 	default:
 		return path
 	}
@@ -78,14 +78,13 @@ func SetUmask(newUmask os.FileMode) {
 // TrimDirPrefix returns path p with the directory prefix dir stripped. path must
 // be an absolute path with forward slashes.
 func TrimDirPrefix(pathAbsPath, dirAbsPath AbsPath) (AbsPath, error) {
-	dirStr := dirAbsPath.String()
-	if pathStr := pathAbsPath.String(); !strings.HasPrefix(pathStr, dirStr+"/") {
+	if !strings.HasPrefix(string(pathAbsPath), string(dirAbsPath)+"/") {
 		return "", &errNotInAbsDir{
 			pathAbsPath: pathAbsPath,
 			dirAbsPath:  dirAbsPath,
 		}
 	}
-	return AbsPath(pathAbsPath[len(dirStr)+1:]), nil
+	return AbsPath(pathAbsPath[len(dirAbsPath)+1:]), nil
 }
 
 // etcHostsFQDNHostname returns the FQDN hostname from parsing /etc/hosts.
