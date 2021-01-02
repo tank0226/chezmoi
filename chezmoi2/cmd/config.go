@@ -759,7 +759,7 @@ func (c *Config) destAbsPath(arg chezmoi.OSPath) (chezmoi.AbsPath, error) {
 	if err != nil {
 		return "", err
 	}
-	if _, err := chezmoi.TrimDirPrefix(normalizedPath, c.destDirAbsPath); err != nil {
+	if _, err := normalizedPath.TrimDirPrefix(c.destDirAbsPath); err != nil {
 		return "", fmt.Errorf("%s: not in destination directory (%s)", arg, c.destDirAbsPath)
 	}
 	return normalizedPath, nil
@@ -861,12 +861,17 @@ func (c *Config) persistentPreRunRootE(cmd *cobra.Command, args []string) error 
 	}
 	c.logger = logger.With().Timestamp().Logger()
 
+	c.baseSystem = chezmoi.NewRealSystem(c.fs)
+	if c.debug {
+		c.baseSystem = chezmoi.NewDebugSystem(c.baseSystem, c.logger)
+	}
+
 	switch {
 	case cmd.Annotations[persistentStateMode] == persistentStateModeEmpty:
 		c.persistentState = chezmoi.NewMockPersistentState()
 	case cmd.Annotations[persistentStateMode] == persistentStateModeReadOnly:
 		persistentStateFile := c.persistentStateFile()
-		c.persistentState, err = chezmoi.NewBoltPersistentState(c.fs, persistentStateFile, chezmoi.BoltPersistentStateReadOnly)
+		c.persistentState, err = chezmoi.NewBoltPersistentState(c.baseSystem, persistentStateFile, chezmoi.BoltPersistentStateReadOnly)
 		if err != nil {
 			return err
 		}
@@ -874,7 +879,7 @@ func (c *Config) persistentPreRunRootE(cmd *cobra.Command, args []string) error 
 		fallthrough
 	case cmd.Annotations[persistentStateMode] == persistentStateModeReadWrite && c.dryRun:
 		persistentStateFile := c.persistentStateFile()
-		persistentState, err := chezmoi.NewBoltPersistentState(c.fs, persistentStateFile, chezmoi.BoltPersistentStateReadOnly)
+		persistentState, err := chezmoi.NewBoltPersistentState(c.baseSystem, persistentStateFile, chezmoi.BoltPersistentStateReadOnly)
 		if err != nil {
 			return err
 		}
@@ -888,7 +893,7 @@ func (c *Config) persistentPreRunRootE(cmd *cobra.Command, args []string) error 
 		c.persistentState = dryRunPeristentState
 	case cmd.Annotations[persistentStateMode] == persistentStateModeReadWrite:
 		persistentStateFile := c.persistentStateFile()
-		c.persistentState, err = chezmoi.NewBoltPersistentState(c.fs, persistentStateFile, chezmoi.BoltPersistentStateReadWrite)
+		c.persistentState, err = chezmoi.NewBoltPersistentState(c.baseSystem, persistentStateFile, chezmoi.BoltPersistentStateReadWrite)
 		if err != nil {
 			return err
 		}
@@ -897,11 +902,6 @@ func (c *Config) persistentPreRunRootE(cmd *cobra.Command, args []string) error 
 	}
 	if c.debug && c.persistentState != nil {
 		c.persistentState = chezmoi.NewDebugPersistentState(c.persistentState, c.logger)
-	}
-
-	c.baseSystem = chezmoi.NewRealSystem(c.fs)
-	if c.debug {
-		c.baseSystem = chezmoi.NewDebugSystem(c.baseSystem, c.logger)
 	}
 
 	c.sourceSystem = c.baseSystem
