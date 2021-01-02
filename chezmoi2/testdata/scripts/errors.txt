@@ -1,9 +1,9 @@
 mksourcedir
 
-# test duplicate target detection
+# test duplicate source state entry detection
 cp $CHEZMOISOURCEDIR/dot_file $CHEZMOISOURCEDIR/empty_dot_file
 ! chezmoi verify
-stderr 'duplicate target'
+stderr 'duplicate source state entries'
 
 # test invalid config
 chhome home2/user
@@ -23,7 +23,7 @@ stderr 'source state requires version'
 # test duplicate script detection
 chhome home5/user
 ! chezmoi verify
-stderr 'duplicate target'
+stderr 'duplicate source state entries'
 
 # FIXME add more tests
 

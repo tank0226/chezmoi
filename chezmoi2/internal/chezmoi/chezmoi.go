@@ -84,7 +84,7 @@ func (e *errDuplicateTarget) Error() string {
 	for _, sourceRelPath := range e.sourceRelPaths {
 		sourceRelPathStrs = append(sourceRelPathStrs, sourceRelPath.String())
 	}
-	return fmt.Sprintf("%s: duplicate target (%s)", e.targetRelPath, strings.Join(sourceRelPathStrs, ", "))
+	return fmt.Sprintf("%s: duplicate source state entries (%s)", e.targetRelPath, strings.Join(sourceRelPathStrs, ", "))
 }
 
 type errNotInAbsDir struct {
