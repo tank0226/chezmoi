@@ -24,14 +24,14 @@ func TestZIPSystem(t *testing.T) {
 			".chezmoiremove":  "*.txt\n",
 			".chezmoiversion": "1.2.3\n",
 			".chezmoitemplates": map[string]interface{}{
-				"foo": "bar",
+				"template": "# contents of .chezmoitemplates/template\n",
 			},
 			"README.md": "",
-			"dir": map[string]interface{}{
-				"foo": "bar",
+			"dot_dir": map[string]interface{}{
+				"file": "# contents of .dir/file\n",
 			},
-			"run_script":      "#!/bin/sh\n",
-			"symlink_symlink": "target",
+			"run_script":      "# contents of script\n",
+			"symlink_symlink": ".dir/subdir/file\n",
 		},
 	}, func(fs vfs.FS) {
 		s := NewSourceState(
@@ -56,25 +56,25 @@ func TestZIPSystem(t *testing.T) {
 			contents []byte
 		}{
 			{
-				name: "dir",
+				name: ".dir",
 				mode: os.ModeDir | 0o777,
 			},
 			{
-				name:     "dir/foo",
+				name:     ".dir/file",
 				method:   zip.Deflate,
 				mode:     0o666,
-				contents: []byte("bar"),
+				contents: []byte("# contents of .dir/file\n"),
 			},
 			{
 				name:     "script",
 				method:   zip.Deflate,
 				mode:     0o700,
-				contents: []byte("#!/bin/sh\n"),
+				contents: []byte("# contents of script\n"),
 			},
 			{
 				name:     "symlink",
 				mode:     os.ModeSymlink,
-				contents: []byte("target"),
+				contents: []byte(".dir/subdir/file"),
 			},
 		}
 		require.Len(t, r.File, len(expectedFiles))

@@ -23,14 +23,14 @@ func TestTARSystem(t *testing.T) {
 			".chezmoiremove":  "*.txt\n",
 			".chezmoiversion": "1.2.3\n",
 			".chezmoitemplates": map[string]interface{}{
-				"foo": "bar",
+				"template": "# contents of .chezmoitemplates/template\n",
 			},
 			"README.md": "",
-			"dir": map[string]interface{}{
-				"foo": "bar",
+			"dot_dir": map[string]interface{}{
+				"file": "# contents of .dir/file\n",
 			},
-			"run_script":      "#!/bin/sh\n",
-			"symlink_symlink": "bar",
+			"run_script":      "# contents of script\n",
+			"symlink_symlink": ".dir/subdir/file\n",
 		},
 	}, func(fs vfs.FS) {
 		s := NewSourceState(
@@ -56,25 +56,25 @@ func TestTARSystem(t *testing.T) {
 		}{
 			{
 				expectedTypeflag: tar.TypeDir,
-				expectedName:     "dir/",
+				expectedName:     ".dir/",
 				expectedMode:     0o777,
 			},
 			{
 				expectedTypeflag: tar.TypeReg,
-				expectedName:     "dir/foo",
-				expectedContents: []byte("bar"),
+				expectedName:     ".dir/file",
+				expectedContents: []byte("# contents of .dir/file\n"),
 				expectedMode:     0o666,
 			},
 			{
 				expectedTypeflag: tar.TypeReg,
 				expectedName:     "script",
-				expectedContents: []byte("#!/bin/sh\n"),
+				expectedContents: []byte("# contents of script\n"),
 				expectedMode:     0o700,
 			},
 			{
 				expectedTypeflag: tar.TypeSymlink,
 				expectedName:     "symlink",
-				expectedLinkname: "bar",
+				expectedLinkname: ".dir/subdir/file",
 			},
 		} {
 			t.Run(tc.expectedName, func(t *testing.T) {
