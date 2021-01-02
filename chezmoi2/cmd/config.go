@@ -488,11 +488,7 @@ func (c *Config) doPurge(purgeOptions *purgeOptions) error {
 		}
 	}
 
-	absSlashPersistentStateFile, err := c.persistentStateFile()
-	if err != nil {
-		return err
-	}
-
+	absSlashPersistentStateFile := c.persistentStateFile()
 	absPaths := chezmoi.AbsPaths{
 		c.configFileAbsPath.Dir(),
 		c.configFileAbsPath,
@@ -584,7 +580,7 @@ func (c *Config) execute(args []string) error {
 	return rootCmd.Execute()
 }
 
-func (c *Config) getTargetRelPath(arg *chezmoi.OSPath) (chezmoi.RelPath, error) {
+func (c *Config) getTargetRelPath(arg chezmoi.OSPath) (chezmoi.RelPath, error) {
 	destAbsPath, err := c.destAbsPath(arg)
 	if err != nil {
 		return "", err
@@ -758,7 +754,7 @@ func (c *Config) newRootCmd() (*cobra.Command, error) {
 	return rootCmd, nil
 }
 
-func (c *Config) destAbsPath(arg *chezmoi.OSPath) (chezmoi.AbsPath, error) {
+func (c *Config) destAbsPath(arg chezmoi.OSPath) (chezmoi.AbsPath, error) {
 	normalizedPath, err := arg.Normalize(c.homeDirAbsPath)
 	if err != nil {
 		return "", err
@@ -956,7 +952,7 @@ func (c *Config) persistentPreRunRootE(cmd *cobra.Command, args []string) error 
 
 func (c *Config) persistentStateFile() chezmoi.AbsPath {
 	if c.configFile != "" {
-		return chezmoi.NewOSPath(c.configFile).Dir().Join(persistentStateFilename).AbsPath()
+		return chezmoi.NewOSPath(c.configFile).Dir().Join(persistentStateFilename)
 	}
 	for _, configDir := range c.bds.ConfigDirs {
 		persistentStateFile := filepath.Join(configDir, "chezmoi", persistentStateFilename)

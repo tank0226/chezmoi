@@ -16,16 +16,17 @@ var _ PersistentState = &BoltPersistentState{}
 func TestBoltPersistentState(t *testing.T) {
 	chezmoitest.WithTestFS(t, nil, func(fs vfs.FS) {
 		var (
-			path   = "/home/user/.config/chezmoi/chezmoistate.boltdb"
+			s      = NewRealSystem(fs)
+			path   = AbsPath("/home/user/.config/chezmoi/chezmoistate.boltdb")
 			bucket = []byte("bucket")
 			key    = []byte("key")
 			value  = []byte("value")
 		)
 
-		b1, err := NewBoltPersistentState(fs, path, BoltPersistentStateReadWrite)
+		b1, err := NewBoltPersistentState(s, path, BoltPersistentStateReadWrite)
 		require.NoError(t, err)
 		vfst.RunTests(t, fs, "",
-			vfst.TestPath(path,
+			vfst.TestPath(string(path),
 				vfst.TestModeIsRegular,
 			),
 		)
@@ -50,7 +51,7 @@ func TestBoltPersistentState(t *testing.T) {
 
 		require.NoError(t, b1.Close())
 
-		b2, err := NewBoltPersistentState(fs, path, BoltPersistentStateReadWrite)
+		b2, err := NewBoltPersistentState(s, path, BoltPersistentStateReadWrite)
 		require.NoError(t, err)
 
 		require.NoError(t, b2.Delete(bucket, key))
@@ -64,14 +65,15 @@ func TestBoltPersistentState(t *testing.T) {
 func TestBoltPersistentStateMock(t *testing.T) {
 	chezmoitest.WithTestFS(t, nil, func(fs vfs.FS) {
 		var (
-			path   = "/home/user/.config/chezmoi/chezmoistate.boltdb"
+			s      = NewRealSystem(fs)
+			path   = AbsPath("/home/user/.config/chezmoi/chezmoistate.boltdb")
 			bucket = []byte("bucket")
 			key    = []byte("key")
 			value1 = []byte("value1")
 			value2 = []byte("value2")
 		)
 
-		b, err := NewBoltPersistentState(fs, path, BoltPersistentStateReadWrite)
+		b, err := NewBoltPersistentState(s, path, BoltPersistentStateReadWrite)
 		require.NoError(t, err)
 		require.NoError(t, b.Set(bucket, key, value1))
 
@@ -105,22 +107,23 @@ func TestBoltPersistentStateMock(t *testing.T) {
 func TestBoltPersistentStateReadOnly(t *testing.T) {
 	chezmoitest.WithTestFS(t, nil, func(fs vfs.FS) {
 		var (
-			path   = "/home/user/.config/chezmoi/chezmoistate.boltdb"
+			s      = NewRealSystem(fs)
+			path   = AbsPath("/home/user/.config/chezmoi/chezmoistate.boltdb")
 			bucket = []byte("bucket")
 			key    = []byte("key")
 			value  = []byte("value")
 		)
 
-		b1, err := NewBoltPersistentState(fs, path, BoltPersistentStateReadWrite)
+		b1, err := NewBoltPersistentState(s, path, BoltPersistentStateReadWrite)
 		require.NoError(t, err)
 		require.NoError(t, b1.Set(bucket, key, value))
 		require.NoError(t, b1.Close())
 
-		b2, err := NewBoltPersistentState(fs, path, BoltPersistentStateReadOnly)
+		b2, err := NewBoltPersistentState(s, path, BoltPersistentStateReadOnly)
 		require.NoError(t, err)
 		defer b2.Close()
 
-		b3, err := NewBoltPersistentState(fs, path, BoltPersistentStateReadOnly)
+		b3, err := NewBoltPersistentState(s, path, BoltPersistentStateReadOnly)
 		require.NoError(t, err)
 		defer b3.Close()
 

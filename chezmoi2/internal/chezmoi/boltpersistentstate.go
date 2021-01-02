@@ -2,10 +2,8 @@ package chezmoi
 
 import (
 	"os"
-	"path/filepath"
 	"time"
 
-	vfs "github.com/twpayne/go-vfs"
 	"go.etcd.io/bbolt"
 )
 
@@ -26,21 +24,27 @@ type BoltPersistentState struct {
 // NewBoltPersistentState returns a new BoltPersistentState.
 //
 //nolint:interfacer
-func NewBoltPersistentState(fs vfs.FS, path string, mode BoltPersistentStateMode) (*BoltPersistentState, error) {
-	if _, err := fs.Stat(path); os.IsNotExist(err) {
+func NewBoltPersistentState(s System, path AbsPath, mode BoltPersistentStateMode) (*BoltPersistentState, error) {
+	if _, err := s.Stat(path); os.IsNotExist(err) {
 		if mode == BoltPersistentStateReadOnly {
 			return &BoltPersistentState{}, nil
 		}
-		if err := vfs.MkdirAll(fs, filepath.Dir(path), 0o777); err != nil {
+		if err := MkdirAll(s, path.Dir(), 0o777); err != nil {
 			return nil, err
 		}
 	}
 	options := bbolt.Options{
-		OpenFile: fs.OpenFile,
+		OpenFile: func(name string, flag int, perm os.FileMode) (*os.File, error) {
+			rawPath, err := s.RawPath(AbsPath(name))
+			if err != nil {
+				return nil, err
+			}
+			return os.OpenFile(string(rawPath), flag, perm)
+		},
 		ReadOnly: mode == BoltPersistentStateReadOnly,
 		Timeout:  time.Second,
 	}
-	db, err := bbolt.Open(path, 0o600, &options)
+	db, err := bbolt.Open(string(path), 0o600, &options)
 	if err != nil {
 		return nil, err
 	}

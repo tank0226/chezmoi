@@ -13,7 +13,7 @@ import (
 
 func TestOSPathFormat(t *testing.T) {
 	type s struct {
-		Dir *OSPath
+		Dir OSPath
 	}
 
 	for name, format := range Formats {
