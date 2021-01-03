@@ -288,14 +288,10 @@ func (t *TargetStateScript) Apply(system System, persistentState PersistentState
 			return err
 		}
 	}
-	value, err := stateFormat.Marshal(&scriptState{
+	return persistentStateSet(persistentState, scriptStateBucket, key, &scriptState{
 		Name:  string(t.name),
 		RunAt: runAt,
 	})
-	if err != nil {
-		return err
-	}
-	return persistentState.Set(scriptStateBucket, key, value)
 }
 
 // EntryState returns t's entry state.

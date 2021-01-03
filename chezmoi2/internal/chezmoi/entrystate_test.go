@@ -112,20 +112,3 @@ func TestEntryStateEquivalent(t *testing.T) {
 		})
 	}
 }
-
-func TestEntryStateMarshal(t *testing.T) {
-	es := EntryState{
-		Type:           EntryStateTypeFile,
-		Mode:           0o777,
-		ContentsSHA256: []byte{0, 1, 2, 3},
-	}
-	jsonBytes := []byte(`{"type":"file","mode":511,"contentsSHA256":"00010203"}`)
-
-	actualJSONBytes, err := stateFormat.Marshal(es)
-	require.NoError(t, err)
-	assert.Equal(t, jsonBytes, actualJSONBytes)
-
-	var actualEntryState EntryState
-	require.NoError(t, stateFormat.Unmarshal(jsonBytes, &actualEntryState))
-	assert.Equal(t, es, actualEntryState)
-}

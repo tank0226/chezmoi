@@ -236,11 +236,7 @@ func (s *SourceState) Add(sourceSystem System, persistentState PersistentState, 
 				return err
 			}
 		}
-		value, err := stateFormat.Marshal(update.entryState)
-		if err != nil {
-			return err
-		}
-		if err := persistentState.Set(entryStateBucket, []byte(update.destAbsPath), value); err != nil {
+		if err := persistentStateSet(persistentState, entryStateBucket, []byte(update.destAbsPath), update.entryState); err != nil {
 			return err
 		}
 	}
@@ -318,14 +314,12 @@ func (s *SourceState) Apply(targetSystem System, persistentState PersistentState
 
 	if options.PreApplyFunc != nil {
 		var lastWrittenEntryState *EntryState
-		switch data, err := persistentState.Get(entryStateBucket, []byte(targetAbsPath)); {
-		case err != nil:
+		var entryState EntryState
+		ok, err := persistentStateGet(persistentState, entryStateBucket, []byte(targetAbsPath), &entryState)
+		if err != nil {
 			return err
-		case data != nil:
-			var entryState EntryState
-			if err := stateFormat.Unmarshal(data, &entryState); err != nil {
-				return err
-			}
+		}
+		if ok {
 			lastWrittenEntryState = &entryState
 		}
 
@@ -343,11 +337,7 @@ func (s *SourceState) Apply(targetSystem System, persistentState PersistentState
 		return err
 	}
 
-	data, err := stateFormat.Marshal(targetEntryState)
-	if err != nil {
-		return err
-	}
-	return persistentState.Set(entryStateBucket, []byte(targetAbsPath), data)
+	return persistentStateSet(persistentState, entryStateBucket, []byte(targetAbsPath), targetEntryState)
 }
 
 // Entries returns s's source state entries.
