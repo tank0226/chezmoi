@@ -423,27 +423,24 @@ func TestSourceStateAdd(t *testing.T) {
 				),
 			},
 		},
-		// FIXME fix the code so that the following test passes
-		/*
-			{
-				name: "file_in_dir_exact_subdir",
-				destAbsPaths: AbsPaths{
-					"/home/user/.dir/subdir/file",
-				},
-				addOptions: AddOptions{
-					Include: NewIncludeSet(IncludeAll),
-				},
-				extraRoot: map[string]interface{}{
-					"/home/user/.local/share/chezmoi/dot_dir/exact_subdir": &vfst.Dir{Perm: 0o777},
-				},
-				tests: []interface{}{
-					vfst.TestPath("/home/user/.local/share/chezmoi/dot_dir/exact_subdir/file",
-						vfst.TestModeIsRegular,
-						vfst.TestContentsString("# contents of .dir/subdir/file\n"),
-					),
-				},
+		{
+			name: "file_in_dir_exact_subdir",
+			destAbsPaths: AbsPaths{
+				"/home/user/.dir/subdir/file",
 			},
-		*/
+			addOptions: AddOptions{
+				Include: NewIncludeSet(IncludeAll),
+			},
+			extraRoot: map[string]interface{}{
+				"/home/user/.local/share/chezmoi/dot_dir/exact_subdir": &vfst.Dir{Perm: 0o777},
+			},
+			tests: []interface{}{
+				vfst.TestPath("/home/user/.local/share/chezmoi/dot_dir/exact_subdir/file",
+					vfst.TestModeIsRegular,
+					vfst.TestContentsString("# contents of .dir/subdir/file\n"),
+				),
+			},
+		},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			chezmoitest.SkipUnlessGOOS(t, tc.name)
