@@ -14,15 +14,6 @@ var (
 
 	// Skip indicates that entry should be skipped.
 	Skip = filepath.SkipDir
-
-	// entryStateBucket is the bucket for recording the entry states.
-	entryStateBucket = []byte("entryState")
-
-	// scriptStateBucket is the bucket for recording the state of run once
-	// scripts.
-	scriptStateBucket = []byte("scriptState")
-
-	stateFormat = jsonFormat{}
 )
 
 // Suffixes and prefixes.

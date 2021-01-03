@@ -1,5 +1,16 @@
 package chezmoi
 
+var (
+	// entryStateBucket is the bucket for recording the entry states.
+	entryStateBucket = []byte("entryState")
+
+	// scriptStateBucket is the bucket for recording the state of run once
+	// scripts.
+	scriptStateBucket = []byte("scriptState")
+
+	stateFormat = jsonFormat{}
+)
+
 // A PersistentState is a persistent state.
 type PersistentState interface {
 	Close() error
