@@ -9,13 +9,13 @@ import (
 
 // An RealSystem is a System that writes to a filesystem and executes scripts.
 type RealSystem struct {
-	vfs.FS
+	fs vfs.FS
 }
 
 // NewRealSystem returns a System that acts on fs.
 func NewRealSystem(fs vfs.FS) *RealSystem {
 	return &RealSystem{
-		FS: fs,
+		fs: fs,
 	}
 }
 
@@ -26,7 +26,7 @@ func (s *RealSystem) Chmod(name AbsPath, mode os.FileMode) error {
 
 // Readlink implements System.Readlink.
 func (s *RealSystem) Readlink(name AbsPath) (string, error) {
-	linkname, err := s.FS.Readlink(string(name))
+	linkname, err := s.fs.Readlink(string(name))
 	if err != nil {
 		return "", err
 	}
@@ -35,13 +35,13 @@ func (s *RealSystem) Readlink(name AbsPath) (string, error) {
 
 // WriteFile implements System.WriteFile.
 func (s *RealSystem) WriteFile(filename AbsPath, data []byte, perm os.FileMode) error {
-	return s.FS.WriteFile(string(filename), data, perm)
+	return s.fs.WriteFile(string(filename), data, perm)
 }
 
 // WriteSymlink implements System.WriteSymlink.
 func (s *RealSystem) WriteSymlink(oldname string, newname AbsPath) error {
-	if err := s.FS.RemoveAll(string(newname)); err != nil && !os.IsNotExist(err) {
+	if err := s.fs.RemoveAll(string(newname)); err != nil && !os.IsNotExist(err) {
 		return err
 	}
-	return s.FS.Symlink(filepath.FromSlash(oldname), string(newname))
+	return s.fs.Symlink(filepath.FromSlash(oldname), string(newname))
 }

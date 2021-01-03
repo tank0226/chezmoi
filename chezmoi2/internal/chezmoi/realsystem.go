@@ -24,12 +24,12 @@ func (s *RealSystem) IdempotentCmdOutput(cmd *exec.Cmd) ([]byte, error) {
 
 // Lstat implements System.Lstat.
 func (s *RealSystem) Lstat(filename AbsPath) (os.FileInfo, error) {
-	return s.FS.Lstat(string(filename))
+	return s.fs.Lstat(string(filename))
 }
 
 // Mkdir implements System.Mkdir.
 func (s *RealSystem) Mkdir(name AbsPath, perm os.FileMode) error {
-	return s.FS.Mkdir(string(name), perm)
+	return s.fs.Mkdir(string(name), perm)
 }
 
 // PathSeparator implements doublestar.OS.PathSeparator.
@@ -39,7 +39,7 @@ func (s *RealSystem) PathSeparator() rune {
 
 // RawPath implements System.RawPath.
 func (s *RealSystem) RawPath(absPath AbsPath) (AbsPath, error) {
-	rawAbsPath, err := s.FS.RawPath(string(absPath))
+	rawAbsPath, err := s.fs.RawPath(string(absPath))
 	if err != nil {
 		return "", err
 	}
@@ -48,22 +48,22 @@ func (s *RealSystem) RawPath(absPath AbsPath) (AbsPath, error) {
 
 // ReadDir implements System.ReadDir.
 func (s *RealSystem) ReadDir(dirname AbsPath) ([]os.FileInfo, error) {
-	return s.FS.ReadDir(string(dirname))
+	return s.fs.ReadDir(string(dirname))
 }
 
 // ReadFile implements System.ReadFile.
 func (s *RealSystem) ReadFile(filename AbsPath) ([]byte, error) {
-	return s.FS.ReadFile(string(filename))
+	return s.fs.ReadFile(string(filename))
 }
 
 // RemoveAll implements System.RemoveAll.
 func (s *RealSystem) RemoveAll(name AbsPath) error {
-	return s.FS.RemoveAll(string(name))
+	return s.fs.RemoveAll(string(name))
 }
 
 // Rename implements System.Rename.
 func (s *RealSystem) Rename(oldpath, newpath AbsPath) error {
-	return s.FS.Rename(string(oldpath), string(newpath))
+	return s.fs.Rename(string(oldpath), string(newpath))
 }
 
 // RunCmd implements System.RunCmd.
@@ -109,10 +109,10 @@ func (s *RealSystem) RunScript(scriptname string, dir AbsPath, data []byte) (err
 
 // Stat implements System.Stat.
 func (s *RealSystem) Stat(name AbsPath) (os.FileInfo, error) {
-	return s.FS.Stat(string(name))
+	return s.fs.Stat(string(name))
 }
 
 // UnderlyingFS implements System.UnderlyingFS.
 func (s *RealSystem) UnderlyingFS() vfs.FS {
-	return s.FS
+	return s.fs
 }

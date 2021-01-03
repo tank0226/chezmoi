@@ -14,7 +14,7 @@ import (
 
 // An RealSystem is a System that writes to a filesystem and executes scripts.
 type RealSystem struct {
-	vfs.FS
+	fs           vfs.FS
 	devCache     map[AbsPath]uint // devCache maps directories to device numbers.
 	tempDirCache map[uint]string  // tempDirCache maps device numbers to renameio temporary directories.
 }
@@ -22,7 +22,7 @@ type RealSystem struct {
 // NewRealSystem returns a System that acts on fs.
 func NewRealSystem(fs vfs.FS) *RealSystem {
 	return &RealSystem{
-		FS:           fs,
+		fs:           fs,
 		devCache:     make(map[AbsPath]uint),
 		tempDirCache: make(map[uint]string),
 	}
@@ -30,19 +30,19 @@ func NewRealSystem(fs vfs.FS) *RealSystem {
 
 // Chmod implements System.Chmod.
 func (s *RealSystem) Chmod(name AbsPath, mode os.FileMode) error {
-	return s.FS.Chmod(string(name), mode)
+	return s.fs.Chmod(string(name), mode)
 }
 
 // Readlink implements System.Readlink.
 func (s *RealSystem) Readlink(name AbsPath) (string, error) {
-	return s.FS.Readlink(string(name))
+	return s.fs.Readlink(string(name))
 }
 
 // WriteFile implements System.WriteFile.
 func (s *RealSystem) WriteFile(filename AbsPath, data []byte, perm os.FileMode) error {
 	// Special case: if writing to the real filesystem, use
 	// github.com/google/renameio.
-	if s.FS == vfs.OSFS {
+	if s.fs == vfs.OSFS {
 		dir := filename.Dir()
 		dev, ok := s.devCache[dir]
 		if !ok {
@@ -78,20 +78,20 @@ func (s *RealSystem) WriteFile(filename AbsPath, data []byte, perm os.FileMode) 
 		return t.CloseAtomicallyReplace()
 	}
 
-	return writeFile(s.FS, filename, data, perm)
+	return writeFile(s.fs, filename, data, perm)
 }
 
 // WriteSymlink implements System.WriteSymlink.
 func (s *RealSystem) WriteSymlink(oldname string, newname AbsPath) error {
 	// Special case: if writing to the real filesystem, use
 	// github.com/google/renameio.
-	if s.FS == vfs.OSFS {
+	if s.fs == vfs.OSFS {
 		return renameio.Symlink(oldname, string(newname))
 	}
-	if err := s.FS.RemoveAll(string(newname)); err != nil && !os.IsNotExist(err) {
+	if err := s.fs.RemoveAll(string(newname)); err != nil && !os.IsNotExist(err) {
 		return err
 	}
-	return s.FS.Symlink(oldname, string(newname))
+	return s.fs.Symlink(oldname, string(newname))
 }
 
 // writeFile is like ioutil.writeFile but always sets perm before writing data.
