@@ -33,6 +33,11 @@ func (s *RealSystem) Readlink(name AbsPath) (string, error) {
 	return filepath.ToSlash(linkname), nil
 }
 
+// WriteFile implements System.WriteFile.
+func (s *RealSystem) WriteFile(filename AbsPath, data []byte, perm os.FileMode) error {
+	return s.FS.WriteFile(string(filename), data, perm)
+}
+
 // WriteSymlink implements System.WriteSymlink.
 func (s *RealSystem) WriteSymlink(oldname string, newname AbsPath) error {
 	if err := s.FS.RemoveAll(string(newname)); err != nil && !os.IsNotExist(err) {
