@@ -22,8 +22,6 @@ type BoltPersistentState struct {
 }
 
 // NewBoltPersistentState returns a new BoltPersistentState.
-//
-//nolint:interfacer
 func NewBoltPersistentState(s System, path AbsPath, mode BoltPersistentStateMode) (*BoltPersistentState, error) {
 	if _, err := s.Stat(path); os.IsNotExist(err) {
 		if mode == BoltPersistentStateReadOnly {

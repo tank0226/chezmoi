@@ -207,7 +207,7 @@ func (p RelPath) TrimDirPrefix(dirPrefix RelPath) (RelPath, error) {
 			dirRelPath:  dirPrefix,
 		}
 	}
-	return RelPath(p[len(dirPrefix)+1:]), nil
+	return p[len(dirPrefix)+1:], nil
 }
 
 // RelPaths is a slice of RelPaths that implements sort.Interface.

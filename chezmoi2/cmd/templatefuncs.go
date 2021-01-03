@@ -8,8 +8,9 @@ import (
 	"path/filepath"
 	"runtime"
 
-	"github.com/twpayne/chezmoi/chezmoi2/internal/chezmoi"
 	"howett.net/plist"
+
+	"github.com/twpayne/chezmoi/chezmoi2/internal/chezmoi"
 )
 
 type ioregData struct {

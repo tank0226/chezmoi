@@ -39,8 +39,8 @@ func (ps *patternSet) add(pattern string, include bool) error {
 }
 
 // glob returns all matches in fs.
-// FIXME use AbsPath and RelPath
 func (ps *patternSet) glob(fs vfs.FS, prefix string) ([]string, error) {
+	// FIXME use AbsPath and RelPath
 	vos := doubleStarOS{FS: fs}
 	allMatches := newStringSet()
 	for includePattern := range ps.includePatterns {
