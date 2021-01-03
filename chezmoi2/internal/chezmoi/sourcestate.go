@@ -199,7 +199,7 @@ func (s *SourceState) Add(sourceSystem System, persistentState PersistentState, 
 			// rename to avoid losing the directory's contents. Otherwise,
 			// remove the old.
 			oldSourceEntryRelPath := oldSourceStateEntry.SourceRelPath()
-			if !oldSourceEntryRelPath.Empty() && oldSourceEntryRelPath != oldSourceEntryRelPath {
+			if !oldSourceEntryRelPath.Empty() && oldSourceEntryRelPath != sourceEntryRelPath {
 				_, newIsDir := newSourceStateEntry.(*SourceStateDir)
 				_, oldIsDir := oldSourceStateEntry.(*SourceStateDir)
 				if newIsDir && oldIsDir {
