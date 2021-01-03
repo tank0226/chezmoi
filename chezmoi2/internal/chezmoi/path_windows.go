@@ -9,7 +9,7 @@ import (
 // NewAbsPath returns a new AbsPath.
 func NewAbsPath(path string) (AbsPath, error) {
 	if !filepath.IsAbs(path) {
-		return "", fmt.Errorf("%s: not an absolute path")
+		return "", fmt.Errorf("%s: not an absolute path", path)
 	}
 	return AbsPath(path), nil
 }
@@ -18,11 +18,11 @@ func NewAbsPath(path string) (AbsPath, error) {
 // slashes, tilde expansion, making the path absolute, and converting the volume
 // name to uppercase.
 func NewAbsPathFromExtPath(extPath string, homeDirAbsPath AbsPath) (AbsPath, error) {
-	tildeSlashPath := expandTilde(filepath.ToSlash(extPath), homeDirAbsPath)
-	if filepath.IsAbs(tildeSlashPath) {
-		return AbsPath(tildeSlashPath), nil
+	slashPath := filepath.ToSlash(expandTilde(extPath, homeDirAbsPath))
+	if filepath.IsAbs(slashPath) {
+		return AbsPath(slashPath), nil
 	}
-	slashPathAbsPath, err := filepath.Abs(tildeSlashPath)
+	slashPathAbsPath, err := filepath.Abs(slashPath)
 	if err != nil {
 		return "", err
 	}

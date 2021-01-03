@@ -13,7 +13,7 @@ import (
 func TestNewAbsPathFromExtPath(t *testing.T) {
 	wd, err := os.Getwd()
 	require.NoError(t, err)
-	wdAbsPath, err := NormalizePath(wd)
+	wdAbsPath := AbsPath(wd)
 	require.NoError(t, err)
 	homeDirAbsPath, err := NormalizePath(chezmoitest.HomeDir())
 	require.NoError(t, err)
@@ -53,7 +53,17 @@ func TestNewAbsPathFromExtPath(t *testing.T) {
 
 			actual, err := NewAbsPathFromExtPath(tc.extPath, homeDirAbsPath)
 			require.NoError(t, err)
-			assert.Equal(t, tc.expected, actual)
+			normalizedActual, err := NormalizePath(string(actual))
+			require.NoError(t, err)
+			expected, err := NormalizePath(string(tc.expected))
+			require.NoError(t, err)
+			assert.Equal(t, expected, normalizedActual)
 		})
 	}
+}
+
+func mustNormalizePath(t *testing.T, path string) string {
+	normalizedPath, err := NormalizePath(path)
+	require.NoError(t, err)
+	return string(normalizedPath)
 }
