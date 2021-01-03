@@ -833,11 +833,13 @@ func (c *Config) persistentPreRunRootE(cmd *cobra.Command, args []string) error 
 		return err
 	}
 
-	logger := zerolog.New(zerolog.ConsoleWriter{
-		Out:        c.stderr,
-		NoColor:    !c.color,
-		TimeFormat: time.RFC3339,
-	})
+	logger := zerolog.New(zerolog.NewConsoleWriter(
+		func(w *zerolog.ConsoleWriter) {
+			w.Out = c.stderr
+			w.NoColor = !c.color
+			w.TimeFormat = time.RFC3339
+		},
+	))
 	if !c.debug {
 		logger = logger.Level(zerolog.InfoLevel)
 	}

@@ -197,8 +197,9 @@ func (s *SourceState) Add(sourceSystem System, persistentState PersistentState, 
 		if oldSourceStateEntry, ok := s.entries[targetRelPath]; ok {
 			// If both the new and old source state entries are directories but the name has changed,
 			// rename to avoid losing the directory's contents. Otherwise,
-			// remove the old.``
-			if oldSourceEntryRelPath := oldSourceStateEntry.SourceRelPath(); sourceEntryRelPath != oldSourceEntryRelPath {
+			// remove the old.
+			oldSourceEntryRelPath := oldSourceStateEntry.SourceRelPath()
+			if !oldSourceEntryRelPath.Empty() && oldSourceEntryRelPath != oldSourceEntryRelPath {
 				_, newIsDir := newSourceStateEntry.(*SourceStateDir)
 				_, oldIsDir := oldSourceStateEntry.(*SourceStateDir)
 				if newIsDir && oldIsDir {

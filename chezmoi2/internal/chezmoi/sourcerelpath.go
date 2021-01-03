@@ -40,6 +40,11 @@ func (p SourceRelPath) Dir() SourceRelPath {
 	}
 }
 
+// Empty returns true if p is empty.
+func (p SourceRelPath) Empty() bool {
+	return p == SourceRelPath{}
+}
+
 // Join appends elems to p.
 func (p SourceRelPath) Join(elems ...SourceRelPath) SourceRelPath {
 	elemRelPaths := make(RelPaths, 0, len(elems))
