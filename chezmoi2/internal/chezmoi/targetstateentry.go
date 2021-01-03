@@ -272,7 +272,7 @@ func (t *TargetStateScript) Apply(system System, persistentState PersistentState
 	}
 	key := []byte(hex.EncodeToString(contentsSHA256))
 	if t.once {
-		switch scriptState, err := persistentState.Get(ScriptStateBucket, key); {
+		switch scriptState, err := persistentState.Get(scriptStateBucket, key); {
 		case err != nil:
 			return err
 		case scriptState != nil:
@@ -296,7 +296,7 @@ func (t *TargetStateScript) Apply(system System, persistentState PersistentState
 	if err != nil {
 		return err
 	}
-	return persistentState.Set(ScriptStateBucket, key, value)
+	return persistentState.Set(scriptStateBucket, key, value)
 }
 
 // EntryState returns t's entry state.

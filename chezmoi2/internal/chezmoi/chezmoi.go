@@ -2,7 +2,6 @@ package chezmoi
 
 import (
 	"bytes"
-	"encoding/json"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -13,15 +12,15 @@ var (
 	// DefaultTemplateOptions are the default template options.
 	DefaultTemplateOptions = []string{"missingkey=error"}
 
-	// EntryStateBucket is the bucket for recording the entry states.
-	EntryStateBucket = []byte("entryState")
-
-	// ScriptStateBucket is the bucket for recording the state of run once
-	// scripts.
-	ScriptStateBucket = []byte("scriptState")
-
 	// Skip indicates that entry should be skipped.
 	Skip = filepath.SkipDir
+
+	// entryStateBucket is the bucket for recording the entry states.
+	entryStateBucket = []byte("entryState")
+
+	// scriptStateBucket is the bucket for recording the state of run once
+	// scripts.
+	scriptStateBucket = []byte("scriptState")
 )
 
 // Suffixes and prefixes.
@@ -111,22 +110,6 @@ type errUnsupportedFileType struct {
 
 func (e *errUnsupportedFileType) Error() string {
 	return fmt.Sprintf("%s: unsupported file type %s", e.absPath, modeTypeName(e.mode))
-}
-
-// StateData returns the state data in bucket in s.
-func StateData(s PersistentState, bucket []byte) (map[string]interface{}, error) {
-	result := make(map[string]interface{})
-	if err := s.ForEach(bucket, func(k, v []byte) error {
-		var value map[string]interface{}
-		if err := json.Unmarshal(v, &value); err != nil {
-			return err
-		}
-		result[string(k)] = value
-		return nil
-	}); err != nil {
-		return nil, err
-	}
-	return result, nil
 }
 
 // SuspiciousSourceDirEntry returns true if base is a suspicous dir entry.

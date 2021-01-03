@@ -9,11 +9,6 @@ import (
 	"github.com/twpayne/chezmoi/chezmoi2/internal/chezmoi"
 )
 
-type persistentStateData struct {
-	EntryState  interface{} `json:"entryState" toml:"entryState" yaml:"entryState"`
-	ScriptState interface{} `json:"scriptState" toml:"scriptState" yaml:"scriptState"`
-}
-
 func (c *Config) newStateCmd() *cobra.Command {
 	stateCmd := &cobra.Command{
 		Use:   "state",
@@ -47,18 +42,11 @@ func (c *Config) newStateCmd() *cobra.Command {
 }
 
 func (c *Config) runStateDataCmd(cmd *cobra.Command, args []string) error {
-	entryStateData, err := chezmoi.StateData(c.persistentState, chezmoi.EntryStateBucket)
+	data, err := chezmoi.PersistentStateData(c.persistentState)
 	if err != nil {
 		return err
 	}
-	scriptStateData, err := chezmoi.StateData(c.persistentState, chezmoi.ScriptStateBucket)
-	if err != nil {
-		return err
-	}
-	return c.marshal(&persistentStateData{
-		EntryState:  entryStateData,
-		ScriptState: scriptStateData,
-	})
+	return c.marshal(data)
 }
 
 func (c *Config) runStateResetCmd(cmd *cobra.Command, args []string) error {
