@@ -5,4 +5,4 @@ chezmoi source-path ~/.file
 stdout $CHEZMOISOURCEDIR/dot_file
 
 ! chezmoi source-path ~
-stderr not\x20in\x20${HOME@R}
+stderr 'not in'

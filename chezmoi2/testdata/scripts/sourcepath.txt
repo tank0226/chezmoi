@@ -10,7 +10,7 @@ cmpenv stdout golden/source-path-file
 stderr 'not in source state'
 
 ! chezmoi source-path $WORK${/}etc${/}passwd
-stderr not\x20in\x20${HOME@R}
+stderr 'not in'
 
 -- golden/source-path --
 $CHEZMOISOURCEDIR
