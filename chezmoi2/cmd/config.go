@@ -8,7 +8,6 @@ import (
 	"os"
 	"os/exec"
 	"os/user"
-	"path/filepath"
 	"regexp"
 	"runtime"
 	"sort"
@@ -131,7 +130,7 @@ type Config struct {
 type configOption func(*Config) error
 
 var (
-	persistentStateFilename    = "chezmoistate.boltdb"
+	persistentStateFilename    = chezmoi.RelPath("chezmoistate.boltdb")
 	commitMessageTemplateAsset = "assets/templates/COMMIT_MESSAGE.tmpl"
 
 	identifierRx = regexp.MustCompile(`\A[\pL_][\pL\p{Nd}_]*\z`)
@@ -273,8 +272,8 @@ func newConfig(options ...configOption) (*Config, error) {
 		}
 	}
 
-	c.configFile = defaultConfigFile(c.fs, c.bds).String()
-	c.SourceDir = defaultSourceDir(c.fs, c.bds).String()
+	c.configFile = string(defaultConfigFile(c.fs, c.bds))
+	c.SourceDir = string(defaultSourceDir(c.fs, c.bds))
 
 	c.homeDirAbsPath, err = chezmoi.NormalizePath(c.HomeDir)
 	if err != nil {
@@ -952,12 +951,13 @@ func (c *Config) persistentPreRunRootE(cmd *cobra.Command, args []string) error 
 
 func (c *Config) persistentStateFile() chezmoi.AbsPath {
 	if c.configFile != "" {
-		return chezmoi.NewOSPath(c.configFile).Dir().Join(persistentStateFilename)
+		return chezmoi.AbsPath(c.configFile).Dir().Join(persistentStateFilename)
 	}
 	for _, configDir := range c.bds.ConfigDirs {
-		persistentStateFile := filepath.Join(configDir, "chezmoi", persistentStateFilename)
-		if _, err := os.Stat(persistentStateFile); err == nil {
-			return chezmoi.NewOSPath(persistentStateFile).AbsPath()
+		configDirAbsPath := chezmoi.AbsPath(configDir)
+		persistentStateFile := configDirAbsPath.Join(chezmoi.RelPath("chezmoi"), persistentStateFilename)
+		if _, err := os.Stat(string(persistentStateFile)); err == nil {
+			return persistentStateFile
 		}
 	}
 	return defaultConfigFile(c.fs, c.bds).Dir().Join(persistentStateFilename)

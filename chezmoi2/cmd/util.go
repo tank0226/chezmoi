@@ -2,7 +2,6 @@ package cmd
 
 import (
 	"fmt"
-	"path/filepath"
 	"regexp"
 	"sort"
 	"strconv"
@@ -25,32 +24,34 @@ var wellKnownAbbreviations = map[string]struct{}{
 
 // defaultConfigFile returns the default config file according to the XDG Base
 // Directory Specification.
-func defaultConfigFile(fs vfs.Stater, bds *xdg.BaseDirectorySpecification) *chezmoi.OSPath {
+func defaultConfigFile(fs vfs.Stater, bds *xdg.BaseDirectorySpecification) chezmoi.AbsPath {
 	// Search XDG Base Directory Specification config directories first.
 	for _, configDir := range bds.ConfigDirs {
+		configDirAbsPath := chezmoi.AbsPath(configDir)
 		for _, extension := range viper.SupportedExts {
-			configFilePath := filepath.Join(configDir, "chezmoi", "chezmoi."+extension)
-			if _, err := fs.Stat(configFilePath); err == nil {
-				return chezmoi.NewOSPath(configFilePath)
+			configFileAbsPath := configDirAbsPath.Join(chezmoi.RelPath("chezmoi"), chezmoi.RelPath("chezmoi."+extension))
+			if _, err := fs.Stat(string(configFileAbsPath)); err == nil {
+				return configFileAbsPath
 			}
 		}
 	}
 	// Fallback to XDG Base Directory Specification default.
-	return chezmoi.NewOSPath(bds.ConfigHome).Join("chezmoi", "chezmoi.toml")
+	return chezmoi.AbsPath(bds.ConfigHome).Join(chezmoi.RelPath("chezmoi"), chezmoi.RelPath("chezmoi.toml"))
 }
 
 // defaultSourceDir returns the default source directory according to the XDG
 // Base Directory Specification.
-func defaultSourceDir(fs vfs.Stater, bds *xdg.BaseDirectorySpecification) *chezmoi.OSPath {
+func defaultSourceDir(fs vfs.Stater, bds *xdg.BaseDirectorySpecification) chezmoi.AbsPath {
 	// Check for XDG Base Directory Specification data directories first.
 	for _, dataDir := range bds.DataDirs {
-		sourceDir := filepath.Join(dataDir, "chezmoi")
-		if _, err := fs.Stat(sourceDir); err == nil {
-			return chezmoi.NewOSPath(sourceDir)
+		dataDirAbsPath := chezmoi.AbsPath(dataDir)
+		sourceDirAbsPath := dataDirAbsPath.Join(chezmoi.RelPath("chezmoi"))
+		if _, err := fs.Stat(string(sourceDirAbsPath)); err == nil {
+			return sourceDirAbsPath
 		}
 	}
 	// Fallback to XDG Base Directory Specification default.
-	return chezmoi.NewOSPath(bds.DataHome).Join("chezmoi")
+	return chezmoi.AbsPath(bds.DataHome).Join(chezmoi.RelPath("chezmoi"))
 }
 
 // firstNonEmptyString returns its first non-empty argument, or "" if all
