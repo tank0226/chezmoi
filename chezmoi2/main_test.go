@@ -89,7 +89,6 @@ func cmdChHome(ts *testscript.TestScript, neg bool, args []string) {
 	)
 	ts.Check(os.MkdirAll(homeDir, 0o777))
 	ts.Setenv("HOME", homeDir)
-	ts.Setenv("HOMESLASH", filepath.ToSlash(homeDir))
 	ts.Setenv("CHEZMOICONFIGDIR", chezmoiConfigDir)
 	ts.Setenv("CHEZMOISOURCEDIR", chezmoiSourceDir)
 	if runtime.GOOS == "windows" {
@@ -344,7 +343,6 @@ func setup(env *testscript.Env) error {
 	)
 
 	env.Setenv("HOME", homeDir)
-	env.Setenv("HOMESLASH", filepath.ToSlash(homeDir))
 	env.Setenv("PATH", prependDirToPath(binDir, env.Getenv("PATH")))
 	env.Setenv("CHEZMOICONFIGDIR", chezmoiConfigDir)
 	env.Setenv("CHEZMOISOURCEDIR", chezmoiSourceDir)

@@ -27,6 +27,6 @@ script.cmd
   }
 }
 -- golden/managed --
-$HOMESLASH/script.cmd
+script.cmd
 -- home/user/.local/share/chezmoi/run_script.cmd --
 echo evidence
