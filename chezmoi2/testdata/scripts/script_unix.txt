@@ -34,7 +34,7 @@ script
   }
 }
 -- golden/managed --
-$HOME/script
+script
 -- home/user/.local/share/chezmoi/run_script --
 #!/bin/sh
 

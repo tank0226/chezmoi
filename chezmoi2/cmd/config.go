@@ -411,7 +411,6 @@ func (c *Config) defaultTemplateData() map[string]interface{} {
 	}
 
 	if hostname, err := os.Hostname(); err == nil {
-		data["fullHostname"] = hostname
 		data["hostname"] = strings.SplitN(hostname, ".", 2)[0]
 	} else {
 		c.logger.Debug().
