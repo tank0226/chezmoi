@@ -30,9 +30,9 @@ func SkipUnlessGOOS(t *testing.T, name string) {
 	t.Helper()
 	switch {
 	case strings.HasSuffix(name, "_windows") && runtime.GOOS != "windows":
-		t.Skip("skipping Windows-only test")
+		t.Skip("skipping Windows test on UNIX")
 	case strings.HasSuffix(name, "_unix") && runtime.GOOS == "windows":
-		t.Skip("skipping non-Windows test")
+		t.Skip("skipping UNIX test on Windows")
 	}
 }
 
