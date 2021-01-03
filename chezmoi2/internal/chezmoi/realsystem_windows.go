@@ -20,13 +20,13 @@ func NewRealSystem(fs vfs.FS) *RealSystem {
 }
 
 // Chmod implements System.Chmod.
-func (s *RealSystem) Chmod(name string, mode os.FileMode) error {
+func (s *RealSystem) Chmod(name AbsPath, mode os.FileMode) error {
 	return nil
 }
 
 // Readlink implements System.Readlink.
-func (s *RealSystem) Readlink(name string) (string, error) {
-	linkname, err := s.FS.Readlink(name)
+func (s *RealSystem) Readlink(name AbsPath) (string, error) {
+	linkname, err := s.FS.Readlink(string(name))
 	if err != nil {
 		return "", err
 	}
@@ -34,9 +34,9 @@ func (s *RealSystem) Readlink(name string) (string, error) {
 }
 
 // WriteSymlink implements System.WriteSymlink.
-func (s *RealSystem) WriteSymlink(oldname, newname string) error {
-	if err := s.FS.RemoveAll(newname); err != nil && !os.IsNotExist(err) {
+func (s *RealSystem) WriteSymlink(oldname string, newname AbsPath) error {
+	if err := s.FS.RemoveAll(string(newname)); err != nil && !os.IsNotExist(err) {
 		return err
 	}
-	return s.FS.Symlink(filepath.FromSlash(oldname), newname)
+	return s.FS.Symlink(filepath.FromSlash(oldname), string(newname))
 }

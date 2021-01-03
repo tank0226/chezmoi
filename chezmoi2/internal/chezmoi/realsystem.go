@@ -12,11 +12,6 @@ import (
 	"go.uber.org/multierr"
 )
 
-// Chmod implements System.Chmod.
-func (s *RealSystem) Chmod(name AbsPath, mode os.FileMode) error {
-	return s.FS.Chmod(string(name), mode)
-}
-
 // Glob implements System.Glob.
 func (s *RealSystem) Glob(pattern string) ([]string, error) {
 	return doublestar.GlobOS(doubleStarOS{FS: s.UnderlyingFS()}, pattern)
@@ -59,11 +54,6 @@ func (s *RealSystem) ReadDir(dirname AbsPath) ([]os.FileInfo, error) {
 // ReadFile implements System.ReadFile.
 func (s *RealSystem) ReadFile(filename AbsPath) ([]byte, error) {
 	return s.FS.ReadFile(string(filename))
-}
-
-// Readlink implements System.Readlink.
-func (s *RealSystem) Readlink(name AbsPath) (string, error) {
-	return s.FS.Readlink(string(name))
 }
 
 // RemoveAll implements System.RemoveAll.

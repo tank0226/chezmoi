@@ -21,9 +21,9 @@ func NewAbsPath(path string) (AbsPath, error) {
 func ExpandTilde(path string, homeDirAbsPath AbsPath) string {
 	switch {
 	case path == "~":
-		return homeDirAbsPath
+		return string(homeDirAbsPath)
 	case len(path) >= 2 && path[0] == '~' && isSlash(path[1]):
-		return filepath.ToSlash(homeDirAbsPath.Join(path[2:]).String())
+		return filepath.ToSlash(string(homeDirAbsPath.Join(RelPath(path[2:]))))
 	default:
 		return path
 	}

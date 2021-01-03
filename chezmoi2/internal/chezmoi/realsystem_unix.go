@@ -28,6 +28,16 @@ func NewRealSystem(fs vfs.FS) *RealSystem {
 	}
 }
 
+// Chmod implements System.Chmod.
+func (s *RealSystem) Chmod(name AbsPath, mode os.FileMode) error {
+	return s.FS.Chmod(string(name), mode)
+}
+
+// Readlink implements System.Readlink.
+func (s *RealSystem) Readlink(name AbsPath) (string, error) {
+	return s.FS.Readlink(string(name))
+}
+
 // WriteFile implements System.WriteFile.
 func (s *RealSystem) WriteFile(filename AbsPath, data []byte, perm os.FileMode) error {
 	// Special case: if writing to the real filesystem, use
