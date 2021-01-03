@@ -38,7 +38,7 @@ func (t *testEncryptionTool) Decrypt(filenameHint string, ciphertext []byte) ([]
 	return t.xorWithKey(ciphertext), nil
 }
 
-func (t *testEncryptionTool) DecryptToFile(filenameHint string, ciphertext []byte) (filename string, cleanupFunc CleanupFunc, err error) {
+func (t *testEncryptionTool) DecryptToFile(filenameHint string, ciphertext []byte) (filename string, cleanupFunc func() error, err error) {
 	tempDir, err := ioutil.TempDir("", "chezmoi-test-decrypt")
 	if err != nil {
 		return

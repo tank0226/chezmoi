@@ -31,7 +31,7 @@ func (t *GPGEncryptionTool) Decrypt(filenameHint string, ciphertext []byte) (pla
 }
 
 // DecryptToFile implements EncryptionTool.DecryptToFile.
-func (t *GPGEncryptionTool) DecryptToFile(filenameHint string, ciphertext []byte) (filename string, cleanupFunc CleanupFunc, err error) {
+func (t *GPGEncryptionTool) DecryptToFile(filenameHint string, ciphertext []byte) (filename string, cleanupFunc func() error, err error) {
 	tempDir, err := ioutil.TempDir("", "chezmoi-gpg-decrypt")
 	if err != nil {
 		return
@@ -48,15 +48,11 @@ func (t *GPGEncryptionTool) DecryptToFile(filenameHint string, ciphertext []byte
 	}
 
 	args := []string{
-		"--armor",
 		"--decrypt",
 		"--output", filename,
 		"--quiet",
+		inputFilename,
 	}
-	if t.Symmetric {
-		args = append(args, "--symmetric")
-	}
-	args = append(args, inputFilename)
 
 	if err = t.runWithArgs(args); err != nil {
 		err = multierr.Append(err, cleanupFunc())
