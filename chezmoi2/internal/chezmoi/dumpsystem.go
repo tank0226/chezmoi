@@ -99,7 +99,7 @@ func (s *DumpSystem) RunCmd(cmd *exec.Cmd) error {
 }
 
 // RunScript implements System.RunScript.
-func (s *DumpSystem) RunScript(scriptname string, dir AbsPath, data []byte) error {
+func (s *DumpSystem) RunScript(scriptname RelPath, dir AbsPath, data []byte) error {
 	scriptnameAbsPath := AbsPath(scriptname)
 	if _, exists := s.data[scriptnameAbsPath]; exists {
 		return os.ErrExist

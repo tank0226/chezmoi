@@ -203,7 +203,7 @@ func (s *DebugSystem) RunCmd(cmd *exec.Cmd) error {
 }
 
 // RunScript implements System.RunScript.
-func (s *DebugSystem) RunScript(scriptname string, dir AbsPath, data []byte) error {
+func (s *DebugSystem) RunScript(scriptname RelPath, dir AbsPath, data []byte) error {
 	type result struct {
 		startTime time.Time
 		err       error
@@ -225,7 +225,7 @@ func (s *DebugSystem) RunScript(scriptname string, dir AbsPath, data []byte) err
 	case r = <-resultCh:
 	case <-time.After(1 * time.Second):
 		s.logger.Debug().
-			Str("scriptname", scriptname).
+			Str("scriptname", string(scriptname)).
 			Str("dir", string(dir)).
 			Str("data", firstFewBytes(data)).
 			Msg("RunScript")
@@ -233,7 +233,7 @@ func (s *DebugSystem) RunScript(scriptname string, dir AbsPath, data []byte) err
 	}
 
 	s.logger.Debug().
-		Str("scriptname", scriptname).
+		Str("scriptname", string(scriptname)).
 		Str("dir", string(dir)).
 		Str("data", firstFewBytes(data)).
 		Err(r.err).

@@ -59,7 +59,7 @@ func (s *TARSystem) RunCmd(cmd *exec.Cmd) error {
 }
 
 // RunScript implements System.RunScript.
-func (s *TARSystem) RunScript(scriptname string, dir AbsPath, data []byte) error {
+func (s *TARSystem) RunScript(scriptname RelPath, dir AbsPath, data []byte) error {
 	return s.WriteFile(AbsPath(scriptname), data, 0o700)
 }
 

@@ -23,7 +23,7 @@ type System interface {
 	RemoveAll(name AbsPath) error
 	Rename(oldpath, newpath AbsPath) error
 	RunCmd(cmd *exec.Cmd) error
-	RunScript(scriptname string, dir AbsPath, data []byte) error
+	RunScript(scriptname RelPath, dir AbsPath, data []byte) error
 	Stat(name AbsPath) (os.FileInfo, error)
 	UnderlyingFS() vfs.FS
 	WriteFile(filename AbsPath, data []byte, perm os.FileMode) error

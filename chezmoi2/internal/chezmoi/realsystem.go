@@ -4,7 +4,6 @@ import (
 	"io/ioutil"
 	"os"
 	"os/exec"
-	"path"
 	"runtime"
 
 	"github.com/bmatcuk/doublestar/v3"
@@ -72,10 +71,10 @@ func (s *RealSystem) RunCmd(cmd *exec.Cmd) error {
 }
 
 // RunScript implements System.RunScript.
-func (s *RealSystem) RunScript(scriptname string, dir AbsPath, data []byte) (err error) {
+func (s *RealSystem) RunScript(scriptname RelPath, dir AbsPath, data []byte) (err error) {
 	// Write the temporary script file. Put the randomness at the front of the
 	// filename to preserve any file extension for Windows scripts.
-	f, err := ioutil.TempFile("", "*."+path.Base(scriptname))
+	f, err := ioutil.TempFile("", "*."+scriptname.Base())
 	if err != nil {
 		return
 	}

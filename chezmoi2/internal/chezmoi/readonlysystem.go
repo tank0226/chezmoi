@@ -80,7 +80,7 @@ func (s *ReadOnlySystem) RunCmd(cmd *exec.Cmd) error {
 }
 
 // RunScript implements System.RunScript.
-func (s *ReadOnlySystem) RunScript(scriptname string, dir AbsPath, data []byte) error {
+func (s *ReadOnlySystem) RunScript(scriptname RelPath, dir AbsPath, data []byte) error {
 	return os.ErrPermission
 }
 

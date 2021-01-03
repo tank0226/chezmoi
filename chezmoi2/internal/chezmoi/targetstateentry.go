@@ -285,7 +285,7 @@ func (t *TargetStateScript) Apply(system System, persistentState PersistentState
 	}
 	runAt := time.Now().UTC()
 	if !isEmpty(contents) {
-		if err := system.RunScript(string(t.name), actualStateEntry.Path().Dir(), contents); err != nil {
+		if err := system.RunScript(t.name, actualStateEntry.Path().Dir(), contents); err != nil {
 			return err
 		}
 	}

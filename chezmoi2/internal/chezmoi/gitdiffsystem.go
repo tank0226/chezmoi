@@ -181,7 +181,7 @@ func (s *GitDiffSystem) RunCmd(cmd *exec.Cmd) error {
 }
 
 // RunScript implements System.RunScript.
-func (s *GitDiffSystem) RunScript(scriptname string, dir AbsPath, data []byte) error {
+func (s *GitDiffSystem) RunScript(scriptname RelPath, dir AbsPath, data []byte) error {
 	isBinary := isBinary(data)
 	var chunks []diff.Chunk
 	if !isBinary {
