@@ -5,10 +5,8 @@ package chezmoi
 import (
 	"bufio"
 	"bytes"
-	"fmt"
 	"net"
 	"os"
-	"path/filepath"
 	"regexp"
 	"strings"
 	"syscall"
@@ -26,26 +24,6 @@ func init() {
 	syscall.Umask(int(umask))
 }
 
-// NewAbsPath returns a new AbsPath.
-func NewAbsPath(path string) (AbsPath, error) {
-	if path == "" || path[0] != '/' {
-		return "", fmt.Errorf("%s: not an absolute path", path)
-	}
-	return AbsPath(path), nil
-}
-
-// ExpandTilde expands a leading tilde in path.
-func ExpandTilde(path string, homeDirAbsPath AbsPath) string {
-	switch {
-	case path == "~":
-		return string(homeDirAbsPath)
-	case strings.HasPrefix(path, "~/"):
-		return string(homeDirAbsPath.Join(RelPath(path[2:])))
-	default:
-		return path
-	}
-}
-
 // FQDNHostname returns the FQDN hostname.
 func FQDNHostname(fs vfs.FS) (string, error) {
 	if fqdnHostname, err := etcHostsFQDNHostname(fs); err == nil && fqdnHostname != "" {
@@ -57,16 +35,6 @@ func FQDNHostname(fs vfs.FS) (string, error) {
 // GetUmask returns the umask.
 func GetUmask() os.FileMode {
 	return umask
-}
-
-// NormalizePath returns path normalized. On non-Windows systems, normalized
-// paths are absolute paths.
-func NormalizePath(path string) (AbsPath, error) {
-	absPath, err := filepath.Abs(path)
-	if err != nil {
-		return "", err
-	}
-	return AbsPath(absPath), nil
 }
 
 // SetUmask sets the umask.

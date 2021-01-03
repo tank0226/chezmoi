@@ -443,8 +443,11 @@ func (c *Config) defaultTemplateData() map[string]interface{} {
 func (c *Config) destAbsPathInfos(sourceState *chezmoi.SourceState, args []string, recursive, follow bool) (map[chezmoi.AbsPath]os.FileInfo, error) {
 	destAbsPathInfos := make(map[chezmoi.AbsPath]os.FileInfo)
 	for _, arg := range args {
-		destAbsPath, err := c.destAbsPath(chezmoi.NewOSPath(arg))
+		destAbsPath, err := chezmoi.NewAbsPathFromExtPath(arg, c.homeDirAbsPath)
 		if err != nil {
+			return nil, err
+		}
+		if _, err := destAbsPath.TrimDirPrefix(c.destDirAbsPath); err != nil {
 			return nil, err
 		}
 		if recursive {
@@ -577,14 +580,6 @@ func (c *Config) execute(args []string) error {
 	}
 	rootCmd.SetArgs(args)
 	return rootCmd.Execute()
-}
-
-func (c *Config) getTargetRelPath(arg chezmoi.OSPath) (chezmoi.RelPath, error) {
-	destAbsPath, err := c.destAbsPath(arg)
-	if err != nil {
-		return "", err
-	}
-	return destAbsPath.TrimDirPrefix(c.destDirAbsPath)
 }
 
 func (c *Config) getTTY() (*bufio.Reader, io.Writer, error) {
@@ -753,17 +748,6 @@ func (c *Config) newRootCmd() (*cobra.Command, error) {
 	return rootCmd, nil
 }
 
-func (c *Config) destAbsPath(arg chezmoi.OSPath) (chezmoi.AbsPath, error) {
-	normalizedPath, err := arg.Normalize(c.homeDirAbsPath)
-	if err != nil {
-		return "", err
-	}
-	if _, err := normalizedPath.TrimDirPrefix(c.destDirAbsPath); err != nil {
-		return "", fmt.Errorf("%s: not in destination directory (%s)", arg, c.destDirAbsPath)
-	}
-	return normalizedPath, nil
-}
-
 func (c *Config) persistentPostRunRootE(cmd *cobra.Command, args []string) error {
 	if c.persistentState != nil {
 		if err := c.persistentState.Close(); err != nil {
@@ -811,7 +795,7 @@ func (c *Config) persistentPostRunRootE(cmd *cobra.Command, args []string) error
 
 func (c *Config) persistentPreRunRootE(cmd *cobra.Command, args []string) error {
 	var err error
-	c.configFileAbsPath, err = chezmoi.NewOSPath(c.configFile).Normalize(c.homeDirAbsPath)
+	c.configFileAbsPath, err = chezmoi.NewAbsPathFromExtPath(c.configFile, c.homeDirAbsPath)
 	if err != nil {
 		return err
 	}
@@ -843,10 +827,10 @@ func (c *Config) persistentPreRunRootE(cmd *cobra.Command, args []string) error 
 		}
 	}
 
-	if c.sourceDirAbsPath, err = chezmoi.NewOSPath(c.SourceDir).Normalize(c.homeDirAbsPath); err != nil {
+	if c.sourceDirAbsPath, err = chezmoi.NewAbsPathFromExtPath(c.SourceDir, c.homeDirAbsPath); err != nil {
 		return err
 	}
-	if c.destDirAbsPath, err = chezmoi.NewOSPath(c.DestDir).Normalize(c.homeDirAbsPath); err != nil {
+	if c.destDirAbsPath, err = chezmoi.NewAbsPathFromExtPath(c.DestDir, c.homeDirAbsPath); err != nil {
 		return err
 	}
 
@@ -1094,7 +1078,14 @@ type targetRelPathsOptions struct {
 func (c *Config) targetRelPaths(s *chezmoi.SourceState, args []string, options targetRelPathsOptions) (chezmoi.RelPaths, error) {
 	targetRelPaths := make(chezmoi.RelPaths, 0, len(args))
 	for _, arg := range args {
-		targetRelPath, err := c.getTargetRelPath(chezmoi.NewOSPath(arg))
+		argAbsPath, err := chezmoi.NewAbsPathFromExtPath(arg, c.homeDirAbsPath)
+		if err != nil {
+			return nil, err
+		}
+		targetRelPath, err := argAbsPath.TrimDirPrefix(c.destDirAbsPath)
+		if err != nil {
+			return nil, err
+		}
 		if err != nil {
 			return nil, err
 		}
