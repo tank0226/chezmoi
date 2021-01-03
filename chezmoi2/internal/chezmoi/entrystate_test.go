@@ -1,7 +1,6 @@
 package chezmoi
 
 import (
-	"encoding/json"
 	"fmt"
 	"os"
 	"sort"
@@ -122,11 +121,11 @@ func TestEntryStateMarshal(t *testing.T) {
 	}
 	jsonBytes := []byte(`{"type":"file","mode":511,"contentsSHA256":"00010203"}`)
 
-	actualJSONBytes, err := json.Marshal(es)
+	actualJSONBytes, err := stateFormat.Marshal(es)
 	require.NoError(t, err)
 	assert.Equal(t, jsonBytes, actualJSONBytes)
 
 	var actualEntryState EntryState
-	require.NoError(t, json.Unmarshal(jsonBytes, &actualEntryState))
+	require.NoError(t, stateFormat.Unmarshal(jsonBytes, &actualEntryState))
 	assert.Equal(t, es, actualEntryState)
 }

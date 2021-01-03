@@ -1,7 +1,6 @@
 package chezmoi
 
 import (
-	"encoding/json"
 	"strconv"
 	"testing"
 
@@ -16,24 +15,31 @@ func TestHexBytes(t *testing.T) {
 	}{
 		{
 			b:           nil,
-			expectedStr: `""`,
+			expectedStr: "\"\"\n",
 		},
 		{
 			b:           []byte{0},
-			expectedStr: `"00"`,
+			expectedStr: "\"00\"\n",
 		},
 		{
 			b:           []byte{0, 1, 2, 3},
-			expectedStr: `"00010203"`,
+			expectedStr: "\"00010203\"\n",
 		},
 	} {
 		t.Run(strconv.Itoa(i), func(t *testing.T) {
-			actual, err := json.Marshal(tc.b)
-			require.NoError(t, err)
-			assert.Equal(t, []byte(tc.expectedStr), actual)
-			var actualB hexBytes
-			require.NoError(t, json.Unmarshal(actual, &actualB))
-			assert.Equal(t, tc.b, actualB)
+			for _, format := range []Format{
+				jsonFormat{},
+				yamlFormat{},
+			} {
+				t.Run(format.Name(), func(t *testing.T) {
+					actual, err := format.Marshal(tc.b)
+					require.NoError(t, err)
+					assert.Equal(t, []byte(tc.expectedStr), actual)
+					var actualB hexBytes
+					require.NoError(t, format.Unmarshal(actual, &actualB))
+					assert.Equal(t, tc.b, actualB)
+				})
+			}
 		})
 	}
 }

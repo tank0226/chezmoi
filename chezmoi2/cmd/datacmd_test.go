@@ -68,7 +68,7 @@ func TestDataCmd(t *testing.T) {
 					} `json:"chezmoi" toml:"chezmoi" yaml:"chezmoi"`
 					Test bool `json:"test" toml:"test" yaml:"test"`
 				}
-				assert.NoError(t, chezmoi.Formats[tc.format].Decode([]byte(sb.String()), &data))
+				assert.NoError(t, chezmoi.Formats[tc.format].Unmarshal([]byte(sb.String()), &data))
 				normalizedSourceDir, err := chezmoi.NormalizePath("/tmp/source")
 				require.NoError(t, err)
 				assert.Equal(t, string(normalizedSourceDir), data.Chezmoi.SourceDir)

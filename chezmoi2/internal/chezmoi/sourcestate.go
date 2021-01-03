@@ -3,7 +3,6 @@ package chezmoi
 import (
 	"bufio"
 	"bytes"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"os"
@@ -237,7 +236,7 @@ func (s *SourceState) Add(sourceSystem System, persistentState PersistentState, 
 				return err
 			}
 		}
-		value, err := json.Marshal(update.entryState)
+		value, err := stateFormat.Marshal(update.entryState)
 		if err != nil {
 			return err
 		}
@@ -324,7 +323,7 @@ func (s *SourceState) Apply(targetSystem System, persistentState PersistentState
 			return err
 		case data != nil:
 			var entryState EntryState
-			if err := json.Unmarshal(data, &entryState); err != nil {
+			if err := stateFormat.Unmarshal(data, &entryState); err != nil {
 				return err
 			}
 			lastWrittenEntryState = &entryState
@@ -344,7 +343,7 @@ func (s *SourceState) Apply(targetSystem System, persistentState PersistentState
 		return err
 	}
 
-	data, err := json.Marshal(targetEntryState)
+	data, err := stateFormat.Marshal(targetEntryState)
 	if err != nil {
 		return err
 	}
@@ -682,7 +681,7 @@ func (s *SourceState) addTemplateData(sourceAbsPath AbsPath) error {
 		return fmt.Errorf("%s: %w", sourceAbsPath, err)
 	}
 	var templateData map[string]interface{}
-	if err := format.Decode(data, &templateData); err != nil {
+	if err := format.Unmarshal(data, &templateData); err != nil {
 		return fmt.Errorf("%s: %w", sourceAbsPath, err)
 	}
 	recursiveMerge(s.userTemplateData, templateData)

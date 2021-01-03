@@ -21,6 +21,8 @@ var (
 	// scriptStateBucket is the bucket for recording the state of run once
 	// scripts.
 	scriptStateBucket = []byte("scriptState")
+
+	stateFormat = jsonFormat{}
 )
 
 // Suffixes and prefixes.

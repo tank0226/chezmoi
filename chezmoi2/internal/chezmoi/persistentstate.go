@@ -1,7 +1,5 @@
 package chezmoi
 
-import "encoding/json"
-
 // A PersistentState is a persistent state.
 type PersistentState interface {
 	Close() error
@@ -36,7 +34,7 @@ func persistentStateBucketData(s PersistentState, bucket []byte) (map[string]int
 	result := make(map[string]interface{})
 	if err := s.ForEach(bucket, func(k, v []byte) error {
 		var value map[string]interface{}
-		if err := json.Unmarshal(v, &value); err != nil {
+		if err := stateFormat.Unmarshal(v, &value); err != nil {
 			return err
 		}
 		result[string(k)] = value

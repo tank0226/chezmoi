@@ -3,7 +3,6 @@ package chezmoi
 import (
 	"bytes"
 	"encoding/hex"
-	"encoding/json"
 	"os"
 	"time"
 )
@@ -289,7 +288,7 @@ func (t *TargetStateScript) Apply(system System, persistentState PersistentState
 			return err
 		}
 	}
-	value, err := json.Marshal(&scriptState{
+	value, err := stateFormat.Marshal(&scriptState{
 		Name:  string(t.name),
 		RunAt: runAt,
 	})
