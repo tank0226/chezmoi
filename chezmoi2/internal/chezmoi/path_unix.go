@@ -3,18 +3,9 @@
 package chezmoi
 
 import (
-	"fmt"
 	"path/filepath"
 	"strings"
 )
-
-// NewAbsPath returns a new AbsPath.
-func NewAbsPath(path string) (AbsPath, error) {
-	if filepath.IsAbs(path) {
-		return "", fmt.Errorf("%s: not an absolute path", path)
-	}
-	return AbsPath(path), nil
-}
 
 // NewAbsPathFromExtPath returns a new AbsPath by converting extPath to use
 // slashes, tilde expansion, and making the path absolute.

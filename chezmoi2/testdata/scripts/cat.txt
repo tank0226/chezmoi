@@ -23,7 +23,7 @@ stderr 'not a file or symlink'
 
 # test that chezmoi cat does not print files outside the destination directory
 ! chezmoi cat ${/}etc${/}passwd
-stderr 'not in'
+stderr not\x20in\x20${HOME@R}$
 
 # test that chezmoi cat uses relative paths
 mkdir $HOME/.dir
