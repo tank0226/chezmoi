@@ -10,17 +10,14 @@ import (
 // name to uppercase.
 func NewAbsPathFromExtPath(extPath string, homeDirAbsPath AbsPath) (AbsPath, error) {
 	slashPath := filepath.ToSlash(expandTilde(extPath, homeDirAbsPath))
-	if filepath.IsAbs(slashPath) {
-		return AbsPath(slashPath), nil
+	if filepath.IsAbs(tildeSlashPath) {
+		return AbsPath(volumeNameToUpper(tildeSlashPath)), nil
 	}
 	slashPathAbsPath, err := filepath.Abs(slashPath)
 	if err != nil {
 		return "", err
 	}
-	if n := volumeNameLen(slashPathAbsPath); n > 0 {
-		slashPathAbsPath = strings.ToUpper(slashPathAbsPath[:n]) + slashPathAbsPath[n:]
-	}
-	return AbsPath(slashPathAbsPath), nil
+	return AbsPath(volumeNameToUpper(slashPathAbsPath)), nil
 }
 
 // NormalizePath returns path normalized. On Windows, normalized paths are
@@ -85,4 +82,12 @@ func volumeNameLen(path string) int {
 		}
 	}
 	return 0
+}
+
+// volumeNameToUpper returns path with the volume name converted to uppercase.
+func volumeNameToUpper(path string) string {
+	if n := volumeNameLen(path); n > 0 {
+		return strings.ToUpper(path[:n]) + path[n:]
+	}
+	return path
 }

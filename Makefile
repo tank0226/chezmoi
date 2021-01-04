@@ -1,9 +1,24 @@
 GOLANGCI_LINT_VERSION=1.34.1
 
 .PHONY: default
-default: generate run test lint format
+default: generate build run test lint format
 
-.PHONT: generate
+.PHONY: build
+build: build-darwin build-linux build-windows
+
+.PHONY: build-darwin
+build-darwin: generate
+	GOOS=darwin GOARCH=amd64 go build -o /dev/null ./chezmoi2
+
+.PHONY: build-linux
+build-linux: generate
+	GOOS=linux GOARCH=amd64 go build -o /dev/null ./chezmoi2
+
+.PHONY: build-windows
+build-windows: generate
+	GOOS=windows GOARCH=amd64 go build -o /dev/null ./chezmoi2
+
+.PHONY: generate
 generate:
 	go generate
 
