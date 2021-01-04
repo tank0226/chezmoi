@@ -6,18 +6,20 @@ import (
 )
 
 // NewAbsPathFromExtPath returns a new AbsPath by converting extPath to use
-// slashes, tilde expansion, making the path absolute, and converting the volume
-// name to uppercase.
+// slashes, performing tilde expansion, making the path absolute, and converting
+// the volume name to uppercase.
 func NewAbsPathFromExtPath(extPath string, homeDirAbsPath AbsPath) (AbsPath, error) {
 	slashTildePath := filepath.ToSlash(expandTilde(extPath, homeDirAbsPath))
 	if filepath.IsAbs(slashTildePath) {
 		return AbsPath(volumeNameToUpper(slashTildePath)), nil
 	}
-	slashPathAbsPath, err := filepath.Abs(slashTildePath)
+	tildeAbsPath, err := filepath.Abs(slashTildePath)
 	if err != nil {
 		return "", err
 	}
-	return AbsPath(volumeNameToUpper(slashPathAbsPath)), nil
+	// filepath.Abs on Windows converts forward slashes to backslashes so we
+	// have to call filepath.ToSlash again.
+	return AbsPath(filepath.ToSlash(volumeNameToUpper(tildeAbsPath))), nil
 }
 
 // NormalizePath returns path normalized. On Windows, normalized paths are

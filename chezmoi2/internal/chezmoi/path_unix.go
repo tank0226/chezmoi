@@ -8,7 +8,7 @@ import (
 )
 
 // NewAbsPathFromExtPath returns a new AbsPath by converting extPath to use
-// slashes, tilde expansion, and making the path absolute.
+// slashes, performing tilde expansion, and making the path absolute.
 func NewAbsPathFromExtPath(extPath string, homeDirAbsPath AbsPath) (AbsPath, error) {
 	tildeSlashPath := expandTilde(filepath.ToSlash(extPath), homeDirAbsPath)
 	if filepath.IsAbs(tildeSlashPath) {
