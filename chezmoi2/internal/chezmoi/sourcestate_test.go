@@ -2,6 +2,7 @@ package chezmoi
 
 import (
 	"os"
+	"path/filepath"
 	"testing"
 	"text/template"
 
@@ -353,11 +354,6 @@ func TestSourceStateAdd(t *testing.T) {
 			addOptions: AddOptions{
 				Include: NewIncludeSet(IncludeAll),
 			},
-			extraRoot: map[string]interface{}{
-				"/home/user": map[string]interface{}{
-					".symlink": &vfst.Symlink{Target: ".dir/subdir/file"},
-				},
-			},
 			tests: []interface{}{
 				vfst.TestPath("/home/user/.local/share/chezmoi/symlink_dot_symlink",
 					vfst.TestModeIsRegular,
@@ -366,7 +362,7 @@ func TestSourceStateAdd(t *testing.T) {
 			},
 		},
 		{
-			name: "symlink_windows",
+			name: "symlink_backslash_windows",
 			destAbsPaths: AbsPaths{
 				"/home/user/.symlink_windows",
 			},
@@ -677,7 +673,7 @@ func TestSourceStateApplyAll(t *testing.T) {
 			tests: []interface{}{
 				vfst.TestPath("/home/user/.symlink",
 					vfst.TestModeType(os.ModeSymlink),
-					vfst.TestSymlinkTarget(".dir/subdir/file"),
+					vfst.TestSymlinkTarget(filepath.FromSlash(".dir/subdir/file")),
 				),
 			},
 		},
@@ -693,7 +689,7 @@ func TestSourceStateApplyAll(t *testing.T) {
 			tests: []interface{}{
 				vfst.TestPath("/home/user/.symlink",
 					vfst.TestModeType(os.ModeSymlink),
-					vfst.TestSymlinkTarget(".dir/subdir/file"),
+					vfst.TestSymlinkTarget(filepath.FromSlash(".dir/subdir/file")),
 				),
 			},
 		},
