@@ -9,11 +9,11 @@ import (
 // slashes, tilde expansion, making the path absolute, and converting the volume
 // name to uppercase.
 func NewAbsPathFromExtPath(extPath string, homeDirAbsPath AbsPath) (AbsPath, error) {
-	slashPath := filepath.ToSlash(expandTilde(extPath, homeDirAbsPath))
-	if filepath.IsAbs(tildeSlashPath) {
-		return AbsPath(volumeNameToUpper(tildeSlashPath)), nil
+	slashTildePath := filepath.ToSlash(expandTilde(extPath, homeDirAbsPath))
+	if filepath.IsAbs(slashTildePath) {
+		return AbsPath(volumeNameToUpper(slashTildePath)), nil
 	}
-	slashPathAbsPath, err := filepath.Abs(slashPath)
+	slashPathAbsPath, err := filepath.Abs(slashTildePath)
 	if err != nil {
 		return "", err
 	}

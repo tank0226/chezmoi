@@ -18,29 +18,29 @@ build-linux: generate
 build-windows: generate
 	GOOS=windows GOARCH=amd64 go build -o /dev/null ./chezmoi2
 
+.PHONY: run
+run: generate
+	go run . --version
+
 .PHONY: generate
 generate:
 	go generate
+
+.PHONY: test
+test: generate
+	go test ./...
 
 .PHONY: generate-install.sh
 generate-install.sh:
 	go run ./internal/cmd/generate-install.sh > assets/scripts/install.sh
 
-.PHONY: run
-run:
-	go run . --version
-
-.PHONY: test
-test:
-	go test ./...
-
 .PHONY: lint
-lint: ensure-golangci-lint
+lint: ensure-golangci-lint generate
 	./bin/golangci-lint run
 	go run ./internal/cmd/lint-whitespace
 
 .PHONY: format
-format: ensure-gofumports
+format: ensure-gofumports generate
 	find . -name \*.go | xargs ./bin/gofumports -local github.com/twpayne/chezmoi -w
 
 .PHONY: ensure-tools

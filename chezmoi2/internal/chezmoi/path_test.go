@@ -61,9 +61,3 @@ func TestNewAbsPathFromExtPath(t *testing.T) {
 		})
 	}
 }
-
-func mustNormalizePath(t *testing.T, path string) string {
-	normalizedPath, err := NormalizePath(path)
-	require.NoError(t, err)
-	return string(normalizedPath)
-}
