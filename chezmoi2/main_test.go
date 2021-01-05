@@ -207,18 +207,15 @@ func cmdMkGPGConfig(ts *testscript.TestScript, neg bool, args []string) {
 	}
 	homeDir := ts.Getenv("HOME")
 	ts.Check(os.MkdirAll(homeDir, 0o777))
-	cmd := exec.Command(
+	output, err := exec.Command(
 		"gpg",
 		"--batch",
+		"--homedir", homeDir,
 		"--no-tty",
 		"--passphrase", "passphrase",
 		"--pinentry-mode", "loopback",
 		"--quick-generate-key", "chezmoi-test-",
-	)
-	cmd.Env = []string{
-		"HOME=" + homeDir,
-	}
-	output, err := cmd.CombinedOutput()
+	).CombinedOutput()
 	ts.Check(err)
 	submatch := gpgKeyMarkedAsUltimatelyTrustedRx.FindSubmatch(output)
 	if submatch == nil {
@@ -229,9 +226,14 @@ func cmdMkGPGConfig(ts *testscript.TestScript, neg bool, args []string) {
 	ts.Check(os.MkdirAll(path.Dir(configFile), 0o777))
 	ts.Check(ioutil.WriteFile(configFile, []byte(fmt.Sprintf(chezmoitest.JoinLines(
 		`[gpg]`,
-		`  args = ["--no-tty", "--passphrase", "passphrase", "--pinentry-mode", "loopback"]`,
+		`  args = [`,
+		`    "--homedir", %q,`,
+		`    "--no-tty",`,
+		`    "--passphrase", "passphrase",`,
+		`    "--pinentry-mode", "loopback",`,
+		`  ]`,
 		`  recipient = %q`,
-	), key)), 0o666))
+	), homeDir, key)), 0o666))
 }
 
 // cmdMkHomeDir makes and populates a home directory.

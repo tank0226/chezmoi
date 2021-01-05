@@ -5,7 +5,6 @@ import (
 	"os"
 	"os/exec"
 	"path"
-	"runtime"
 
 	"go.uber.org/multierr"
 )
@@ -19,15 +18,8 @@ type GPGEncryptionTool struct {
 }
 
 // Decrypt implements EncyrptionTool.Decrypt.
-func (t *GPGEncryptionTool) Decrypt(filenameHint string, ciphertext []byte) (plaintext []byte, err error) {
-	filename, cleanup, err := t.DecryptToFile(filenameHint, ciphertext)
-	if err != nil {
-		return
-	}
-	defer func() {
-		err = multierr.Append(err, cleanup())
-	}()
-	return ioutil.ReadFile(filename)
+func (t *GPGEncryptionTool) Decrypt(filenameHint string, ciphertext []byte) ([]byte, error) {
+	return encryptionToolDecrypt(t, filenameHint, ciphertext)
 }
 
 // DecryptToFile implements EncryptionTool.DecryptToFile.
@@ -64,25 +56,7 @@ func (t *GPGEncryptionTool) DecryptToFile(filenameHint string, ciphertext []byte
 
 // Encrypt implements EncryptionTool.Encrypt.
 func (t *GPGEncryptionTool) Encrypt(plaintext []byte) (ciphertext []byte, err error) {
-	tempFile, err := ioutil.TempFile("", "chezmoi-gpg-encrypt")
-	if err != nil {
-		return
-	}
-	defer func() {
-		err = multierr.Append(err, os.RemoveAll(tempFile.Name()))
-	}()
-
-	if runtime.GOOS != "windows" {
-		if err = tempFile.Chmod(0o600); err != nil {
-			return
-		}
-	}
-
-	if err = ioutil.WriteFile(tempFile.Name(), ciphertext, 0o600); err != nil {
-		return
-	}
-
-	return t.EncryptFile(tempFile.Name())
+	return encryptionToolEncrypt(t, "chezmoi-gpg-encrypt", plaintext)
 }
 
 // EncryptFile implements EncryptionTool.EncryptFile.
