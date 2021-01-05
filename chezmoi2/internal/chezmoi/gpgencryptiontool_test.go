@@ -9,6 +9,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/require"
+	"github.com/twpayne/chezmoi/chezmoi2/internal/chezmoitest"
 )
 
 var gpgKeyMarkedAsUltimatelyTrustedRx = regexp.MustCompile(`gpg: key ([0-9A-F]+) marked as ultimately trusted`)
@@ -26,21 +27,10 @@ func TestGPGEncryptionTool(t *testing.T) {
 		require.NoError(t, os.RemoveAll(tempDir))
 	}()
 
-	output, err := exec.Command(
-		"gpg",
-		"--batch",
-		"--homedir", tempDir,
-		"--no-tty",
-		"--passphrase", "chezmoi-test-passphrase",
-		"--pinentry-mode", "loopback",
-		"--quick-generate-key", "chezmoi-test-key",
-	).CombinedOutput()
+	key, err := chezmoitest.GPGQuickGenerateKey(tempDir)
 	require.NoError(t, err)
-	submatch := gpgKeyMarkedAsUltimatelyTrustedRx.FindSubmatch(output)
-	require.NotNil(t, submatch)
-	key := submatch[1]
 
-	gpgET := &GPGEncryptionTool{
+	gpgEncryptionTool := &GPGEncryptionTool{
 		Command: command,
 		Args: []string{
 			"--homedir", tempDir,
@@ -48,9 +38,9 @@ func TestGPGEncryptionTool(t *testing.T) {
 			"--passphrase", "chezmoi-test-passphrase",
 			"--pinentry-mode", "loopback",
 		},
-		Recipient: string(key),
+		Recipient: key,
 	}
-	testEncryptionToolDecryptToFile(t, gpgET)
-	testEncryptionToolEncryptDecrypt(t, gpgET)
-	testEncryptionToolEncryptFile(t, gpgET)
+	testEncryptionToolDecryptToFile(t, gpgEncryptionTool)
+	testEncryptionToolEncryptDecrypt(t, gpgEncryptionTool)
+	testEncryptionToolEncryptFile(t, gpgEncryptionTool)
 }

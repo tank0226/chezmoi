@@ -6,10 +6,8 @@ import (
 	"fmt"
 	"io/ioutil"
 	"os"
-	"os/exec"
 	"path"
 	"path/filepath"
-	"regexp"
 	"runtime"
 	"strconv"
 	"strings"
@@ -28,8 +26,6 @@ import (
 // umask is the umask used in tests. The umask applies to the process and so
 // cannot be overridden in individual tests.
 const umask = 0o22
-
-var gpgKeyMarkedAsUltimatelyTrustedRx = regexp.MustCompile(`gpg: key ([0-9A-F]+) marked as ultimately trusted`)
 
 //nolint:interfacer
 func TestMain(m *testing.M) {
@@ -207,21 +203,8 @@ func cmdMkGPGConfig(ts *testscript.TestScript, neg bool, args []string) {
 	}
 	homeDir := ts.Getenv("HOME")
 	ts.Check(os.MkdirAll(homeDir, 0o777))
-	output, err := exec.Command(
-		"gpg",
-		"--batch",
-		"--homedir", homeDir,
-		"--no-tty",
-		"--passphrase", "chezmoi-test-passphrase",
-		"--pinentry-mode", "loopback",
-		"--quick-generate-key", "chezmoi-test-key",
-	).CombinedOutput()
+	key, err := chezmoitest.GPGQuickGenerateKey(homeDir)
 	ts.Check(err)
-	submatch := gpgKeyMarkedAsUltimatelyTrustedRx.FindSubmatch(output)
-	if submatch == nil {
-		ts.Fatalf("could not find key in %q", output)
-	}
-	key := submatch[1]
 	configFile := filepath.Join(homeDir, ".config", "chezmoi", "chezmoi.toml")
 	ts.Check(os.MkdirAll(path.Dir(configFile), 0o777))
 	ts.Check(ioutil.WriteFile(configFile, []byte(fmt.Sprintf(chezmoitest.JoinLines(

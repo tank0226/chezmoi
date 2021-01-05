@@ -1,6 +1,9 @@
 package chezmoitest
 
 import (
+	"fmt"
+	"os/exec"
+	"regexp"
 	"runtime"
 	"strings"
 	"testing"
@@ -10,9 +13,33 @@ import (
 	"github.com/twpayne/go-vfs/vfst"
 )
 
+var gpgKeyMarkedAsUltimatelyTrustedRx = regexp.MustCompile(`gpg: key ([0-9A-F]+) marked as ultimately trusted`)
+
 // JoinLines joins lines with newlines.
 func JoinLines(lines ...string) string {
 	return strings.Join(lines, "\n") + "\n"
+}
+
+// GPGQuickGenerateKey generates and returns a GPG key in homeDir.
+func GPGQuickGenerateKey(homeDir string) (string, error) {
+	output, err := exec.Command(
+		"gpg",
+		"--batch",
+		"--homedir", homeDir,
+		"--no-tty",
+		"--passphrase", "chezmoi-test-passphrase",
+		"--pinentry-mode", "loopback",
+		"--quick-generate-key", "chezmoi-test-key",
+	).CombinedOutput()
+	if err != nil {
+		return "", err
+	}
+	submatch := gpgKeyMarkedAsUltimatelyTrustedRx.FindSubmatch(output)
+	if submatch == nil {
+		return "", fmt.Errorf("key not found in %q", output)
+	}
+	return string(submatch[1]), nil
+
 }
 
 // HomeDir returns the home directory.
