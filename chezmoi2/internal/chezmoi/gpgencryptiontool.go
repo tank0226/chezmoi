@@ -102,11 +102,11 @@ func (t *GPGEncryptionTool) EncryptFile(filename string) (ciphertext []byte, err
 		"--output", outputFilename,
 		"--quiet",
 	}
-	switch {
-	case t.Symmetric:
-		args = append(args, "--symmetric")
-	case t.Recipient != "":
+	if t.Recipient != "" {
 		args = append(args, "--recipient", t.Recipient)
+	}
+	if t.Symmetric {
+		args = append(args, "--symmetric")
 	}
 	args = append(args, filename)
 

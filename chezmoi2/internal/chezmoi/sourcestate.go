@@ -907,6 +907,12 @@ func (s *SourceState) sourceStateEntry(actualStateEntry ActualStateEntry, destAb
 		if len(contents) == 0 && !options.Empty {
 			return nil, nil
 		}
+		if options.Encrypt {
+			contents, err = s.encryptionTool.Encrypt(contents)
+			if err != nil {
+				return nil, err
+			}
+		}
 		lazyContents := &lazyContents{
 			contents: contents,
 		}

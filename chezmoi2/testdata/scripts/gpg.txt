@@ -1,0 +1,18 @@
+[!exec:gpg] stop
+
+mkhomedir
+mkgpgconfig
+exec find $HOME
+
+cp golden/.encrypted $HOME
+chezmoi add --debug --encrypt ~/.encrypted
+exists $CHEZMOISOURCEDIR/encrypted_dot_encrypted
+exec cat $CHEZMOISOURCEDIR/encrypted_dot_encrypted
+! stdout plaintext
+
+rm $HOME/.encrypted
+chezmoi apply --force
+cp golden/.encrypted $HOME/.encrypted
+
+-- golden/.encrypted --
+plaintext

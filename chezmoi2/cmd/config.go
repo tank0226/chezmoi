@@ -86,6 +86,9 @@ type Config struct {
 	Secret      secretConfig      `mapstructure:"secret"`
 	Vault       vaultConfig       `mapstructure:"vault"`
 
+	// Encryption tool configurations, settable in the config file.
+	GPG chezmoi.GPGEncryptionTool `mapstructure:"gpg"`
+
 	// Password manager data.
 	gitHub  gitHubData
 	keyring keyringData
@@ -199,6 +202,9 @@ func newConfig(options ...configOption) (*Config, error) {
 		},
 		Vault: vaultConfig{
 			Command: "vault",
+		},
+		GPG: chezmoi.GPGEncryptionTool{
+			Command: "gpg",
 		},
 		add: addCmdConfig{
 			include:   chezmoi.NewIncludeSet(chezmoi.IncludeAll),
@@ -1053,6 +1059,7 @@ func (c *Config) sourceState() (*chezmoi.SourceState, error) {
 	s := chezmoi.NewSourceState(
 		chezmoi.WithDefaultTemplateDataFunc(c.defaultTemplateData),
 		chezmoi.WithDestDir(c.destDirAbsPath),
+		chezmoi.WithEncryptionTool(&c.GPG),
 		chezmoi.WithPriorityTemplateData(c.Data),
 		chezmoi.WithSourceDir(c.sourceDirAbsPath),
 		chezmoi.WithSystem(c.sourceSystem),

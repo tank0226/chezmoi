@@ -6,8 +6,10 @@ import (
 	"fmt"
 	"io/ioutil"
 	"os"
+	"os/exec"
 	"path"
 	"path/filepath"
+	"regexp"
 	"runtime"
 	"strconv"
 	"strings"
@@ -26,6 +28,8 @@ import (
 // umask is the umask used in tests. The umask applies to the process and so
 // cannot be overridden in individual tests.
 const umask = 0o22
+
+var gpgKeyMarkedAsUltimatelyTrustedRx = regexp.MustCompile(`gpg: key ([0-9A-F]+) marked as ultimately trusted`)
 
 //nolint:interfacer
 func TestMain(m *testing.M) {
@@ -52,6 +56,7 @@ func TestScript(t *testing.T) {
 			"edit":           cmdEdit,
 			"mkfile":         cmdMkFile,
 			"mkgitconfig":    cmdMkGitConfig,
+			"mkgpgconfig":    cmdMkGPGConfig,
 			"mkhomedir":      cmdMkHomeDir,
 			"mksourcedir":    cmdMkSourceDir,
 			"rmfinalnewline": cmdRmFinalNewline,
@@ -190,6 +195,43 @@ func cmdMkGitConfig(ts *testscript.TestScript, neg bool, args []string) {
 		`  name = User`,
 		`  email = user@example.com`,
 	)), 0o666))
+}
+
+// cmdMkGPGConfig creates a GPG key and a chezmoi configuration file.
+func cmdMkGPGConfig(ts *testscript.TestScript, neg bool, args []string) {
+	if neg {
+		ts.Fatalf("unupported: ! mkgpgconfig")
+	}
+	if len(args) > 0 {
+		ts.Fatalf("usage: mkgpgconfig")
+	}
+	homeDir := ts.Getenv("HOME")
+	ts.Check(os.MkdirAll(homeDir, 0o777))
+	cmd := exec.Command(
+		"gpg",
+		"--batch",
+		"--no-tty",
+		"--passphrase", "passphrase",
+		"--pinentry-mode", "loopback",
+		"--quick-generate-key", "chezmoi-test-",
+	)
+	cmd.Env = []string{
+		"HOME=" + homeDir,
+	}
+	output, err := cmd.CombinedOutput()
+	ts.Check(err)
+	submatch := gpgKeyMarkedAsUltimatelyTrustedRx.FindSubmatch(output)
+	if submatch == nil {
+		ts.Fatalf("could not find key in %q", output)
+	}
+	key := submatch[1]
+	configFile := filepath.Join(homeDir, ".config", "chezmoi", "chezmoi.toml")
+	ts.Check(os.MkdirAll(path.Dir(configFile), 0o777))
+	ts.Check(ioutil.WriteFile(configFile, []byte(fmt.Sprintf(chezmoitest.JoinLines(
+		`[gpg]`,
+		`  args = ["--no-tty", "--passphrase", "passphrase", "--pinentry-mode", "loopback"]`,
+		`  recipient = %q`,
+	), key)), 0o666))
 }
 
 // cmdMkHomeDir makes and populates a home directory.
