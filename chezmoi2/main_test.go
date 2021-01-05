@@ -212,9 +212,9 @@ func cmdMkGPGConfig(ts *testscript.TestScript, neg bool, args []string) {
 		"--batch",
 		"--homedir", homeDir,
 		"--no-tty",
-		"--passphrase", "passphrase",
+		"--passphrase", "chezmoi-test-passphrase",
 		"--pinentry-mode", "loopback",
-		"--quick-generate-key", "chezmoi-test-",
+		"--quick-generate-key", "chezmoi-test-key",
 	).CombinedOutput()
 	ts.Check(err)
 	submatch := gpgKeyMarkedAsUltimatelyTrustedRx.FindSubmatch(output)
@@ -229,7 +229,7 @@ func cmdMkGPGConfig(ts *testscript.TestScript, neg bool, args []string) {
 		`  args = [`,
 		`    "--homedir", %q,`,
 		`    "--no-tty",`,
-		`    "--passphrase", "passphrase",`,
+		`    "--passphrase", "chezmoi-test-passphrase",`,
 		`    "--pinentry-mode", "loopback",`,
 		`  ]`,
 		`  recipient = %q`,

@@ -79,7 +79,7 @@ func (t *testEncryptionTool) xorWithKey(input []byte) []byte {
 func testEncryptionToolDecryptToFile(t *testing.T, et EncryptionTool) {
 	t.Helper()
 	t.Run("DecryptToFile", func(t *testing.T) {
-		expectedPlaintext := []byte("secret")
+		expectedPlaintext := []byte("plaintext")
 
 		actualCiphertext, err := et.Encrypt(expectedPlaintext)
 		require.NoError(t, err)
@@ -103,13 +103,13 @@ func testEncryptionToolDecryptToFile(t *testing.T, et EncryptionTool) {
 func testEncryptionToolEncryptDecrypt(t *testing.T, et EncryptionTool) {
 	t.Helper()
 	t.Run("EncryptDecrypt", func(t *testing.T) {
-		expectedPlaintext := []byte("secret")
+		expectedPlaintext := []byte("plaintext")
 
 		actualCiphertext, err := et.Encrypt(expectedPlaintext)
 		require.NoError(t, err)
 		assert.NotEqual(t, expectedPlaintext, actualCiphertext)
 
-		actualPlaintext, err := et.Decrypt("", actualCiphertext)
+		actualPlaintext, err := et.Decrypt("filename", actualCiphertext)
 		require.NoError(t, err)
 		assert.Equal(t, expectedPlaintext, actualPlaintext)
 	})
@@ -118,7 +118,7 @@ func testEncryptionToolEncryptDecrypt(t *testing.T, et EncryptionTool) {
 func testEncryptionToolEncryptFile(t *testing.T, et EncryptionTool) {
 	t.Helper()
 	t.Run("EncryptFile", func(t *testing.T) {
-		expectedPlaintext := []byte("secret")
+		expectedPlaintext := []byte("plaintext")
 
 		tempFile, err := ioutil.TempFile("", "chezmoi-test-encryption-tool")
 		require.NoError(t, err)
@@ -136,7 +136,7 @@ func testEncryptionToolEncryptFile(t *testing.T, et EncryptionTool) {
 		require.NoError(t, err)
 		assert.NotEqual(t, expectedPlaintext, actualCiphertext)
 
-		actualPlaintext, err := et.Decrypt("", actualCiphertext)
+		actualPlaintext, err := et.Decrypt("filename", actualCiphertext)
 		require.NoError(t, err)
 		assert.Equal(t, expectedPlaintext, actualPlaintext)
 	})

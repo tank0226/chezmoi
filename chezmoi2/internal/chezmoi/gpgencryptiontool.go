@@ -33,7 +33,7 @@ func (t *GPGEncryptionTool) DecryptToFile(filenameHint string, ciphertext []byte
 	}
 
 	filename = path.Join(tempDir, path.Base(filenameHint))
-	inputFilename := filename + ".gpg"
+	inputFilename := filename + ".asc"
 	if err = ioutil.WriteFile(inputFilename, ciphertext, 0o600); err != nil {
 		err = multierr.Append(err, cleanupFunc())
 		return

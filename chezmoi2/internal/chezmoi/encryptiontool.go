@@ -46,9 +46,10 @@ func encryptionToolEncrypt(t EncryptionTool, pattern string, plaintext []byte) (
 		}
 	}
 
-	if err = ioutil.WriteFile(tempFile.Name(), ciphertext, 0o600); err != nil {
+	if err = ioutil.WriteFile(tempFile.Name(), plaintext, 0o600); err != nil {
 		return
 	}
 
-	return t.EncryptFile(tempFile.Name())
+	ciphertext, err = t.EncryptFile(tempFile.Name())
+	return
 }
