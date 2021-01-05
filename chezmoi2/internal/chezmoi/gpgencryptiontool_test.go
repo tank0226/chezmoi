@@ -5,14 +5,12 @@ import (
 	"io/ioutil"
 	"os"
 	"os/exec"
-	"regexp"
 	"testing"
 
 	"github.com/stretchr/testify/require"
+
 	"github.com/twpayne/chezmoi/chezmoi2/internal/chezmoitest"
 )
-
-var gpgKeyMarkedAsUltimatelyTrustedRx = regexp.MustCompile(`gpg: key ([0-9A-F]+) marked as ultimately trusted`)
 
 func TestGPGEncryptionTool(t *testing.T) {
 	command, err := exec.LookPath("gpg")
@@ -40,6 +38,7 @@ func TestGPGEncryptionTool(t *testing.T) {
 		},
 		Recipient: key,
 	}
+
 	testEncryptionToolDecryptToFile(t, gpgEncryptionTool)
 	testEncryptionToolEncryptDecrypt(t, gpgEncryptionTool)
 	testEncryptionToolEncryptFile(t, gpgEncryptionTool)

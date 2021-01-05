@@ -39,7 +39,6 @@ func GPGQuickGenerateKey(homeDir string) (string, error) {
 		return "", fmt.Errorf("key not found in %q", output)
 	}
 	return string(submatch[1]), nil
-
 }
 
 // HomeDir returns the home directory.
