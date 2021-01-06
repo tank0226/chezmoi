@@ -18,7 +18,8 @@ type AGEEncryptionTool struct {
 
 // Decrypt implements EncyrptionTool.Decrypt.
 func (t *AGEEncryptionTool) Decrypt(filenameHint string, ciphertext []byte) ([]byte, error) {
-	cmd := exec.Command(t.Command, t.encryptArgs()...)
+	//nolint:gosec
+	cmd := exec.Command(t.Command, t.decryptArgs()...)
 	cmd.Stdin = bytes.NewReader(ciphertext)
 	output := &bytes.Buffer{}
 	cmd.Stdout = output
@@ -36,6 +37,7 @@ func (t *AGEEncryptionTool) DecryptToFile(filenameHint string, ciphertext []byte
 
 // Encrypt implements EncryptionTool.Encrypt.
 func (t *AGEEncryptionTool) Encrypt(plaintext []byte) ([]byte, error) {
+	//nolint:gosec
 	cmd := exec.Command(t.Command, t.encryptArgs()...)
 	cmd.Stdin = bytes.NewReader(plaintext)
 	output := &bytes.Buffer{}
@@ -48,6 +50,7 @@ func (t *AGEEncryptionTool) Encrypt(plaintext []byte) ([]byte, error) {
 
 // EncryptFile implements EncryptionTool.EncryptFile.
 func (t *AGEEncryptionTool) EncryptFile(filename string) ([]byte, error) {
+	//nolint:gosec
 	return exec.Command(t.Command, append(t.encryptArgs(), filename)...).Output()
 }
 
