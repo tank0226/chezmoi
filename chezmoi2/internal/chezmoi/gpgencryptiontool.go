@@ -9,7 +9,7 @@ import (
 	"go.uber.org/multierr"
 )
 
-// A GPGEncryptionTool uses gpg for encryption and decryption.
+// A GPGEncryptionTool uses gpg for encryption and decryption. See https://gnupg.org/.
 type GPGEncryptionTool struct {
 	Command   string
 	Args      []string

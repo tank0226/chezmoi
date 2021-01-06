@@ -50,6 +50,5 @@ func encryptionToolEncrypt(t EncryptionTool, pattern string, plaintext []byte) (
 		return
 	}
 
-	ciphertext, err = t.EncryptFile(tempFile.Name())
-	return
+	return t.EncryptFile(tempFile.Name())
 }
