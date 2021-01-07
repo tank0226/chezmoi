@@ -2,21 +2,21 @@ package chezmoi
 
 import "io/ioutil"
 
-// A nullEncryptionTool returns its input unchanged.
-type nullEncryptionTool struct{}
+// A nullEncryption returns its input unchanged.
+type nullEncryption struct{}
 
-func (*nullEncryptionTool) Decrypt(ciphertext []byte) ([]byte, error) {
+func (*nullEncryption) Decrypt(ciphertext []byte) ([]byte, error) {
 	return ciphertext, nil
 }
 
-func (*nullEncryptionTool) DecryptToFile(filename string, ciphertext []byte) error {
+func (*nullEncryption) DecryptToFile(filename string, ciphertext []byte) error {
 	return ioutil.WriteFile(filename, ciphertext, 0o600)
 }
 
-func (*nullEncryptionTool) Encrypt(plaintext []byte) ([]byte, error) {
+func (*nullEncryption) Encrypt(plaintext []byte) ([]byte, error) {
 	return plaintext, nil
 }
 
-func (*nullEncryptionTool) EncryptFile(filename string) ([]byte, error) {
+func (*nullEncryption) EncryptFile(filename string) ([]byte, error) {
 	return ioutil.ReadFile(filename)
 }

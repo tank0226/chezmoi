@@ -11,33 +11,33 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-var _ EncryptionTool = &nullEncryptionTool{}
+var _ Encryption = &nullEncryption{}
 
-type testEncryptionTool struct {
+type testEncryption struct {
 	key byte
 }
 
-var _ EncryptionTool = &testEncryptionTool{}
+var _ Encryption = &testEncryption{}
 
-func newTestEncryptionTool() *testEncryptionTool {
-	return &testEncryptionTool{
+func newTestEncryption() *testEncryption {
+	return &testEncryption{
 		key: byte(rand.Int() + 1),
 	}
 }
 
-func (t *testEncryptionTool) Decrypt(ciphertext []byte) ([]byte, error) {
+func (t *testEncryption) Decrypt(ciphertext []byte) ([]byte, error) {
 	return t.xorWithKey(ciphertext), nil
 }
 
-func (t *testEncryptionTool) DecryptToFile(filename string, ciphertext []byte) error {
+func (t *testEncryption) DecryptToFile(filename string, ciphertext []byte) error {
 	return ioutil.WriteFile(filename, t.xorWithKey(ciphertext), 0o666)
 }
 
-func (t *testEncryptionTool) Encrypt(plaintext []byte) ([]byte, error) {
+func (t *testEncryption) Encrypt(plaintext []byte) ([]byte, error) {
 	return t.xorWithKey(plaintext), nil
 }
 
-func (t *testEncryptionTool) EncryptFile(filename string) ([]byte, error) {
+func (t *testEncryption) EncryptFile(filename string) ([]byte, error) {
 	plaintext, err := ioutil.ReadFile(filename)
 	if err != nil {
 		return nil, err
@@ -45,7 +45,7 @@ func (t *testEncryptionTool) EncryptFile(filename string) ([]byte, error) {
 	return t.xorWithKey(plaintext), nil
 }
 
-func (t *testEncryptionTool) xorWithKey(input []byte) []byte {
+func (t *testEncryption) xorWithKey(input []byte) []byte {
 	output := make([]byte, 0, len(input))
 	for _, b := range input {
 		output = append(output, b^t.key)
@@ -53,7 +53,7 @@ func (t *testEncryptionTool) xorWithKey(input []byte) []byte {
 	return output
 }
 
-func testEncryptionToolDecryptToFile(t *testing.T, et EncryptionTool) {
+func testEncryptionDecryptToFile(t *testing.T, et Encryption) {
 	t.Helper()
 	t.Run("DecryptToFile", func(t *testing.T) {
 		expectedPlaintext := []byte("plaintext")
@@ -77,7 +77,7 @@ func testEncryptionToolDecryptToFile(t *testing.T, et EncryptionTool) {
 	})
 }
 
-func testEncryptionToolEncryptDecrypt(t *testing.T, et EncryptionTool) {
+func testEncryptionEncryptDecrypt(t *testing.T, et Encryption) {
 	t.Helper()
 	t.Run("EncryptDecrypt", func(t *testing.T) {
 		expectedPlaintext := []byte("plaintext")
@@ -92,7 +92,7 @@ func testEncryptionToolEncryptDecrypt(t *testing.T, et EncryptionTool) {
 	})
 }
 
-func testEncryptionToolEncryptFile(t *testing.T, et EncryptionTool) {
+func testEncryptionEncryptFile(t *testing.T, et Encryption) {
 	t.Helper()
 	t.Run("EncryptFile", func(t *testing.T) {
 		expectedPlaintext := []byte("plaintext")
@@ -115,10 +115,10 @@ func testEncryptionToolEncryptFile(t *testing.T, et EncryptionTool) {
 	})
 }
 
-func TestTestEncryptionTool(t *testing.T) {
+func TestTestEncryption(t *testing.T) {
 	t.Helper()
-	et := newTestEncryptionTool()
-	testEncryptionToolDecryptToFile(t, et)
-	testEncryptionToolEncryptDecrypt(t, et)
-	testEncryptionToolEncryptFile(t, et)
+	et := newTestEncryption()
+	testEncryptionDecryptToFile(t, et)
+	testEncryptionEncryptDecrypt(t, et)
+	testEncryptionEncryptFile(t, et)
 }

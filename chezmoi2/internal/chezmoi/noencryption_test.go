@@ -1,3 +1,3 @@
 package chezmoi
 
-var _ EncryptionTool = NoEncryption{}
+var _ Encryption = NoEncryption{}

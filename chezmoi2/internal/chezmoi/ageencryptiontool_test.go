@@ -13,7 +13,7 @@ import (
 	"github.com/twpayne/chezmoi/chezmoi2/internal/chezmoitest"
 )
 
-func TestAGEEncryptionTool(t *testing.T) {
+func TestAGEEncryption(t *testing.T) {
 	command, err := exec.LookPath("age")
 	if errors.Is(err, exec.ErrNotFound) {
 		t.Skip("age not found in $PATH")
@@ -26,13 +26,13 @@ func TestAGEEncryptionTool(t *testing.T) {
 		assert.NoError(t, os.RemoveAll(filepath.Dir(privateKeyFile)))
 	}()
 
-	ageEncryptionTool := &AGEEncryptionTool{
+	ageEncryption := &AGEEncryption{
 		Command:   command,
 		Identity:  privateKeyFile,
 		Recipient: publicKey,
 	}
 
-	testEncryptionToolDecryptToFile(t, ageEncryptionTool)
-	testEncryptionToolEncryptDecrypt(t, ageEncryptionTool)
-	testEncryptionToolEncryptFile(t, ageEncryptionTool)
+	testEncryptionDecryptToFile(t, ageEncryption)
+	testEncryptionEncryptDecrypt(t, ageEncryption)
+	testEncryptionEncryptFile(t, ageEncryption)
 }

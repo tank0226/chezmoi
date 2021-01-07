@@ -87,8 +87,8 @@ type Config struct {
 	Vault       vaultConfig       `mapstructure:"vault"`
 
 	// Encryption tool configurations, settable in the config file.
-	AGE chezmoi.AGEEncryptionTool `mapstructure:"age"`
-	GPG chezmoi.GPGEncryptionTool `mapstructure:"gpg"`
+	AGE chezmoi.AGEEncryption `mapstructure:"age"`
+	GPG chezmoi.GPGEncryption `mapstructure:"gpg"`
 
 	// Password manager data.
 	gitHub  gitHubData
@@ -204,10 +204,10 @@ func newConfig(options ...configOption) (*Config, error) {
 		Vault: vaultConfig{
 			Command: "vault",
 		},
-		AGE: chezmoi.AGEEncryptionTool{
+		AGE: chezmoi.AGEEncryption{
 			Command: "age",
 		},
-		GPG: chezmoi.GPGEncryptionTool{
+		GPG: chezmoi.GPGEncryption{
 			Command: "gpg",
 		},
 		add: addCmdConfig{
@@ -1059,7 +1059,7 @@ func (c *Config) sourceAbsPaths(s *chezmoi.SourceState, args []string) (chezmoi.
 }
 
 func (c *Config) sourceState() (*chezmoi.SourceState, error) {
-	var encryption chezmoi.EncryptionTool
+	var encryption chezmoi.Encryption
 	switch c.Encryption {
 	case "age":
 		encryption = &c.AGE
@@ -1074,7 +1074,7 @@ func (c *Config) sourceState() (*chezmoi.SourceState, error) {
 	s := chezmoi.NewSourceState(
 		chezmoi.WithDefaultTemplateDataFunc(c.defaultTemplateData),
 		chezmoi.WithDestDir(c.destDirAbsPath),
-		chezmoi.WithEncryptionTool(encryption),
+		chezmoi.WithEncryption(encryption),
 		chezmoi.WithPriorityTemplateData(c.Data),
 		chezmoi.WithSourceDir(c.sourceDirAbsPath),
 		chezmoi.WithSystem(c.sourceSystem),

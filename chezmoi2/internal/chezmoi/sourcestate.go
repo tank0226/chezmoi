@@ -27,7 +27,7 @@ type SourceState struct {
 	sourceDirAbsPath        AbsPath
 	destDirAbsPath          AbsPath
 	umask                   os.FileMode
-	encryptionTool          EncryptionTool
+	encryption              Encryption
 	ignore                  *patternSet
 	minVersion              semver.Version
 	defaultTemplateDataFunc func() map[string]interface{}
@@ -49,10 +49,10 @@ func WithDestDir(destDirAbsPath AbsPath) SourceStateOption {
 	}
 }
 
-// WithEncryptionTool sets the encryption tool.
-func WithEncryptionTool(encryptionTool EncryptionTool) SourceStateOption {
+// WithEncryption sets the encryption.
+func WithEncryption(encryption Encryption) SourceStateOption {
 	return func(s *SourceState) {
-		s.encryptionTool = encryptionTool
+		s.encryption = encryption
 	}
 }
 
@@ -110,7 +110,7 @@ func NewSourceState(options ...SourceStateOption) *SourceState {
 	s := &SourceState{
 		entries:              make(map[RelPath]SourceStateEntry),
 		umask:                GetUmask(),
-		encryptionTool:       &nullEncryptionTool{},
+		encryption:           &nullEncryption{},
 		ignore:               newPatternSet(),
 		priorityTemplateData: make(map[string]interface{}),
 		userTemplateData:     make(map[string]interface{}),
@@ -774,7 +774,7 @@ func (s *SourceState) newSourceStateFile(sourceRelPath SourceRelPath, fileAttr F
 				return nil, err
 			}
 			if fileAttr.Encrypted {
-				contents, err = s.encryptionTool.Encrypt(contents)
+				contents, err = s.encryption.Encrypt(contents)
 				if err != nil {
 					return nil, err
 				}
@@ -911,7 +911,7 @@ func (s *SourceState) sourceStateEntry(actualStateEntry ActualStateEntry, destAb
 			return nil, nil
 		}
 		if options.Encrypt {
-			contents, err = s.encryptionTool.Encrypt(contents)
+			contents, err = s.encryption.Encrypt(contents)
 			if err != nil {
 				return nil, err
 			}

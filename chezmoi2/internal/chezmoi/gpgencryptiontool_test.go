@@ -12,14 +12,14 @@ import (
 	"github.com/twpayne/chezmoi/chezmoi2/internal/chezmoitest"
 )
 
-func TestGPGEncryptionTool(t *testing.T) {
+func TestGPGEncryption(t *testing.T) {
 	command, err := exec.LookPath("gpg")
 	if errors.Is(err, exec.ErrNotFound) {
 		t.Skip("gpg not found in $PATH")
 	}
 	require.NoError(t, err)
 
-	tempDir, err := ioutil.TempDir("", "chezmoi-test-GPGEncryptionTool")
+	tempDir, err := ioutil.TempDir("", "chezmoi-test-GPGEncryption")
 	require.NoError(t, err)
 	defer func() {
 		require.NoError(t, os.RemoveAll(tempDir))
@@ -28,7 +28,7 @@ func TestGPGEncryptionTool(t *testing.T) {
 	key, err := chezmoitest.GPGGenerateKey(tempDir)
 	require.NoError(t, err)
 
-	gpgEncryptionTool := &GPGEncryptionTool{
+	gpgEncryption := &GPGEncryption{
 		Command: command,
 		Args: []string{
 			"--homedir", tempDir,
@@ -39,7 +39,7 @@ func TestGPGEncryptionTool(t *testing.T) {
 		Recipient: key,
 	}
 
-	testEncryptionToolDecryptToFile(t, gpgEncryptionTool)
-	testEncryptionToolEncryptDecrypt(t, gpgEncryptionTool)
-	testEncryptionToolEncryptFile(t, gpgEncryptionTool)
+	testEncryptionDecryptToFile(t, gpgEncryption)
+	testEncryptionEncryptDecrypt(t, gpgEncryption)
+	testEncryptionEncryptFile(t, gpgEncryption)
 }

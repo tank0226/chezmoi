@@ -9,16 +9,16 @@ import (
 	"github.com/twpayne/chezmoi/chezmoi2/internal/chezmoilog"
 )
 
-// A GPGEncryptionTool uses gpg for encryption and decryption. See https://gnupg.org/.
-type GPGEncryptionTool struct {
+// A GPGEncryption uses gpg for encryption and decryption. See https://gnupg.org/.
+type GPGEncryption struct {
 	Command   string
 	Args      []string
 	Recipient string
 	Symmetric bool
 }
 
-// Decrypt implements EncyrptionTool.Decrypt.
-func (t *GPGEncryptionTool) Decrypt(ciphertext []byte) ([]byte, error) {
+// Decrypt implements Encyrption.Decrypt.
+func (t *GPGEncryption) Decrypt(ciphertext []byte) ([]byte, error) {
 	//nolint:gosec
 	cmd := exec.Command(t.Command, append([]string{
 		"--decrypt",
@@ -27,28 +27,28 @@ func (t *GPGEncryptionTool) Decrypt(ciphertext []byte) ([]byte, error) {
 	return chezmoilog.LogCmdOutput(log.Logger, cmd)
 }
 
-// DecryptToFile implements EncryptionTool.DecryptToFile.
-func (t *GPGEncryptionTool) DecryptToFile(filename string, ciphertext []byte) error {
+// DecryptToFile implements Encryption.DecryptToFile.
+func (t *GPGEncryption) DecryptToFile(filename string, ciphertext []byte) error {
 	args := append([]string{"--decrypt", "--output", filename}, t.Args...)
 	//nolint:gosec
 	return chezmoilog.LogCmdRun(log.Logger, exec.Command(t.Command, args...))
 }
 
-// Encrypt implements EncryptionTool.Encrypt.
-func (t *GPGEncryptionTool) Encrypt(plaintext []byte) ([]byte, error) {
+// Encrypt implements Encryption.Encrypt.
+func (t *GPGEncryption) Encrypt(plaintext []byte) ([]byte, error) {
 	args := append(t.encyptArgs(), t.Args...)
 	//nolint:gosec
 	return chezmoilog.LogCmdOutput(log.Logger, exec.Command(t.Command, args...))
 }
 
-// EncryptFile implements EncryptionTool.EncryptFile.
-func (t *GPGEncryptionTool) EncryptFile(filename string) (ciphertext []byte, err error) {
+// EncryptFile implements Encryption.EncryptFile.
+func (t *GPGEncryption) EncryptFile(filename string) (ciphertext []byte, err error) {
 	args := append(append(t.encyptArgs(), "--output", filename), t.Args...)
 	//nolint:gosec
 	return chezmoilog.LogCmdOutput(log.Logger, exec.Command(t.Command, args...))
 }
 
-func (t *GPGEncryptionTool) encyptArgs() []string {
+func (t *GPGEncryption) encyptArgs() []string {
 	args := []string{
 		"--armor",
 		"--encrypt",

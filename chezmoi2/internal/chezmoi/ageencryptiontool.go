@@ -9,9 +9,9 @@ import (
 	"github.com/twpayne/chezmoi/chezmoi2/internal/chezmoilog"
 )
 
-// An AGEEncryptionTool uses age for encryption and decryption. See
+// An AGEEncryption uses age for encryption and decryption. See
 // https://github.com/FiloSottile/age.
-type AGEEncryptionTool struct {
+type AGEEncryption struct {
 	Command    string
 	Args       []string // FIXME
 	Identity   string
@@ -20,8 +20,8 @@ type AGEEncryptionTool struct {
 	Recipients []string
 }
 
-// Decrypt implements EncyrptionTool.Decrypt.
-func (t *AGEEncryptionTool) Decrypt(ciphertext []byte) ([]byte, error) {
+// Decrypt implements Encyrption.Decrypt.
+func (t *AGEEncryption) Decrypt(ciphertext []byte) ([]byte, error) {
 	//nolint:gosec
 	cmd := exec.Command(t.Command, append(t.decryptArgs(), t.Args...)...)
 	cmd.Stdin = bytes.NewReader(ciphertext)
@@ -32,16 +32,16 @@ func (t *AGEEncryptionTool) Decrypt(ciphertext []byte) ([]byte, error) {
 	return plaintext, nil
 }
 
-// DecryptToFile implements EncryptionTool.DecryptToFile.
-func (t *AGEEncryptionTool) DecryptToFile(filename string, ciphertext []byte) error {
+// DecryptToFile implements Encryption.DecryptToFile.
+func (t *AGEEncryption) DecryptToFile(filename string, ciphertext []byte) error {
 	//nolint:gosec
 	cmd := exec.Command(t.Command, append(append(t.decryptArgs(), "--output", filename), t.Args...)...)
 	cmd.Stdin = bytes.NewReader(ciphertext)
 	return chezmoilog.LogCmdRun(log.Logger, cmd)
 }
 
-// Encrypt implements EncryptionTool.Encrypt.
-func (t *AGEEncryptionTool) Encrypt(plaintext []byte) ([]byte, error) {
+// Encrypt implements Encryption.Encrypt.
+func (t *AGEEncryption) Encrypt(plaintext []byte) ([]byte, error) {
 	//nolint:gosec
 	cmd := exec.Command(t.Command, append(t.encryptArgs(), t.Args...)...)
 	cmd.Stdin = bytes.NewReader(plaintext)
@@ -52,14 +52,14 @@ func (t *AGEEncryptionTool) Encrypt(plaintext []byte) ([]byte, error) {
 	return ciphertext, nil
 }
 
-// EncryptFile implements EncryptionTool.EncryptFile.
-func (t *AGEEncryptionTool) EncryptFile(filename string) ([]byte, error) {
+// EncryptFile implements Encryption.EncryptFile.
+func (t *AGEEncryption) EncryptFile(filename string) ([]byte, error) {
 	//nolint:gosec
 	cmd := exec.Command(t.Command, append(append(t.encryptArgs(), t.Args...), filename)...)
 	return chezmoilog.LogCmdOutput(log.Logger, cmd)
 }
 
-func (t *AGEEncryptionTool) decryptArgs() []string {
+func (t *AGEEncryption) decryptArgs() []string {
 	args := make([]string, 0, 1+2*(1+len(t.Identities)))
 	args = append(args, "--decrypt")
 	if t.Identity != "" {
@@ -71,7 +71,7 @@ func (t *AGEEncryptionTool) decryptArgs() []string {
 	return args
 }
 
-func (t *AGEEncryptionTool) encryptArgs() []string {
+func (t *AGEEncryption) encryptArgs() []string {
 	args := make([]string, 0, 1+2*(1+len(t.Recipients)))
 	args = append(args, "--armor")
 	if t.Recipient != "" {
