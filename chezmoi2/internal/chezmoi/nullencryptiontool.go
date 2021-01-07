@@ -5,12 +5,12 @@ import "io/ioutil"
 // A nullEncryptionTool returns its input unchanged.
 type nullEncryptionTool struct{}
 
-func (*nullEncryptionTool) Decrypt(filenameHint string, ciphertext []byte) ([]byte, error) {
+func (*nullEncryptionTool) Decrypt(ciphertext []byte) ([]byte, error) {
 	return ciphertext, nil
 }
 
-func (*nullEncryptionTool) DecryptToFile(filenameHint string, ciphertext []byte) (string, func() error, error) {
-	return filenameHint, func() error { return nil }, nil
+func (*nullEncryptionTool) DecryptToFile(filename string, ciphertext []byte) error {
+	return ioutil.WriteFile(filename, ciphertext, 0o600)
 }
 
 func (*nullEncryptionTool) Encrypt(plaintext []byte) ([]byte, error) {

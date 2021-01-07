@@ -25,14 +25,14 @@ func TestGPGEncryptionTool(t *testing.T) {
 		require.NoError(t, os.RemoveAll(tempDir))
 	}()
 
-	key, err := chezmoitest.GPGQuickGenerateKey(tempDir)
+	key, err := chezmoitest.GPGGenerateKey(tempDir)
 	require.NoError(t, err)
 
 	gpgEncryptionTool := &GPGEncryptionTool{
 		Command: command,
 		Args: []string{
 			"--homedir", tempDir,
-			"--no-tty",
+			// "--no-tty",
 			"--passphrase", "chezmoi-test-passphrase",
 			"--pinentry-mode", "loopback",
 		},

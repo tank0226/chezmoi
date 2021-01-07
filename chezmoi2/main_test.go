@@ -51,6 +51,7 @@ func TestScript(t *testing.T) {
 			"cmpmod":         cmdCmpMod,
 			"edit":           cmdEdit,
 			"mkfile":         cmdMkFile,
+			"mkageconfig":    cmdMkAGEConfig,
 			"mkgitconfig":    cmdMkGitConfig,
 			"mkgpgconfig":    cmdMkGPGConfig,
 			"mkhomedir":      cmdMkHomeDir,
@@ -193,6 +194,29 @@ func cmdMkGitConfig(ts *testscript.TestScript, neg bool, args []string) {
 	)), 0o666))
 }
 
+// cmdMkAGEConfig creates a AGE key and a chezmoi configuration file.
+func cmdMkAGEConfig(ts *testscript.TestScript, neg bool, args []string) {
+	if neg {
+		ts.Fatalf("unupported: ! mkageconfig")
+	}
+	if len(args) > 0 {
+		ts.Fatalf("usage: mkageconfig")
+	}
+	homeDir := ts.Getenv("HOME")
+	ts.Check(os.MkdirAll(homeDir, 0o777))
+	privateKeyFile := filepath.Join(homeDir, "key.txt")
+	publicKey, _, err := chezmoitest.AGEGenerateKey(ts.MkAbs(privateKeyFile))
+	ts.Check(err)
+	configFile := filepath.Join(homeDir, ".config", "chezmoi", "chezmoi.toml")
+	ts.Check(os.MkdirAll(path.Dir(configFile), 0o777))
+	ts.Check(ioutil.WriteFile(configFile, []byte(fmt.Sprintf(chezmoitest.JoinLines(
+		`encryption = "age"`,
+		`[age]`,
+		`  identity = %q`,
+		`  recipient = %q`,
+	), privateKeyFile, publicKey)), 0o666))
+}
+
 // cmdMkGPGConfig creates a GPG key and a chezmoi configuration file.
 func cmdMkGPGConfig(ts *testscript.TestScript, neg bool, args []string) {
 	if neg {
@@ -203,11 +227,12 @@ func cmdMkGPGConfig(ts *testscript.TestScript, neg bool, args []string) {
 	}
 	homeDir := ts.Getenv("HOME")
 	ts.Check(os.MkdirAll(homeDir, 0o777))
-	key, err := chezmoitest.GPGQuickGenerateKey(homeDir)
+	key, err := chezmoitest.GPGGenerateKey(homeDir)
 	ts.Check(err)
 	configFile := filepath.Join(homeDir, ".config", "chezmoi", "chezmoi.toml")
 	ts.Check(os.MkdirAll(path.Dir(configFile), 0o777))
 	ts.Check(ioutil.WriteFile(configFile, []byte(fmt.Sprintf(chezmoitest.JoinLines(
+		`encryption = "gpg"`,
 		`[gpg]`,
 		`  args = [`,
 		`    "--homedir", %q,`,

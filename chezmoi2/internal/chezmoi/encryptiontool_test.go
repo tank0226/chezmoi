@@ -4,14 +4,11 @@ import (
 	"io/ioutil"
 	"math/rand"
 	"os"
-	"path"
-	"runtime"
-	"strings"
+	"path/filepath"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"go.uber.org/multierr"
 )
 
 var _ EncryptionTool = &nullEncryptionTool{}
@@ -22,38 +19,18 @@ type testEncryptionTool struct {
 
 var _ EncryptionTool = &testEncryptionTool{}
 
-type testEncryptionToolOption func(*testEncryptionTool)
-
-func newTestEncryptionTool(options ...testEncryptionToolOption) *testEncryptionTool {
-	t := &testEncryptionTool{
+func newTestEncryptionTool() *testEncryptionTool {
+	return &testEncryptionTool{
 		key: byte(rand.Int() + 1),
 	}
-	for _, option := range options {
-		option(t)
-	}
-	return t
 }
 
-func (t *testEncryptionTool) Decrypt(filenameHint string, ciphertext []byte) ([]byte, error) {
+func (t *testEncryptionTool) Decrypt(ciphertext []byte) ([]byte, error) {
 	return t.xorWithKey(ciphertext), nil
 }
 
-func (t *testEncryptionTool) DecryptToFile(filenameHint string, ciphertext []byte) (filename string, cleanupFunc func() error, err error) {
-	tempDir, err := ioutil.TempDir("", "chezmoi-test-decrypt")
-	if err != nil {
-		return
-	}
-	cleanupFunc = func() error {
-		return os.RemoveAll(tempDir)
-	}
-
-	filename = path.Join(tempDir, path.Base(filenameHint))
-	if err = ioutil.WriteFile(filename, t.xorWithKey(ciphertext), 0o600); err != nil {
-		err = multierr.Append(err, cleanupFunc())
-		return
-	}
-
-	return
+func (t *testEncryptionTool) DecryptToFile(filename string, ciphertext []byte) error {
+	return ioutil.WriteFile(filename, t.xorWithKey(ciphertext), 0o666)
 }
 
 func (t *testEncryptionTool) Encrypt(plaintext []byte) ([]byte, error) {
@@ -85,14 +62,14 @@ func testEncryptionToolDecryptToFile(t *testing.T, et EncryptionTool) {
 		require.NoError(t, err)
 		assert.NotEqual(t, expectedPlaintext, actualCiphertext)
 
-		filenameHint := "filename.txt"
-		filename, cleanup, err := et.DecryptToFile(filenameHint, actualCiphertext)
+		tempDir, err := ioutil.TempDir("", "chezmoi-test-encryption-tool")
 		require.NoError(t, err)
-		assert.True(t, strings.Contains(filename, filenameHint))
-		assert.NotNil(t, cleanup)
 		defer func() {
-			assert.NoError(t, cleanup())
+			assert.NoError(t, os.RemoveAll(tempDir))
 		}()
+		filename := filepath.Join(tempDir, "filename")
+
+		require.NoError(t, et.DecryptToFile(filename, actualCiphertext))
 
 		actualPlaintext, err := ioutil.ReadFile(filename)
 		require.NoError(t, err)
@@ -109,7 +86,7 @@ func testEncryptionToolEncryptDecrypt(t *testing.T, et EncryptionTool) {
 		require.NoError(t, err)
 		assert.NotEqual(t, expectedPlaintext, actualCiphertext)
 
-		actualPlaintext, err := et.Decrypt("filename", actualCiphertext)
+		actualPlaintext, err := et.Decrypt(actualCiphertext)
 		require.NoError(t, err)
 		assert.Equal(t, expectedPlaintext, actualPlaintext)
 	})
@@ -120,23 +97,19 @@ func testEncryptionToolEncryptFile(t *testing.T, et EncryptionTool) {
 	t.Run("EncryptFile", func(t *testing.T) {
 		expectedPlaintext := []byte("plaintext")
 
-		tempFile, err := ioutil.TempFile("", "chezmoi-test-encryption-tool")
+		tempDir, err := ioutil.TempDir("", "chezmoi-test-encryption-tool")
 		require.NoError(t, err)
 		defer func() {
-			assert.NoError(t, os.RemoveAll(tempFile.Name()))
+			assert.NoError(t, os.RemoveAll(tempDir))
 		}()
-		if runtime.GOOS != "windows" {
-			require.NoError(t, tempFile.Chmod(0o600))
-		}
-		_, err = tempFile.Write(expectedPlaintext)
-		require.NoError(t, err)
-		require.NoError(t, tempFile.Close())
+		filename := filepath.Join(tempDir, "filename")
+		require.NoError(t, ioutil.WriteFile(filename, expectedPlaintext, 0o666))
 
-		actualCiphertext, err := et.EncryptFile(tempFile.Name())
+		actualCiphertext, err := et.EncryptFile(filename)
 		require.NoError(t, err)
 		assert.NotEqual(t, expectedPlaintext, actualCiphertext)
 
-		actualPlaintext, err := et.Decrypt("filename", actualCiphertext)
+		actualPlaintext, err := et.Decrypt(actualCiphertext)
 		require.NoError(t, err)
 		assert.Equal(t, expectedPlaintext, actualPlaintext)
 	})

@@ -773,10 +773,13 @@ func (s *SourceState) newSourceStateFile(sourceRelPath SourceRelPath, fileAttr F
 			if err != nil {
 				return nil, err
 			}
-			if !fileAttr.Encrypted {
-				return contents, nil
+			if fileAttr.Encrypted {
+				contents, err = s.encryptionTool.Encrypt(contents)
+				if err != nil {
+					return nil, err
+				}
 			}
-			return s.encryptionTool.Decrypt(targetRelPath.Base(), contents)
+			return contents, nil
 		},
 	}
 

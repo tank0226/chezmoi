@@ -31,8 +31,9 @@ General:
 - `chezmoi init --one-shot`
 - new type `--exists`
 - `chezmoi archive --format=zip`
-- `pre_` and `post_` script attributes change script order, scripts now run during
+- `first_` and `last_` script attributes change script order, scripts now run during
 - new `fqdnHostname` template var (UNIX only for now)
+- age encryption support
 
 {{ range (gitHubKeys "twpayne") -}}
 {{ .Key }}
@@ -43,3 +44,4 @@ Config file:
 - use `gpg.recipient` instead of `gpgRecipient`
 - rename `genericSecret` to `secret`
 - rename `homedir` to `homeDir`
+- FIXME add `encryption` (currently `age` or `gpg`)

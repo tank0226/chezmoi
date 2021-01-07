@@ -1,0 +1,15 @@
+mkhomedir
+
+# test that chezmoi add --encrypt without an encryption tool fails
+! chezmoi add --encrypt ~/.encrypted
+stderr 'no encryption'
+
+# test that chezmoi apply without an encryption tool fails
+! chezmoi apply --force
+stderr 'no encryption'
+
+-- home/user/.encrypted --
+plaintext
+-- home/user/.local/share/chezmoi/encrypted_dot_encrypted --
+ciphertext
+

@@ -1,0 +1,17 @@
+[!exec:age] stop
+
+mkhomedir
+mkageconfig
+
+# test that chezmoi add --encrypt encrypts
+cp golden/.encrypted $HOME
+chezmoi add --encrypt ~/.encrypted
+! grep plaintext $CHEZMOISOURCEDIR/encrypted_dot_encrypted
+
+# test that chezmoi apply decrypts
+rm $HOME/.encrypted
+chezmoi apply --force
+cp golden/.encrypted $HOME/.encrypted
+
+-- golden/.encrypted --
+plaintext

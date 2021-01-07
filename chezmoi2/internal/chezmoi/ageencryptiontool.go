@@ -3,13 +3,17 @@ package chezmoi
 import (
 	"bytes"
 	"os/exec"
+
+	"github.com/rs/zerolog/log"
+
+	"github.com/twpayne/chezmoi/chezmoi2/internal/chezmoilog"
 )
 
 // An AGEEncryptionTool uses age for encryption and decryption. See
 // https://github.com/FiloSottile/age.
 type AGEEncryptionTool struct {
 	Command    string
-	Args       []string
+	Args       []string // FIXME
 	Identity   string
 	Identities []string
 	Recipient  string
@@ -17,41 +21,42 @@ type AGEEncryptionTool struct {
 }
 
 // Decrypt implements EncyrptionTool.Decrypt.
-func (t *AGEEncryptionTool) Decrypt(filenameHint string, ciphertext []byte) ([]byte, error) {
+func (t *AGEEncryptionTool) Decrypt(ciphertext []byte) ([]byte, error) {
 	//nolint:gosec
-	cmd := exec.Command(t.Command, t.decryptArgs()...)
+	cmd := exec.Command(t.Command, append(t.decryptArgs(), t.Args...)...)
 	cmd.Stdin = bytes.NewReader(ciphertext)
-	output := &bytes.Buffer{}
-	cmd.Stdout = output
-	if err := cmd.Run(); err != nil {
+	plaintext, err := chezmoilog.LogCmdOutput(log.Logger, cmd)
+	if err != nil {
 		return nil, err
 	}
-	return output.Bytes(), nil
+	return plaintext, nil
 }
 
 // DecryptToFile implements EncryptionTool.DecryptToFile.
-func (t *AGEEncryptionTool) DecryptToFile(filenameHint string, ciphertext []byte) (string, func() error, error) {
-	return "", func() error { return nil }, nil // FIXME IAMHERE
-	// FIXME change EncryptionTool interface to pass filename, not filenameHint
+func (t *AGEEncryptionTool) DecryptToFile(filename string, ciphertext []byte) error {
+	//nolint:gosec
+	cmd := exec.Command(t.Command, append(append(t.decryptArgs(), "--output", filename), t.Args...)...)
+	cmd.Stdin = bytes.NewReader(ciphertext)
+	return chezmoilog.LogCmdRun(log.Logger, cmd)
 }
 
 // Encrypt implements EncryptionTool.Encrypt.
 func (t *AGEEncryptionTool) Encrypt(plaintext []byte) ([]byte, error) {
 	//nolint:gosec
-	cmd := exec.Command(t.Command, t.encryptArgs()...)
+	cmd := exec.Command(t.Command, append(t.encryptArgs(), t.Args...)...)
 	cmd.Stdin = bytes.NewReader(plaintext)
-	output := &bytes.Buffer{}
-	cmd.Stdout = output
-	if err := cmd.Run(); err != nil {
+	ciphertext, err := chezmoilog.LogCmdOutput(log.Logger, cmd)
+	if err != nil {
 		return nil, err
 	}
-	return output.Bytes(), nil
+	return ciphertext, nil
 }
 
 // EncryptFile implements EncryptionTool.EncryptFile.
 func (t *AGEEncryptionTool) EncryptFile(filename string) ([]byte, error) {
 	//nolint:gosec
-	return exec.Command(t.Command, append(t.encryptArgs(), filename)...).Output()
+	cmd := exec.Command(t.Command, append(append(t.encryptArgs(), t.Args...), filename)...)
+	return chezmoilog.LogCmdOutput(log.Logger, cmd)
 }
 
 func (t *AGEEncryptionTool) decryptArgs() []string {

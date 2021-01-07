@@ -18,6 +18,7 @@ import (
 	"github.com/Masterminds/sprig/v3"
 	"github.com/coreos/go-semver/semver"
 	"github.com/rs/zerolog"
+	"github.com/rs/zerolog/log"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 	"github.com/twpayne/go-vfs"
@@ -43,8 +44,6 @@ type Config struct {
 	versionInfo VersionInfo
 	versionStr  string
 
-	logger zerolog.Logger
-
 	bds *xdg.BaseDirectorySpecification
 
 	fs              vfs.FS
@@ -60,6 +59,7 @@ type Config struct {
 	SourceDir     string                 `mapstructure:"sourceDir"`
 	DestDir       string                 `mapstructure:"destDir"`
 	Umask         fileMode               `mapstructure:"umask"`
+	Encryption    string                 `mapstructure:"encryption"`
 	Format        string                 `mapstructure:"format"`
 	Remove        bool                   `mapstructure:"remove"`
 	Color         string                 `mapstructure:"color"`
@@ -87,6 +87,7 @@ type Config struct {
 	Vault       vaultConfig       `mapstructure:"vault"`
 
 	// Encryption tool configurations, settable in the config file.
+	AGE chezmoi.AGEEncryptionTool `mapstructure:"age"`
 	GPG chezmoi.GPGEncryptionTool `mapstructure:"gpg"`
 
 	// Password manager data.
@@ -202,6 +203,9 @@ func newConfig(options ...configOption) (*Config, error) {
 		},
 		Vault: vaultConfig{
 			Command: "vault",
+		},
+		AGE: chezmoi.AGEEncryptionTool{
+			Command: "age",
 		},
 		GPG: chezmoi.GPGEncryptionTool{
 			Command: "gpg",
@@ -388,20 +392,20 @@ func (c *Config) defaultTemplateData() map[string]interface{} {
 		if group, err := user.LookupGroupId(currentUser.Gid); err == nil {
 			data["group"] = group.Name
 		} else {
-			c.logger.Debug().
+			log.Debug().
 				Str("gid", currentUser.Gid).
 				Err(err).
 				Msg("user.LookupGroupId")
 		}
 	} else {
-		c.logger.Debug().
+		log.Debug().
 			Err(err).
 			Msg("user.Current")
 		user, ok := os.LookupEnv("USER")
 		if ok {
 			data["username"] = user
 		} else {
-			c.logger.Debug().
+			log.Debug().
 				Str("key", "USER").
 				Bool("ok", ok).
 				Msg("os.LookupEnv")
@@ -411,7 +415,7 @@ func (c *Config) defaultTemplateData() map[string]interface{} {
 	if fqdnHostname, err := chezmoi.FQDNHostname(c.fs); err == nil && fqdnHostname != "" {
 		data["fqdnHostname"] = fqdnHostname
 	} else {
-		c.logger.Debug().
+		log.Debug().
 			Err(err).
 			Msg("chezmoi.EtcHostsFQDNHostname")
 	}
@@ -419,7 +423,7 @@ func (c *Config) defaultTemplateData() map[string]interface{} {
 	if hostname, err := os.Hostname(); err == nil {
 		data["hostname"] = strings.SplitN(hostname, ".", 2)[0]
 	} else {
-		c.logger.Debug().
+		log.Debug().
 			Err(err).
 			Msg("os.Hostname")
 	}
@@ -427,7 +431,7 @@ func (c *Config) defaultTemplateData() map[string]interface{} {
 	if kernelInfo, err := chezmoi.KernelInfo(c.fs); err == nil {
 		data["kernel"] = kernelInfo
 	} else {
-		c.logger.Debug().
+		log.Debug().
 			Err(err).
 			Msg("chezmoi.KernelInfo")
 	}
@@ -435,7 +439,7 @@ func (c *Config) defaultTemplateData() map[string]interface{} {
 	if osRelease, err := chezmoi.OSRelease(c.fs); err == nil {
 		data["osRelease"] = upperSnakeCaseToCamelCaseMap(osRelease)
 	} else {
-		c.logger.Debug().
+		log.Debug().
 			Err(err).
 			Msg("chezmoi.OSRelease")
 	}
@@ -839,7 +843,7 @@ func (c *Config) persistentPreRunRootE(cmd *cobra.Command, args []string) error 
 		return err
 	}
 
-	logger := zerolog.New(zerolog.NewConsoleWriter(
+	log.Logger = log.Output(zerolog.NewConsoleWriter(
 		func(w *zerolog.ConsoleWriter) {
 			w.Out = c.stderr
 			w.NoColor = !c.color
@@ -847,13 +851,12 @@ func (c *Config) persistentPreRunRootE(cmd *cobra.Command, args []string) error 
 		},
 	))
 	if !c.debug {
-		logger = logger.Level(zerolog.InfoLevel)
+		zerolog.SetGlobalLevel(zerolog.InfoLevel)
 	}
-	c.logger = logger.With().Timestamp().Logger()
 
 	c.baseSystem = chezmoi.NewRealSystem(c.fs)
 	if c.debug {
-		c.baseSystem = chezmoi.NewDebugSystem(c.baseSystem, c.logger)
+		c.baseSystem = chezmoi.NewDebugSystem(c.baseSystem, log.Logger)
 	}
 
 	switch {
@@ -891,7 +894,7 @@ func (c *Config) persistentPreRunRootE(cmd *cobra.Command, args []string) error 
 		c.persistentState = nil
 	}
 	if c.debug && c.persistentState != nil {
-		c.persistentState = chezmoi.NewDebugPersistentState(c.persistentState, c.logger)
+		c.persistentState = chezmoi.NewDebugPersistentState(c.persistentState, log.Logger)
 	}
 
 	c.sourceSystem = c.baseSystem
@@ -1056,10 +1059,22 @@ func (c *Config) sourceAbsPaths(s *chezmoi.SourceState, args []string) (chezmoi.
 }
 
 func (c *Config) sourceState() (*chezmoi.SourceState, error) {
+	var encryption chezmoi.EncryptionTool
+	switch c.Encryption {
+	case "age":
+		encryption = &c.AGE
+	case "gpg":
+		encryption = &c.GPG
+	case "":
+		encryption = chezmoi.NoEncryption{}
+	default:
+		return nil, fmt.Errorf("%s: unknown encryption", c.Encryption)
+	}
+
 	s := chezmoi.NewSourceState(
 		chezmoi.WithDefaultTemplateDataFunc(c.defaultTemplateData),
 		chezmoi.WithDestDir(c.destDirAbsPath),
-		chezmoi.WithEncryptionTool(&c.GPG),
+		chezmoi.WithEncryptionTool(encryption),
 		chezmoi.WithPriorityTemplateData(c.Data),
 		chezmoi.WithSourceDir(c.sourceDirAbsPath),
 		chezmoi.WithSystem(c.sourceSystem),
