@@ -59,7 +59,6 @@ type Config struct {
 	SourceDir     string                 `mapstructure:"sourceDir"`
 	DestDir       string                 `mapstructure:"destDir"`
 	Umask         fileMode               `mapstructure:"umask"`
-	Encryption    string                 `mapstructure:"encryption"`
 	Format        string                 `mapstructure:"format"`
 	Remove        bool                   `mapstructure:"remove"`
 	Color         string                 `mapstructure:"color"`
@@ -86,9 +85,10 @@ type Config struct {
 	Secret      secretConfig      `mapstructure:"secret"`
 	Vault       vaultConfig       `mapstructure:"vault"`
 
-	// Encryption tool configurations, settable in the config file.
-	AGE chezmoi.AGEEncryption `mapstructure:"age"`
-	GPG chezmoi.GPGEncryption `mapstructure:"gpg"`
+	// Encryption configurations, settable in the config file.
+	Encryption string                `mapstructure:"encryption"`
+	AGE        chezmoi.AGEEncryption `mapstructure:"age"`
+	GPG        chezmoi.GPGEncryption `mapstructure:"gpg"`
 
 	// Password manager data.
 	gitHub  gitHubData

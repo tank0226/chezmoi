@@ -54,7 +54,7 @@ func testEncryptionDecryptToFile(t *testing.T, encryption Encryption) {
 		require.NoError(t, err)
 		assert.NotEqual(t, expectedPlaintext, actualCiphertext)
 
-		tempDir, err := ioutil.TempDir("", "chezmoi-test-encryption-tool")
+		tempDir, err := ioutil.TempDir("", "chezmoi-test-encryption")
 		require.NoError(t, err)
 		defer func() {
 			assert.NoError(t, os.RemoveAll(tempDir))
@@ -89,7 +89,7 @@ func testEncryptionEncryptFile(t *testing.T, encryption Encryption) {
 	t.Run("EncryptFile", func(t *testing.T) {
 		expectedPlaintext := []byte("plaintext")
 
-		tempDir, err := ioutil.TempDir("", "chezmoi-test-encryption-tool")
+		tempDir, err := ioutil.TempDir("", "chezmoi-test-encryption")
 		require.NoError(t, err)
 		defer func() {
 			assert.NoError(t, os.RemoveAll(tempDir))
