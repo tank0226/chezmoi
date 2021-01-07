@@ -110,7 +110,7 @@ func NewSourceState(options ...SourceStateOption) *SourceState {
 	s := &SourceState{
 		entries:              make(map[RelPath]SourceStateEntry),
 		umask:                GetUmask(),
-		encryption:           &nullEncryption{},
+		encryption:           NoEncryption{},
 		ignore:               newPatternSet(),
 		priorityTemplateData: make(map[string]interface{}),
 		userTemplateData:     make(map[string]interface{}),
