@@ -856,7 +856,7 @@ func (c *Config) persistentPreRunRootE(cmd *cobra.Command, args []string) error 
 
 	c.baseSystem = chezmoi.NewRealSystem(c.fs)
 	if c.debug {
-		c.baseSystem = chezmoi.NewDebugSystem(c.baseSystem, log.Logger)
+		c.baseSystem = chezmoi.NewDebugSystem(c.baseSystem)
 	}
 
 	switch {
@@ -894,7 +894,7 @@ func (c *Config) persistentPreRunRootE(cmd *cobra.Command, args []string) error 
 		c.persistentState = nil
 	}
 	if c.debug && c.persistentState != nil {
-		c.persistentState = chezmoi.NewDebugPersistentState(c.persistentState, log.Logger)
+		c.persistentState = chezmoi.NewDebugPersistentState(c.persistentState)
 	}
 
 	c.sourceSystem = c.baseSystem
