@@ -13,7 +13,7 @@ import (
 )
 
 func TestGPGEncryption(t *testing.T) {
-	t.Skip()
+	t.Skip("broken code somewhere") // FIXME
 	command, err := exec.LookPath("gpg")
 	if errors.Is(err, exec.ErrNotFound) {
 		t.Skip("gpg not found in $PATH")

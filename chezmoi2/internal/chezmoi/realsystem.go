@@ -7,8 +7,11 @@ import (
 	"runtime"
 
 	"github.com/bmatcuk/doublestar/v3"
+	"github.com/rs/zerolog/log"
 	vfs "github.com/twpayne/go-vfs"
 	"go.uber.org/multierr"
+
+	"github.com/twpayne/chezmoi/chezmoi2/internal/chezmoilog"
 )
 
 // Glob implements System.Glob.
@@ -18,7 +21,7 @@ func (s *RealSystem) Glob(pattern string) ([]string, error) {
 
 // IdempotentCmdOutput implements System.IdempotentCmdOutput.
 func (s *RealSystem) IdempotentCmdOutput(cmd *exec.Cmd) ([]byte, error) {
-	return cmd.Output()
+	return chezmoilog.LogCmdOutput(log.Logger, cmd)
 }
 
 // Lstat implements System.Lstat.
@@ -67,7 +70,7 @@ func (s *RealSystem) Rename(oldpath, newpath AbsPath) error {
 
 // RunCmd implements System.RunCmd.
 func (s *RealSystem) RunCmd(cmd *exec.Cmd) error {
-	return cmd.Run()
+	return chezmoilog.LogCmdRun(log.Logger, cmd)
 }
 
 // RunScript implements System.RunScript.
