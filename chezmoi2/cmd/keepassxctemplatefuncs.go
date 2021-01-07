@@ -115,7 +115,7 @@ func (c *Config) keepassxcVersion() *semver.Version {
 	}
 	c.Keepassxc.version, err = semver.NewVersion(string(bytes.TrimSpace(output)))
 	if err != nil {
-		returnTemplateError(fmt.Errorf("cannot parse version %q: %w", output, err))
+		returnTemplateError(fmt.Errorf("cannot parse version %s: %w", output, err))
 		return nil
 	}
 	return c.Keepassxc.version

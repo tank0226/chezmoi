@@ -25,7 +25,7 @@ func (c *Config) runHelpCmd(cmd *cobra.Command, args []string) error {
 		return err
 	}
 	if subCmd == nil {
-		return fmt.Errorf("unknown command: %q", strings.Join(args, " "))
+		return fmt.Errorf("unknown command: %s", strings.Join(args, " "))
 	}
 	return subCmd.Help()
 }

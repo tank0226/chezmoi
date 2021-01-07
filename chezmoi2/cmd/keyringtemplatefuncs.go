@@ -25,7 +25,7 @@ func (c *Config) keyringTemplateFunc(service, user string) string {
 	}
 	password, err := keyring.Get(service, user)
 	if err != nil {
-		returnTemplateError(fmt.Errorf("%q %q: %w", service, user, err))
+		returnTemplateError(fmt.Errorf("%s %s: %w", service, user, err))
 		return ""
 	}
 	c.keyring.cache[key] = password
