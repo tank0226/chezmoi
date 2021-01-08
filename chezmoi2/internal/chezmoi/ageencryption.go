@@ -12,12 +12,14 @@ import (
 // An AGEEncryption uses age for encryption and decryption. See
 // https://github.com/FiloSottile/age.
 type AGEEncryption struct {
-	Command    string
-	Args       []string // FIXME
-	Identity   string
-	Identities []string
-	Recipient  string
-	Recipients []string
+	Command         string
+	Args            []string
+	Identity        string
+	Identities      []string
+	Recipient       string
+	Recipients      []string
+	RecipientsFile  string
+	RecipientsFiles []string
 }
 
 // Decrypt implements Encyrption.Decrypt.
@@ -72,13 +74,19 @@ func (t *AGEEncryption) decryptArgs() []string {
 }
 
 func (t *AGEEncryption) encryptArgs() []string {
-	args := make([]string, 0, 1+2*(1+len(t.Recipients)))
+	args := make([]string, 0, 1+2*(1+len(t.Recipients))+2*(1+len(t.RecipientsFiles)))
 	args = append(args, "--armor")
 	if t.Recipient != "" {
 		args = append(args, "--recipient", t.Recipient)
 	}
 	for _, recipient := range t.Recipients {
 		args = append(args, "--recipient", recipient)
+	}
+	if t.RecipientsFile != "" {
+		args = append(args, "--recipients-file", t.RecipientsFile)
+	}
+	for _, recipientsFile := range t.RecipientsFiles {
+		args = append(args, "--recipients-file", recipientsFile)
 	}
 	return args
 }
