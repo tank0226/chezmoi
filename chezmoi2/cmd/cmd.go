@@ -29,6 +29,11 @@ const (
 	persistentStateModeReadWrite     = "read-write"
 )
 
+const (
+	nonRecursive = false
+	recursive    = true
+)
+
 // An ErrExitCode indicates the the main program should exit with the given
 // code.
 type ErrExitCode int
