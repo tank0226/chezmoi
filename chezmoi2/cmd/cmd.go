@@ -34,6 +34,8 @@ const (
 	recursive    = true
 )
 
+var noArgs = []string(nil)
+
 // An ErrExitCode indicates the the main program should exit with the given
 // code.
 type ErrExitCode int

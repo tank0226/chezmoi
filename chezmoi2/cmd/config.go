@@ -1045,7 +1045,6 @@ func (c *Config) runEditor(args []string) error {
 func (c *Config) sourceAbsPaths(s *chezmoi.SourceState, args []string) (chezmoi.AbsPaths, error) {
 	targetRelPaths, err := c.targetRelPaths(s, args, targetRelPathsOptions{
 		mustBeInSourceState: true,
-		recursive:           false,
 	})
 	if err != nil {
 		return nil, err

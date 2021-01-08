@@ -183,9 +183,7 @@ func (c *Config) runInitCmd(cmd *cobra.Command, args []string) error {
 
 	// Apply.
 	if c.init.apply {
-		var args []string
-		recursive := false
-		if err := c.applyArgs(c.destSystem, c.destDirAbsPath, args, chezmoi.NewIncludeSet(chezmoi.IncludeAll), recursive, c.Umask.FileMode(), c.preApply); err != nil {
+		if err := c.applyArgs(c.destSystem, c.destDirAbsPath, noArgs, chezmoi.NewIncludeSet(chezmoi.IncludeAll), nonRecursive, c.Umask.FileMode(), c.preApply); err != nil {
 			return err
 		}
 	}

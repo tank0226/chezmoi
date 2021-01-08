@@ -25,7 +25,6 @@ func (c *Config) newCatCmd() *cobra.Command {
 func (c *Config) runCatCmd(cmd *cobra.Command, args []string, sourceState *chezmoi.SourceState) error {
 	targetRelPaths, err := c.targetRelPaths(sourceState, args, targetRelPathsOptions{
 		mustBeInSourceState: true,
-		recursive:           false,
 	})
 	if err != nil {
 		return err
