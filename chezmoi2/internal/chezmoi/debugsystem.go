@@ -3,12 +3,11 @@ package chezmoi
 import (
 	"os"
 	"os/exec"
-	"strconv"
-	"time"
 
-	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
 	vfs "github.com/twpayne/go-vfs"
+
+	"github.com/twpayne/chezmoi/chezmoi2/internal/chezmoilog"
 )
 
 // A DebugSystem wraps a System and logs all of the actions it executes.
@@ -47,42 +46,14 @@ func (s *DebugSystem) Glob(name string) ([]string, error) {
 
 // IdempotentCmdOutput implements System.IdempotentCmdOutput.
 func (s *DebugSystem) IdempotentCmdOutput(cmd *exec.Cmd) ([]byte, error) {
-	type result struct {
-		startTime time.Time
-		output    []byte
-		err       error
-	}
-
-	resultCh := make(chan result)
-	go func(resultCh chan<- result) {
-		defer close(resultCh)
-		start := time.Now().UTC()
-		output, err := s.system.IdempotentCmdOutput(cmd)
-		resultCh <- result{
-			startTime: start,
-			output:    output,
-			err:       err,
-		}
-	}(resultCh)
-
-	var r result
-	select {
-	case r = <-resultCh:
-	case <-time.After(1 * time.Second):
-		log.Logger.Debug().
-			Dict("cmd", cmdDict(cmd)).
-			Msg("IdempotentCmdOutput")
-		r = <-resultCh
-	}
-
+	output, err := s.system.IdempotentCmdOutput(cmd)
 	log.Logger.Debug().
-		Dict("cmd", cmdDict(cmd)).
-		Str("output", firstFewBytes(r.output)).
-		Err(r.err).
-		Dur("duration", time.Since(r.startTime)).
+		EmbedObject(chezmoilog.OSExecCmdLogObject{Cmd: cmd}).
+		Str("output", chezmoilog.FirstFewBytes(output)).
+		Err(err).
+		EmbedObject(chezmoilog.OSExecExitErrorLogObject{Err: err}).
 		Msg("IdempotentCmdOutput")
-
-	return r.output, r.err
+	return output, err
 }
 
 // Lstat implements System.Lstat.
@@ -126,7 +97,7 @@ func (s *DebugSystem) ReadFile(filename AbsPath) ([]byte, error) {
 	data, err := s.system.ReadFile(filename)
 	log.Logger.Debug().
 		Str("filename", string(filename)).
-		Str("data", firstFewBytes(data)).
+		Str("data", chezmoilog.FirstFewBytes(data)).
 		Err(err).
 		Msg("ReadFile")
 	return data, err
@@ -166,80 +137,26 @@ func (s *DebugSystem) Rename(oldpath, newpath AbsPath) error {
 
 // RunCmd implements System.RunCmd.
 func (s *DebugSystem) RunCmd(cmd *exec.Cmd) error {
-	type result struct {
-		startTime time.Time
-		err       error
-	}
-
-	resultCh := make(chan result)
-	go func(resultCh chan<- result) {
-		defer close(resultCh)
-		start := time.Now().UTC()
-		err := s.system.RunCmd(cmd)
-		resultCh <- result{
-			startTime: start,
-			err:       err,
-		}
-	}(resultCh)
-
-	var r result
-	select {
-	case r = <-resultCh:
-	case <-time.After(1 * time.Second):
-		log.Logger.Debug().
-			Dict("cmd", cmdDict(cmd)).
-			Msg("RunCmd")
-		r = <-resultCh
-	}
-
+	err := s.system.RunCmd(cmd)
 	log.Logger.Debug().
-		Dict("cmd", cmdDict(cmd)).
-		Err(r.err).
-		Dur("duration", time.Since(r.startTime)).
+		EmbedObject(chezmoilog.OSExecCmdLogObject{Cmd: cmd}).
+		Err(err).
+		EmbedObject(chezmoilog.OSExecExitErrorLogObject{Err: err}).
 		Msg("RunCmd")
-
-	return r.err
+	return err
 }
 
 // RunScript implements System.RunScript.
 func (s *DebugSystem) RunScript(scriptname RelPath, dir AbsPath, data []byte) error {
-	type result struct {
-		startTime time.Time
-		err       error
-	}
-
-	resultCh := make(chan result)
-	go func(resultCh chan<- result) {
-		defer close(resultCh)
-		start := time.Now().UTC()
-		err := s.system.RunScript(scriptname, dir, data)
-		resultCh <- result{
-			startTime: start,
-			err:       err,
-		}
-	}(resultCh)
-
-	var r result
-	select {
-	case r = <-resultCh:
-	case <-time.After(1 * time.Second):
-		log.Logger.Debug().
-			Str("scriptname", string(scriptname)).
-			Str("dir", string(dir)).
-			Str("data", firstFewBytes(data)).
-			Msg("RunScript")
-		r = <-resultCh
-	}
-
+	err := s.system.RunScript(scriptname, dir, data)
 	log.Logger.Debug().
 		Str("scriptname", string(scriptname)).
 		Str("dir", string(dir)).
-		Str("data", firstFewBytes(data)).
-		Err(r.err).
-		Dur("duration", time.Since(r.startTime)).
+		Str("data", chezmoilog.FirstFewBytes(data)).
+		Err(err).
+		EmbedObject(chezmoilog.OSExecExitErrorLogObject{Err: err}).
 		Msg("RunScript")
-
-	return r.err
+	return err
 }
 
 // Stat implements System.Stat.
@@ -262,7 +179,7 @@ func (s *DebugSystem) WriteFile(name AbsPath, data []byte, perm os.FileMode) err
 	err := s.system.WriteFile(name, data, perm)
 	log.Logger.Debug().
 		Str("name", string(name)).
-		Str("data", firstFewBytes(data)).
+		Str("data", chezmoilog.FirstFewBytes(data)).
 		Int("perm", int(perm)).
 		Err(err).
 		Msg("WriteFile")
@@ -278,21 +195,4 @@ func (s *DebugSystem) WriteSymlink(oldname string, newname AbsPath) error {
 		Err(err).
 		Msg("WriteSymlink")
 	return err
-}
-
-func cmdDict(cmd *exec.Cmd) *zerolog.Event {
-	return zerolog.Dict().
-		Str("path", cmd.Path).
-		Strs("args", cmd.Args)
-}
-
-// firstFewBytes returns the first few bytes of data in a human-readable form.
-func firstFewBytes(data []byte) string {
-	const few = 64
-	if len(data) > few {
-		data = append([]byte{}, data[:few]...)
-		data = append(data, '.', '.', '.')
-	}
-	s := strconv.Quote(string(data))
-	return s[1 : len(s)-1]
 }

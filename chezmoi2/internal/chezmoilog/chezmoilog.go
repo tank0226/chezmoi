@@ -4,32 +4,36 @@ import (
 	"errors"
 	"os"
 	"os/exec"
+	"strconv"
 
 	"github.com/rs/zerolog"
 )
 
-// An osExecCmdLogObject wraps an *os/exec.Cmd and adds
+// An OSExecCmdLogObject wraps an *os/exec.Cmd and adds
 // github.com/rs/zerolog.LogObjectMarshaler functionality.
-type osExecCmdLogObject struct {
+type OSExecCmdLogObject struct {
 	*exec.Cmd
 }
 
-// An osExecExitErrorLogObject wraps an error and adds
+// An OSExecExitErrorLogObject wraps an error and adds
 // github.com/rs/zerolog.LogObjectMarshaler functionality if the wrapped error
 // is an os/exec.ExitError.
-type osExecExitErrorLogObject struct {
-	err error
+type OSExecExitErrorLogObject struct {
+	Err error
 }
 
-// An osProcessStateLogObject wraps an *os.ProcessState and adds
+// An OSProcessStateLogObject wraps an *os.ProcessState and adds
 // github.com/rs/zerolog.LogObjectMarshaler functionality.
-type osProcessStateLogObject struct {
+type OSProcessStateLogObject struct {
 	*os.ProcessState
 }
 
 // MarshalZerologObject implements
 // github.com/rs/zerolog.LogObjectMarshaler.MarshalZerologObject.
-func (cmd osExecCmdLogObject) MarshalZerologObject(event *zerolog.Event) {
+func (cmd OSExecCmdLogObject) MarshalZerologObject(event *zerolog.Event) {
+	if cmd.Cmd == nil {
+		return
+	}
 	if cmd.Path != "" {
 		event.Str("path", cmd.Path)
 	}
@@ -46,12 +50,15 @@ func (cmd osExecCmdLogObject) MarshalZerologObject(event *zerolog.Event) {
 
 // MarshalZerologObject implements
 // github.com/rs/zerolog.LogObjectMarshaler.MarshalZerologObject.
-func (err osExecExitErrorLogObject) MarshalZerologObject(event *zerolog.Event) {
-	var osExecExitError *exec.ExitError
-	if !errors.As(err.err, &osExecExitError) {
+func (err OSExecExitErrorLogObject) MarshalZerologObject(event *zerolog.Event) {
+	if err.Err == nil {
 		return
 	}
-	event.EmbedObject(osProcessStateLogObject(osProcessStateLogObject{osExecExitError.ProcessState}))
+	var osExecExitError *exec.ExitError
+	if !errors.As(err.Err, &osExecExitError) {
+		return
+	}
+	event.EmbedObject(OSProcessStateLogObject{osExecExitError.ProcessState})
 	if osExecExitError.Stderr != nil {
 		event.Bytes("stderr", osExecExitError.Stderr)
 	}
@@ -59,7 +66,10 @@ func (err osExecExitErrorLogObject) MarshalZerologObject(event *zerolog.Event) {
 
 // MarshalZerologObject implements
 // github.com/rs/zerolog.LogObjectMarshaler.MarshalZerologObject.
-func (p osProcessStateLogObject) MarshalZerologObject(event *zerolog.Event) {
+func (p OSProcessStateLogObject) MarshalZerologObject(event *zerolog.Event) {
+	if p.ProcessState == nil {
+		return
+	}
 	if p.Exited() {
 		if !p.Success() {
 			event.Int("exitCode", p.ExitCode())
@@ -75,52 +85,48 @@ func (p osProcessStateLogObject) MarshalZerologObject(event *zerolog.Event) {
 	}
 }
 
+// FirstFewBytes returns the first few bytes of data in a human-readable form.
+func FirstFewBytes(data []byte) string {
+	const few = 64
+	if len(data) > few {
+		data = append([]byte{}, data[:few]...)
+		data = append(data, '.', '.', '.')
+	}
+	s := strconv.Quote(string(data))
+	return s[1 : len(s)-1]
+}
+
 // LogCmdCombinedOutput calls cmd.CombinedOutput, logs the result, and returns the result.
 func LogCmdCombinedOutput(logger zerolog.Logger, cmd *exec.Cmd) ([]byte, error) {
 	combinedOutput, err := cmd.CombinedOutput()
-	if err != nil {
-		logger.Warn().
-			EmbedObject(osExecCmdLogObject{Cmd: cmd}).
-			Err(err).
-			EmbedObject(osExecExitErrorLogObject{err: err}).
-			Msg("CombinedOutput")
-		return combinedOutput, err
-	}
 	logger.Debug().
-		EmbedObject(osExecCmdLogObject{Cmd: cmd}).
+		EmbedObject(OSExecCmdLogObject{Cmd: cmd}).
+		Err(err).
+		EmbedObject(OSExecExitErrorLogObject{Err: err}).
+		Str("combinedOutput", FirstFewBytes(combinedOutput)).
 		Msg("CombinedOutput")
-	return combinedOutput, nil
+	return combinedOutput, err
 }
 
 // LogCmdOutput calls cmd.Output, logs the result, and returns the result.
 func LogCmdOutput(logger zerolog.Logger, cmd *exec.Cmd) ([]byte, error) {
 	output, err := cmd.Output()
-	if err != nil {
-		logger.Error().
-			EmbedObject(osExecCmdLogObject{Cmd: cmd}).
-			Err(err).
-			EmbedObject(osExecExitErrorLogObject{err: err}).
-			Msg("Output")
-		return output, err
-	}
 	logger.Debug().
-		EmbedObject(osExecCmdLogObject{Cmd: cmd}).
+		EmbedObject(OSExecCmdLogObject{Cmd: cmd}).
+		Err(err).
+		EmbedObject(OSExecExitErrorLogObject{Err: err}).
+		Str("output", FirstFewBytes(output)).
 		Msg("Output")
-	return output, nil
+	return output, err
 }
 
 // LogCmdRun calls cmd.Run, logs the result, and returns the result.
 func LogCmdRun(logger zerolog.Logger, cmd *exec.Cmd) error {
-	if err := cmd.Run(); err != nil {
-		logger.Error().
-			EmbedObject(osExecCmdLogObject{Cmd: cmd}).
-			Err(err).
-			EmbedObject(osExecExitErrorLogObject{err: err}).
-			Msg("Run")
-		return err
-	}
+	err := cmd.Run()
 	logger.Debug().
-		EmbedObject(osExecCmdLogObject{Cmd: cmd}).
+		EmbedObject(OSExecCmdLogObject{Cmd: cmd}).
+		Err(err).
+		EmbedObject(OSExecExitErrorLogObject{Err: err}).
 		Msg("Run")
-	return nil
+	return err
 }
