@@ -186,7 +186,7 @@ func cmdMkAGEConfig(ts *testscript.TestScript, neg bool, args []string) {
 	publicKey, _, err := chezmoitest.AGEGenerateKey(ts.MkAbs(privateKeyFile))
 	ts.Check(err)
 	configFile := filepath.Join(homeDir, ".config", "chezmoi", "chezmoi.toml")
-	ts.Check(os.MkdirAll(path.Dir(configFile), 0o777))
+	ts.Check(os.MkdirAll(filepath.Dir(configFile), 0o777))
 	ts.Check(ioutil.WriteFile(configFile, []byte(fmt.Sprintf(chezmoitest.JoinLines(
 		`encryption = "age"`,
 		`[age]`,
@@ -245,7 +245,7 @@ func cmdMkGPGConfig(ts *testscript.TestScript, neg bool, args []string) {
 	ts.Check(err)
 
 	configFile := filepath.Join(ts.Getenv("HOME"), ".config", "chezmoi", "chezmoi.toml")
-	ts.Check(os.MkdirAll(path.Dir(configFile), 0o777))
+	ts.Check(os.MkdirAll(filepath.Dir(configFile), 0o777))
 	ts.Check(ioutil.WriteFile(configFile, []byte(fmt.Sprintf(chezmoitest.JoinLines(
 		`encryption = "gpg"`,
 		`[gpg]`,

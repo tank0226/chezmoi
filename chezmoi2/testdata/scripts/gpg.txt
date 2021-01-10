@@ -1,5 +1,3 @@
-[windows] skip 'broken on Windows' # FIXME
-
 [!exec:gpg] stop
 
 mkhomedir

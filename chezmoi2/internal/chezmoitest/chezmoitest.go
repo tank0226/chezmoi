@@ -22,7 +22,7 @@ import (
 
 var (
 	agePublicKeyRx                    = regexp.MustCompile(`(?m)^Public key: ([0-9a-z]+)$`)
-	gpgKeyMarkedAsUltimatelyTrustedRx = regexp.MustCompile(`(?m)^gpg: key ([0-9A-F]+) marked as ultimately trusted$`)
+	gpgKeyMarkedAsUltimatelyTrustedRx = regexp.MustCompile(`(?m)^gpg: key ([0-9A-F]+) marked as ultimately trusted\s*$`)
 )
 
 // AGEGenerateKey generates and returns an age public key and the path to the
