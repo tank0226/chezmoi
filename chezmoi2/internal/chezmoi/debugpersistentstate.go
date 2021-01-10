@@ -4,16 +4,15 @@ import (
 	"github.com/rs/zerolog/log"
 )
 
-// A DebugPersistentState wraps a PersistentState and logs to a log.Logger.
+// A DebugPersistentState logs calls to a PersistentState.
 type DebugPersistentState struct {
 	persistentState PersistentState
 }
 
-// NewDebugPersistentState returns a new debugPersistentState that wraps s and
-// logs to logger.
-func NewDebugPersistentState(s PersistentState) *DebugPersistentState {
+// NewDebugPersistentState returns a new debugPersistentState.
+func NewDebugPersistentState(persistentState PersistentState) *DebugPersistentState {
 	return &DebugPersistentState{
-		persistentState: s,
+		persistentState: persistentState,
 	}
 }
 

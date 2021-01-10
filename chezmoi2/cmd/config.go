@@ -119,6 +119,7 @@ type Config struct {
 	homeDirAbsPath    chezmoi.AbsPath
 	sourceDirAbsPath  chezmoi.AbsPath
 	destDirAbsPath    chezmoi.AbsPath
+	encryption        chezmoi.Encryption
 
 	stdin     io.Reader
 	stdout    io.Writer
@@ -914,6 +915,20 @@ func (c *Config) persistentPreRunRootE(cmd *cobra.Command, args []string) error 
 		c.destSystem = chezmoi.NewGitDiffSystem(c.destSystem, c.stdout, c.destDirAbsPath, c.color)
 	}
 
+	switch c.Encryption {
+	case "age":
+		c.encryption = &c.AGE
+	case "gpg":
+		c.encryption = &c.GPG
+	case "":
+		c.encryption = chezmoi.NoEncryption{}
+	default:
+		return fmt.Errorf("%s: unknown encryption", c.Encryption)
+	}
+	if c.debug {
+		c.encryption = chezmoi.NewDebugEncryption(c.encryption)
+	}
+
 	if boolAnnotation(cmd, requiresConfigDirectory) {
 		if err := chezmoi.MkdirAll(c.baseSystem, c.configFileAbsPath.Dir(), 0o777); err != nil {
 			return err
@@ -1058,22 +1073,10 @@ func (c *Config) sourceAbsPaths(s *chezmoi.SourceState, args []string) (chezmoi.
 }
 
 func (c *Config) sourceState() (*chezmoi.SourceState, error) {
-	var encryption chezmoi.Encryption
-	switch c.Encryption {
-	case "age":
-		encryption = &c.AGE
-	case "gpg":
-		encryption = &c.GPG
-	case "":
-		encryption = chezmoi.NoEncryption{}
-	default:
-		return nil, fmt.Errorf("%s: unknown encryption", c.Encryption)
-	}
-
 	s := chezmoi.NewSourceState(
 		chezmoi.WithDefaultTemplateDataFunc(c.defaultTemplateData),
 		chezmoi.WithDestDir(c.destDirAbsPath),
-		chezmoi.WithEncryption(encryption),
+		chezmoi.WithEncryption(c.encryption),
 		chezmoi.WithPriorityTemplateData(c.Data),
 		chezmoi.WithSourceDir(c.sourceDirAbsPath),
 		chezmoi.WithSystem(c.sourceSystem),

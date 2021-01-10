@@ -1,6 +1,9 @@
 package cmd
 
 import (
+	"io/ioutil"
+	"runtime"
+
 	"github.com/spf13/cobra"
 
 	"github.com/twpayne/chezmoi/chezmoi2/internal/chezmoi"
@@ -49,24 +52,81 @@ func (c *Config) runEditCmd(cmd *cobra.Command, args []string, s *chezmoi.Source
 		return nil
 	}
 
-	sourceAbsPaths, err := c.sourceAbsPaths(s, args)
+	targetRelPaths, err := c.targetRelPaths(s, args, targetRelPathsOptions{
+		mustBeInSourceState: true,
+	})
 	if err != nil {
 		return err
 	}
 
-	// FIXME transparently decrypt encrypted files
-
-	sourceAbsPathStrs := make([]string, 0, len(sourceAbsPaths))
-	for _, sourceAbsPath := range sourceAbsPaths {
-		sourceAbsPathStrs = append(sourceAbsPathStrs, string(sourceAbsPath))
+	editorArgs := make([]string, 0, len(targetRelPaths))
+	var decryptedDirAbsPath chezmoi.AbsPath
+	type transparentlyDecryptedFile struct {
+		sourceAbsPath    chezmoi.AbsPath
+		decryptedAbsPath chezmoi.AbsPath
 	}
-	if err := c.runEditor(sourceAbsPathStrs); err != nil {
+	var transparentlyDecryptedFiles []transparentlyDecryptedFile
+	for _, targetRelPath := range targetRelPaths {
+		sourceStateEntry := s.MustEntry(targetRelPath)
+		sourceRelPath := sourceStateEntry.SourceRelPath().RelPath()
+		var editorArg string
+		if sourceStateFile, ok := sourceStateEntry.(*chezmoi.SourceStateFile); ok && sourceStateFile.Attr.Encrypted {
+			if decryptedDirAbsPath == "" {
+				decryptedDir, err := ioutil.TempDir("", "chezmoi-decrypted")
+				if err != nil {
+					return err
+				}
+				decryptedDirAbsPath = chezmoi.AbsPath(decryptedDir)
+				defer func() {
+					c.baseSystem.RemoveAll(decryptedDirAbsPath)
+				}()
+				if runtime.GOOS != "windows" {
+					if err := c.baseSystem.Chmod(decryptedDirAbsPath, 0o700); err != nil {
+						return err
+					}
+				}
+			}
+			// FIXME use RawContents and DecryptFile
+			decryptedAbsPath := decryptedDirAbsPath.Join(sourceRelPath)
+			contents, err := sourceStateFile.Contents()
+			if err != nil {
+				return err
+			}
+			if err := c.baseSystem.WriteFile(decryptedAbsPath, contents, 0o600); err != nil {
+				return err
+			}
+			transparentlyDecryptedFile := transparentlyDecryptedFile{
+				sourceAbsPath:    c.sourceDirAbsPath.Join(sourceRelPath),
+				decryptedAbsPath: decryptedAbsPath,
+			}
+			transparentlyDecryptedFiles = append(transparentlyDecryptedFiles, transparentlyDecryptedFile)
+			editorArg = string(decryptedAbsPath)
+		} else {
+			sourceAbsPath := c.sourceDirAbsPath.Join(sourceRelPath)
+			editorArg = string(sourceAbsPath)
+		}
+		editorArgs = append(editorArgs, editorArg)
+	}
+
+	if err := c.runEditor(editorArgs); err != nil {
 		return err
 	}
 
-	if !c.Edit.apply {
-		return nil
+	for _, transparentlyDecryptedFile := range transparentlyDecryptedFiles {
+		contents, err := c.encryption.EncryptFile(string(transparentlyDecryptedFile.decryptedAbsPath))
+		if err != nil {
+			return err
+		}
+		if err := c.sourceSystem.WriteFile(transparentlyDecryptedFile.sourceAbsPath, contents, 0o666); err != nil {
+			return err
+		}
 	}
 
-	return c.applyArgs(c.destSystem, c.destDirAbsPath, args, c.Edit.include, nonRecursive, c.Umask.FileMode(), c.preApply)
+	if c.Edit.apply {
+		if err := c.applyArgs(c.destSystem, c.destDirAbsPath, args, c.Edit.include, nonRecursive, c.Umask.FileMode(), c.preApply); err != nil {
+			return err
+		}
+	}
+
+	return nil
 }

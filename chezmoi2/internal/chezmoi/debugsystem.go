@@ -10,7 +10,7 @@ import (
 	"github.com/twpayne/chezmoi/chezmoi2/internal/chezmoilog"
 )
 
-// A DebugSystem wraps a System and logs all of the actions it executes.
+// A DebugSystem logs all calls to a System.
 type DebugSystem struct {
 	system System
 }

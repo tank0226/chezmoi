@@ -13,5 +13,9 @@ rm $HOME/.encrypted
 chezmoi apply --force
 cp golden/.encrypted $HOME/.encrypted
 
+# test that chezmoi edit --apply transparently decrypts and re-encrypts
+chezmoi edit --apply --force $HOME${/}.encrypted
+grep '# edited' $HOME/.encrypted
+
 -- golden/.encrypted --
 plaintext
