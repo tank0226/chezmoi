@@ -13,10 +13,12 @@ import (
 	"text/tabwriter"
 
 	"github.com/coreos/go-semver/semver"
+	"github.com/rs/zerolog/log"
 	"github.com/spf13/cobra"
 	"github.com/twpayne/go-shell"
 
 	"github.com/twpayne/chezmoi/chezmoi2/internal/chezmoi"
+	"github.com/twpayne/chezmoi/chezmoi2/internal/chezmoilog"
 )
 
 // A checkResult is the result of a check.
@@ -254,7 +256,8 @@ func (c *binaryCheck) Run() (checkResult, string) {
 		return checkOK, fmt.Sprintf("found %s", path)
 	}
 
-	output, err := exec.Command(path, c.versionArgs...).CombinedOutput()
+	cmd := exec.Command(path, c.versionArgs...)
+	output, err := chezmoilog.LogCmdCombinedOutput(log.Logger, cmd)
 	if err != nil {
 		return checkFailed, err.Error()
 	}

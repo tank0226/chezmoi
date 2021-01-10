@@ -11,7 +11,6 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
 	"github.com/stretchr/testify/require"
 	"github.com/twpayne/go-vfs"
@@ -21,7 +20,7 @@ import (
 )
 
 var (
-	agePublicKeyRx                    = regexp.MustCompile(`(?m)^Public key: ([0-9a-z]+)$`)
+	agePublicKeyRx                    = regexp.MustCompile(`(?m)^Public key: ([0-9a-z]+)\s*$`)
 	gpgKeyMarkedAsUltimatelyTrustedRx = regexp.MustCompile(`(?m)^gpg: key ([0-9A-F]+) marked as ultimately trusted\s*$`)
 )
 
@@ -81,7 +80,6 @@ func GPGGenerateKey(homeDir string) (string, error) {
 		"--pinentry-mode", "loopback",
 		"--quick-generate-key", "chezmoi-test-gpg-key",
 	)
-	zerolog.SetGlobalLevel(zerolog.DebugLevel)
 	output, err := chezmoilog.LogCmdCombinedOutput(log.Logger, cmd)
 	if err != nil {
 		return "", err

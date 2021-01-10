@@ -22,7 +22,7 @@ cp golden/git bin # restore fake git
 
 # test chezmoi init --use-builtin-git=true
 chhome home2/user
-chezmoi init --use-builtin-git=true file://$WORKSLASH/home/user/.local/share/chezmoi
+chezmoi init --use-builtin-git=true file://$WORK/home/user/.local/share/chezmoi
 exists $CHEZMOISOURCEDIR/.git
 cmp $CHEZMOISOURCEDIR/dot_file golden/.file
 

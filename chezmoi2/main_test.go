@@ -413,7 +413,6 @@ func setup(env *testscript.Env) error {
 	env.Setenv("PATH", prependDirToPath(binDir, env.Getenv("PATH")))
 	env.Setenv("CHEZMOICONFIGDIR", chezmoiConfigDir)
 	env.Setenv("CHEZMOISOURCEDIR", chezmoiSourceDir)
-	env.Setenv("WORKSLASH", filepath.ToSlash(env.WorkDir))
 	switch runtime.GOOS {
 	case "windows":
 		env.Setenv("EDITOR", filepath.Join(binDir, "editor.cmd"))
