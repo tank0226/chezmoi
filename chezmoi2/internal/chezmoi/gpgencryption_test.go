@@ -20,7 +20,7 @@ func TestGPGEncryption(t *testing.T) {
 	}
 	require.NoError(t, err)
 
-	tempDir, err := ioutil.TempDir("", "chezmoi-test-GPGEncryption")
+	tempDir, err := ioutil.TempDir("", "chezmoi-test-gpg")
 	require.NoError(t, err)
 	defer func() {
 		require.NoError(t, os.RemoveAll(tempDir))
