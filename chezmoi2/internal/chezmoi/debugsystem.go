@@ -49,7 +49,7 @@ func (s *DebugSystem) IdempotentCmdOutput(cmd *exec.Cmd) ([]byte, error) {
 	output, err := s.system.IdempotentCmdOutput(cmd)
 	log.Logger.Debug().
 		EmbedObject(chezmoilog.OSExecCmdLogObject{Cmd: cmd}).
-		Str("output", chezmoilog.FirstFewBytes(output)).
+		Bytes("output", chezmoilog.FirstFewBytes(output)).
 		Err(err).
 		EmbedObject(chezmoilog.OSExecExitErrorLogObject{Err: err}).
 		Msg("IdempotentCmdOutput")
@@ -97,7 +97,7 @@ func (s *DebugSystem) ReadFile(filename AbsPath) ([]byte, error) {
 	data, err := s.system.ReadFile(filename)
 	log.Logger.Debug().
 		Str("filename", string(filename)).
-		Str("data", chezmoilog.FirstFewBytes(data)).
+		Bytes("data", chezmoilog.FirstFewBytes(data)).
 		Err(err).
 		Msg("ReadFile")
 	return data, err
@@ -152,7 +152,7 @@ func (s *DebugSystem) RunScript(scriptname RelPath, dir AbsPath, data []byte) er
 	log.Logger.Debug().
 		Str("scriptname", string(scriptname)).
 		Str("dir", string(dir)).
-		Str("data", chezmoilog.FirstFewBytes(data)).
+		Bytes("data", chezmoilog.FirstFewBytes(data)).
 		Err(err).
 		EmbedObject(chezmoilog.OSExecExitErrorLogObject{Err: err}).
 		Msg("RunScript")
@@ -179,7 +179,7 @@ func (s *DebugSystem) WriteFile(name AbsPath, data []byte, perm os.FileMode) err
 	err := s.system.WriteFile(name, data, perm)
 	log.Logger.Debug().
 		Str("name", string(name)).
-		Str("data", chezmoilog.FirstFewBytes(data)).
+		Bytes("data", chezmoilog.FirstFewBytes(data)).
 		Int("perm", int(perm)).
 		Err(err).
 		Msg("WriteFile")

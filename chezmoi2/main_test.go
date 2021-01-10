@@ -172,28 +172,6 @@ func cmdMkFile(ts *testscript.TestScript, neg bool, args []string) {
 	}
 }
 
-// cmdMkGitConfig makes a .gitconfig file in the home directory.
-func cmdMkGitConfig(ts *testscript.TestScript, neg bool, args []string) {
-	if neg {
-		ts.Fatalf("unsupported: ! mkgitconfig")
-	}
-	if len(args) > 1 {
-		ts.Fatalf(("usage: mkgitconfig [path]"))
-	}
-	path := filepath.Join(ts.Getenv("HOME"), ".gitconfig")
-	if len(args) > 0 {
-		path = ts.MkAbs(args[0])
-	}
-	ts.Check(os.MkdirAll(filepath.Dir(path), 0o777))
-	ts.Check(ioutil.WriteFile(path, []byte(chezmoitest.JoinLines(
-		`[core]`,
-		`  autocrlf = false`,
-		`[user]`,
-		`  name = User`,
-		`  email = user@example.com`,
-	)), 0o666))
-}
-
 // cmdMkAGEConfig creates a AGE key and a chezmoi configuration file.
 func cmdMkAGEConfig(ts *testscript.TestScript, neg bool, args []string) {
 	if neg {
@@ -217,6 +195,28 @@ func cmdMkAGEConfig(ts *testscript.TestScript, neg bool, args []string) {
 	), privateKeyFile, publicKey)), 0o666))
 }
 
+// cmdMkGitConfig makes a .gitconfig file in the home directory.
+func cmdMkGitConfig(ts *testscript.TestScript, neg bool, args []string) {
+	if neg {
+		ts.Fatalf("unsupported: ! mkgitconfig")
+	}
+	if len(args) > 1 {
+		ts.Fatalf(("usage: mkgitconfig [path]"))
+	}
+	path := filepath.Join(ts.Getenv("HOME"), ".gitconfig")
+	if len(args) > 0 {
+		path = ts.MkAbs(args[0])
+	}
+	ts.Check(os.MkdirAll(filepath.Dir(path), 0o777))
+	ts.Check(ioutil.WriteFile(path, []byte(chezmoitest.JoinLines(
+		`[core]`,
+		`  autocrlf = false`,
+		`[user]`,
+		`  name = User`,
+		`  email = user@example.com`,
+	)), 0o666))
+}
+
 // cmdMkGPGConfig creates a GPG key and a chezmoi configuration file.
 func cmdMkGPGConfig(ts *testscript.TestScript, neg bool, args []string) {
 	if neg {
@@ -225,11 +225,26 @@ func cmdMkGPGConfig(ts *testscript.TestScript, neg bool, args []string) {
 	if len(args) > 0 {
 		ts.Fatalf("usage: mkgpgconfig")
 	}
-	homeDir := ts.Getenv("HOME")
-	ts.Check(os.MkdirAll(homeDir, 0o777))
-	key, err := chezmoitest.GPGGenerateKey(homeDir)
+
+	// Create a new directory for GPG. We can't use a subdirectory of the
+	// testscript's working directory because on darwin the absolute path can
+	// exceed GPG's limit of sockaddr_un.sun_path (107 characters, see man
+	// unix(7)). The limit exists because GPG creates a UNIX domain socket in
+	// its home directory and UNIX domain socket paths are limited to
+	// sockaddr_un.sun_path characters.
+	gpgHomeDir, err := ioutil.TempDir("", "chezmoi-gpg-test")
 	ts.Check(err)
-	configFile := filepath.Join(homeDir, ".config", "chezmoi", "chezmoi.toml")
+	ts.Defer(func() {
+		os.RemoveAll(gpgHomeDir)
+	})
+	if runtime.GOOS != "windows" {
+		ts.Check(os.Chmod(gpgHomeDir, 0o700))
+	}
+
+	key, err := chezmoitest.GPGGenerateKey(gpgHomeDir)
+	ts.Check(err)
+
+	configFile := filepath.Join(ts.Getenv("HOME"), ".config", "chezmoi", "chezmoi.toml")
 	ts.Check(os.MkdirAll(path.Dir(configFile), 0o777))
 	ts.Check(ioutil.WriteFile(configFile, []byte(fmt.Sprintf(chezmoitest.JoinLines(
 		`encryption = "gpg"`,
@@ -241,7 +256,7 @@ func cmdMkGPGConfig(ts *testscript.TestScript, neg bool, args []string) {
 		`    "--pinentry-mode", "loopback",`,
 		`  ]`,
 		`  recipient = %q`,
-	), homeDir, key)), 0o666))
+	), gpgHomeDir, key)), 0o666))
 }
 
 // cmdMkHomeDir makes and populates a home directory.

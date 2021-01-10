@@ -1,5 +1,4 @@
 [windows] skip 'broken on Windows' # FIXME
-[darwin] skip 'broken on darwin' # FIXME
 
 [!exec:gpg] stop
 

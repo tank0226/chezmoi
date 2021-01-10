@@ -11,6 +11,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
 	"github.com/stretchr/testify/require"
 	"github.com/twpayne/go-vfs"
@@ -80,6 +81,7 @@ func GPGGenerateKey(homeDir string) (string, error) {
 		"--pinentry-mode", "loopback",
 		"--quick-generate-key", "chezmoi-test-key",
 	)
+	zerolog.SetGlobalLevel(zerolog.DebugLevel)
 	output, err := chezmoilog.LogCmdCombinedOutput(log.Logger, cmd)
 	if err != nil {
 		return "", err

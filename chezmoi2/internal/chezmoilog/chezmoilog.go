@@ -4,7 +4,6 @@ import (
 	"errors"
 	"os"
 	"os/exec"
-	"strconv"
 
 	"github.com/rs/zerolog"
 )
@@ -86,14 +85,13 @@ func (p OSProcessStateLogObject) MarshalZerologObject(event *zerolog.Event) {
 }
 
 // FirstFewBytes returns the first few bytes of data in a human-readable form.
-func FirstFewBytes(data []byte) string {
+func FirstFewBytes(data []byte) []byte {
 	const few = 64
 	if len(data) > few {
 		data = append([]byte{}, data[:few]...)
 		data = append(data, '.', '.', '.')
 	}
-	s := strconv.Quote(string(data))
-	return s[1 : len(s)-1]
+	return data
 }
 
 // LogCmdCombinedOutput calls cmd.CombinedOutput, logs the result, and returns the result.
@@ -103,7 +101,7 @@ func LogCmdCombinedOutput(logger zerolog.Logger, cmd *exec.Cmd) ([]byte, error) 
 		EmbedObject(OSExecCmdLogObject{Cmd: cmd}).
 		Err(err).
 		EmbedObject(OSExecExitErrorLogObject{Err: err}).
-		Str("combinedOutput", FirstFewBytes(combinedOutput)).
+		Bytes("combinedOutput", FirstFewBytes(combinedOutput)).
 		Msg("CombinedOutput")
 	return combinedOutput, err
 }
@@ -115,7 +113,7 @@ func LogCmdOutput(logger zerolog.Logger, cmd *exec.Cmd) ([]byte, error) {
 		EmbedObject(OSExecCmdLogObject{Cmd: cmd}).
 		Err(err).
 		EmbedObject(OSExecExitErrorLogObject{Err: err}).
-		Str("output", FirstFewBytes(output)).
+		Bytes("output", FirstFewBytes(output)).
 		Msg("Output")
 	return output, err
 }
