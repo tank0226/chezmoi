@@ -52,7 +52,7 @@ func AGEGenerateKey(filename string) (publicKey, privateKeyFile string, err erro
 	privateKeyFile = filename
 	var output []byte
 	cmd := exec.Command("age-keygen", "--output", privateKeyFile)
-	output, err = chezmoilog.LogCmdOutput(log.Logger, cmd)
+	output, err = chezmoilog.LogCmdCombinedOutput(log.Logger, cmd)
 	if err != nil {
 		return
 	}
@@ -79,7 +79,7 @@ func GPGGenerateKey(homeDir string) (string, error) {
 		"--no-tty",
 		"--passphrase", "chezmoi-test-passphrase",
 		"--pinentry-mode", "loopback",
-		"--quick-generate-key", "chezmoi-test-key",
+		"--quick-generate-key", "chezmoi-test-gpg-key",
 	)
 	zerolog.SetGlobalLevel(zerolog.DebugLevel)
 	output, err := chezmoilog.LogCmdCombinedOutput(log.Logger, cmd)
