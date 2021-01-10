@@ -1057,8 +1057,8 @@ func (c *Config) runEditor(args []string) error {
 	return c.run("", editor, append(editorArgs, args...))
 }
 
-func (c *Config) sourceAbsPaths(s *chezmoi.SourceState, args []string) (chezmoi.AbsPaths, error) {
-	targetRelPaths, err := c.targetRelPaths(s, args, targetRelPathsOptions{
+func (c *Config) sourceAbsPaths(sourceState *chezmoi.SourceState, args []string) (chezmoi.AbsPaths, error) {
+	targetRelPaths, err := c.targetRelPaths(sourceState, args, targetRelPathsOptions{
 		mustBeInSourceState: true,
 	})
 	if err != nil {
@@ -1066,7 +1066,7 @@ func (c *Config) sourceAbsPaths(s *chezmoi.SourceState, args []string) (chezmoi.
 	}
 	sourceAbsPaths := make(chezmoi.AbsPaths, 0, len(targetRelPaths))
 	for _, targetRelPath := range targetRelPaths {
-		sourceAbsPath := c.sourceDirAbsPath.Join(s.MustEntry(targetRelPath).SourceRelPath().RelPath())
+		sourceAbsPath := c.sourceDirAbsPath.Join(sourceState.MustEntry(targetRelPath).SourceRelPath().RelPath())
 		sourceAbsPaths = append(sourceAbsPaths, sourceAbsPath)
 	}
 	return sourceAbsPaths, nil
@@ -1100,7 +1100,7 @@ type targetRelPathsOptions struct {
 	recursive           bool
 }
 
-func (c *Config) targetRelPaths(s *chezmoi.SourceState, args []string, options targetRelPathsOptions) (chezmoi.RelPaths, error) {
+func (c *Config) targetRelPaths(sourceState *chezmoi.SourceState, args []string, options targetRelPathsOptions) (chezmoi.RelPaths, error) {
 	targetRelPaths := make(chezmoi.RelPaths, 0, len(args))
 	for _, arg := range args {
 		argAbsPath, err := chezmoi.NewAbsPathFromExtPath(arg, c.homeDirAbsPath)
@@ -1115,7 +1115,7 @@ func (c *Config) targetRelPaths(s *chezmoi.SourceState, args []string, options t
 			return nil, err
 		}
 		if options.mustBeInSourceState {
-			if _, ok := s.Entry(targetRelPath); !ok {
+			if _, ok := sourceState.Entry(targetRelPath); !ok {
 				return nil, fmt.Errorf("%s: not in source state", arg)
 			}
 		}
@@ -1123,7 +1123,7 @@ func (c *Config) targetRelPaths(s *chezmoi.SourceState, args []string, options t
 		if options.recursive {
 			parentRelPath := targetRelPath
 			// FIXME we should not call s.TargetRelPaths() here - risk of accidentally quadratic
-			for _, targetRelPath := range s.TargetRelPaths() {
+			for _, targetRelPath := range sourceState.TargetRelPaths() {
 				if _, err := targetRelPath.TrimDirPrefix(parentRelPath); err == nil {
 					targetRelPaths = append(targetRelPaths, targetRelPath)
 				}

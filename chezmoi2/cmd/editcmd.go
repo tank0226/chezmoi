@@ -39,7 +39,7 @@ func (c *Config) newEditCmd() *cobra.Command {
 	return editCmd
 }
 
-func (c *Config) runEditCmd(cmd *cobra.Command, args []string, s *chezmoi.SourceState) error {
+func (c *Config) runEditCmd(cmd *cobra.Command, args []string, sourceState *chezmoi.SourceState) error {
 	if len(args) == 0 {
 		if err := c.runEditor([]string{string(c.sourceDirAbsPath)}); err != nil {
 			return err
@@ -52,7 +52,7 @@ func (c *Config) runEditCmd(cmd *cobra.Command, args []string, s *chezmoi.Source
 		return nil
 	}
 
-	targetRelPaths, err := c.targetRelPaths(s, args, targetRelPathsOptions{
+	targetRelPaths, err := c.targetRelPaths(sourceState, args, targetRelPathsOptions{
 		mustBeInSourceState: true,
 	})
 	if err != nil {
@@ -67,7 +67,7 @@ func (c *Config) runEditCmd(cmd *cobra.Command, args []string, s *chezmoi.Source
 	}
 	var transparentlyDecryptedFiles []transparentlyDecryptedFile
 	for _, targetRelPath := range targetRelPaths {
-		sourceStateEntry := s.MustEntry(targetRelPath)
+		sourceStateEntry := sourceState.MustEntry(targetRelPath)
 		sourceRelPath := sourceStateEntry.SourceRelPath().RelPath()
 		var editorArg string
 		if sourceStateFile, ok := sourceStateEntry.(*chezmoi.SourceStateFile); ok && sourceStateFile.Attr.Encrypted {
