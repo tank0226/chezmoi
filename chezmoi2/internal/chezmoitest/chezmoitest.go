@@ -52,7 +52,7 @@ func AGEGenerateKey(filename string) (publicKey, privateKeyFile string, err erro
 	privateKeyFile = filename
 	var output []byte
 	cmd := exec.Command("age-keygen", "--output", privateKeyFile)
-	output, err = chezmoilog.LogCmdCombinedOutput(log.Logger, cmd)
+	output, err = chezmoilog.LogCmdOutput(log.Logger, cmd)
 	if err != nil {
 		return
 	}
