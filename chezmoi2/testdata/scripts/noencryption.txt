@@ -1,7 +1,7 @@
 mkhomedir
 
 # test that chezmoi add --encrypt without encryption fails
-! chezmoi add --encrypt ~/.encrypted
+! chezmoi add --encrypt $HOME${/}.encrypted
 stderr 'no encryption'
 
 # test that chezmoi apply without encryption fails
