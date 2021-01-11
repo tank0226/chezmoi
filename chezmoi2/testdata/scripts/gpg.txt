@@ -1,5 +1,3 @@
-stop # FIXME
-
 [!exec:gpg] stop
 
 mkhomedir
@@ -7,17 +5,17 @@ mkgpgconfig
 
 # test that chezmoi add --encrypt encrypts
 cp golden/.encrypted $HOME
-chezmoi add --encrypt --debug ~/.encrypted
+chezmoi add --encrypt ~/.encrypted
 exists $CHEZMOISOURCEDIR/encrypted_dot_encrypted
 ! grep plaintext $CHEZMOISOURCEDIR/encrypted_dot_encrypted
 
 # test that chezmoi apply decrypts
 rm $HOME/.encrypted
-chezmoi apply --force --debug
+chezmoi apply --force
 cmp golden/.encrypted $HOME/.encrypted
 
 # test that chezmoi edit --apply transparently decrypts and re-encrypts
-chezmoi edit --apply --debug --force $HOME${/}.encrypted
+chezmoi edit --apply --force $HOME${/}.encrypted
 grep '# edited' $HOME/.encrypted
 
 -- golden/.encrypted --

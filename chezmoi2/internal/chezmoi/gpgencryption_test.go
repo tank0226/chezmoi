@@ -12,7 +12,7 @@ import (
 	"github.com/twpayne/chezmoi/chezmoi2/internal/chezmoitest"
 )
 
-func XTestGPGEncryption(t *testing.T) {
+func TestGPGEncryption(t *testing.T) {
 	// FIXME add symmetric test
 	command, err := exec.LookPath("gpg")
 	if errors.Is(err, exec.ErrNotFound) {

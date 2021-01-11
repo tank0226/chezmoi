@@ -2,6 +2,7 @@ package chezmoi
 
 import (
 	"bytes"
+	"os"
 	"os/exec"
 
 	"github.com/rs/zerolog/log"
@@ -29,31 +30,37 @@ func (t *GPGEncryption) Decrypt(ciphertext []byte) ([]byte, error) {
 // DecryptToFile implements Encryption.DecryptToFile.
 func (t *GPGEncryption) DecryptToFile(filename string, ciphertext []byte) error {
 	args := append(append([]string{
-		// "--batch",
 		"--decrypt",
 		"--output", filename,
 		"--yes",
 	}), t.Args...)
 	//nolint:gosec
-	return chezmoilog.LogCmdRun(log.Logger, exec.Command(t.Command, args...))
+	cmd := exec.Command(t.Command, args...)
+	cmd.Stdin = bytes.NewReader(ciphertext)
+	return chezmoilog.LogCmdRun(log.Logger, cmd)
 }
 
 // Encrypt implements Encryption.Encrypt.
 func (t *GPGEncryption) Encrypt(plaintext []byte) ([]byte, error) {
 	args := append(t.encryptArgs(), t.Args...)
 	//nolint:gosec
-	return chezmoilog.LogCmdOutput(log.Logger, exec.Command(t.Command, args...))
+	cmd := exec.Command(t.Command, args...)
+	cmd.Stdin = bytes.NewReader(plaintext)
+	return chezmoilog.LogCmdOutput(log.Logger, cmd)
 }
 
 // EncryptFile implements Encryption.EncryptFile.
 func (t *GPGEncryption) EncryptFile(filename string) (ciphertext []byte, err error) {
-	args := append(append(t.encryptArgs(),
-		// "--batch",
-		"--output", filename,
-		"--yes",
-	), t.Args...)
+	f, err := os.Open(filename)
+	if err != nil {
+		return nil, err
+	}
+	defer f.Close()
+	args := append(t.encryptArgs(), t.Args...)
 	//nolint:gosec
-	return chezmoilog.LogCmdOutput(log.Logger, exec.Command(t.Command, args...))
+	cmd := exec.Command(t.Command, args...)
+	cmd.Stdin = f
+	return chezmoilog.LogCmdOutput(log.Logger, cmd)
 }
 
 func (t *GPGEncryption) encryptArgs() []string {
