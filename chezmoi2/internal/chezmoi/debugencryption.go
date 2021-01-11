@@ -25,7 +25,7 @@ func (e *DebugEncryption) Decrypt(ciphertext []byte) ([]byte, error) {
 		Bytes("ciphertext", chezmoilog.FirstFewBytes(ciphertext)).
 		Err(err).
 		Bytes("plaintext", chezmoilog.FirstFewBytes(plaintext)).
-		Msg("Encrypt")
+		Msg("Decrypt")
 	return plaintext, err
 }
 

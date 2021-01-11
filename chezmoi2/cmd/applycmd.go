@@ -7,8 +7,9 @@ import (
 )
 
 type applyCmdConfig struct {
-	include   *chezmoi.IncludeSet
-	recursive bool
+	ignoreEncrypted bool
+	include         *chezmoi.IncludeSet
+	recursive       bool
 }
 
 func (c *Config) newApplyCmd() *cobra.Command {
@@ -25,6 +26,7 @@ func (c *Config) newApplyCmd() *cobra.Command {
 	}
 
 	flags := applyCmd.Flags()
+	flags.BoolVar(&c.apply.ignoreEncrypted, "ignore-encrypted", c.apply.ignoreEncrypted, "ignore encrypted files")
 	flags.VarP(c.apply.include, "include", "i", "include entry types")
 	flags.BoolVarP(&c.apply.recursive, "recursive", "r", c.apply.recursive, "recursive")
 
@@ -33,9 +35,10 @@ func (c *Config) newApplyCmd() *cobra.Command {
 
 func (c *Config) runApplyCmd(cmd *cobra.Command, args []string) error {
 	return c.applyArgs(c.destSystem, c.destDirAbsPath, args, applyArgsOptions{
-		include:      c.apply.include,
-		recursive:    c.apply.recursive,
-		umask:        c.Umask.FileMode(),
-		preApplyFunc: c.defaultPreApplyFunc,
+		ignoreEncrypted: c.apply.ignoreEncrypted,
+		include:         c.apply.include,
+		recursive:       c.apply.recursive,
+		umask:           c.Umask.FileMode(),
+		preApplyFunc:    c.defaultPreApplyFunc,
 	})
 }

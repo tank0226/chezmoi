@@ -302,10 +302,11 @@ func (c *Config) addTemplateFunc(key string, value interface{}) {
 }
 
 type applyArgsOptions struct {
-	include      *chezmoi.IncludeSet
-	recursive    bool
-	umask        os.FileMode
-	preApplyFunc chezmoi.PreApplyFunc
+	ignoreEncrypted bool
+	include         *chezmoi.IncludeSet
+	recursive       bool
+	umask           os.FileMode
+	preApplyFunc    chezmoi.PreApplyFunc
 }
 
 func (c *Config) applyArgs(targetSystem chezmoi.System, targetDirAbsPath chezmoi.AbsPath, args []string, options applyArgsOptions) error {
@@ -315,9 +316,10 @@ func (c *Config) applyArgs(targetSystem chezmoi.System, targetDirAbsPath chezmoi
 	}
 
 	applyOptions := chezmoi.ApplyOptions{
-		Include:      options.include,
-		PreApplyFunc: options.preApplyFunc,
-		Umask:        options.umask,
+		IgnoreEncrypted: options.ignoreEncrypted,
+		Include:         options.include,
+		PreApplyFunc:    options.preApplyFunc,
+		Umask:           options.umask,
 	}
 
 	var targetRelPaths chezmoi.RelPaths
