@@ -70,8 +70,9 @@ func JoinLines(lines ...string) string {
 }
 
 // GPGGenerateKey generates and returns a GPG key in homeDir.
-func GPGGenerateKey(homeDir string) (key string, passphrase string, err error) {
-	passphrase = "chezmoi-test-passphrase"
+func GPGGenerateKey(homeDir string) (key, passphrase string, err error) {
+	//nolint:gosec
+	passphrase = "chezmoi-test-gpg-passphrase"
 	cmd := exec.Command(
 		"gpg",
 		"--batch",

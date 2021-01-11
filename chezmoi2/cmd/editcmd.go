@@ -78,7 +78,7 @@ func (c *Config) runEditCmd(cmd *cobra.Command, args []string, sourceState *chez
 				}
 				decryptedDirAbsPath = chezmoi.AbsPath(decryptedDir)
 				defer func() {
-					c.baseSystem.RemoveAll(decryptedDirAbsPath)
+					_ = c.baseSystem.RemoveAll(decryptedDirAbsPath)
 				}()
 				if runtime.GOOS != "windows" {
 					if err := c.baseSystem.Chmod(decryptedDirAbsPath, 0o700); err != nil {

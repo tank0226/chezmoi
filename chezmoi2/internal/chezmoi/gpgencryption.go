@@ -29,11 +29,11 @@ func (t *GPGEncryption) Decrypt(ciphertext []byte) ([]byte, error) {
 
 // DecryptToFile implements Encryption.DecryptToFile.
 func (t *GPGEncryption) DecryptToFile(filename string, ciphertext []byte) error {
-	args := append(append([]string{
+	args := append([]string{
 		"--decrypt",
 		"--output", filename,
 		"--yes",
-	}), t.Args...)
+	}, t.Args...)
 	//nolint:gosec
 	cmd := exec.Command(t.Command, args...)
 	cmd.Stdin = bytes.NewReader(ciphertext)

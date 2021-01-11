@@ -232,7 +232,7 @@ func cmdMkGPGConfig(ts *testscript.TestScript, neg bool, args []string) {
 	// unix(7)). The limit exists because GPG creates a UNIX domain socket in
 	// its home directory and UNIX domain socket paths are limited to
 	// sockaddr_un.sun_path characters.
-	gpgHomeDir, err := ioutil.TempDir("", "chezmoi-gpg-test")
+	gpgHomeDir, err := ioutil.TempDir("", "chezmoi-test-gpg-homedir")
 	ts.Check(err)
 	ts.Defer(func() {
 		os.RemoveAll(gpgHomeDir)
