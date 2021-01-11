@@ -1,9 +1,11 @@
 [!windows] chmod 755 bin/bw
 [windows] unix2dos bin/bw.cmd
 
+# test bitwarden template function
 chezmoi execute-template '{{ (bitwarden "item" "example.com").login.password }}'
 stdout password-value
 
+# test bitwardenFields template function
 chezmoi execute-template '{{ (bitwardenFields "item" "example.com").Hidden.value }}'
 stdout hidden-value
 

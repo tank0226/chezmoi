@@ -1,9 +1,11 @@
 [!windows] chmod 755 bin/lpass
 [windows] unix2dos bin/lpass.cmd
 
+# test lastpass template function
 chezmoi execute-template '{{ (index (lastpass "example.com") 0).password }}'
 stdout examplepassword
 
+# test lastpass version check
 chmod 755 $WORK/bin2/lpass
 env PATH=$WORK${/}bin2${:}$PATH
 ! chezmoi execute-template '{{ (index (lastpass "example.com") 0).password }}'
