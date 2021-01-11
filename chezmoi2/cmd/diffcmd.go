@@ -39,7 +39,11 @@ func (c *Config) runDiffCmd(cmd *cobra.Command, args []string) error {
 	sb := strings.Builder{}
 	dryRunSystem := chezmoi.NewDryRunSystem(c.destSystem)
 	gitDiffSystem := chezmoi.NewGitDiffSystem(dryRunSystem, &sb, c.destDirAbsPath, c.color)
-	if err := c.applyArgs(gitDiffSystem, c.destDirAbsPath, args, c.Diff.include, c.Diff.recursive, c.Umask.FileMode(), nil); err != nil {
+	if err := c.applyArgs(gitDiffSystem, c.destDirAbsPath, args, applyArgsOptions{
+		include:   c.Diff.include,
+		recursive: c.Diff.recursive,
+		umask:     c.Umask.FileMode(),
+	}); err != nil {
 		return err
 	}
 	return c.writeOutputString(sb.String())

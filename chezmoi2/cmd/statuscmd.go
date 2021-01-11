@@ -46,7 +46,12 @@ func (c *Config) runStatusCmd(cmd *cobra.Command, args []string, sourceState *ch
 		}
 		return chezmoi.Skip
 	}
-	if err := c.applyArgs(dryRunSystem, c.destDirAbsPath, args, c.status.include, c.status.recursive, c.Umask.FileMode(), preApplyFunc); err != nil {
+	if err := c.applyArgs(dryRunSystem, c.destDirAbsPath, args, applyArgsOptions{
+		include:      c.status.include,
+		recursive:    c.status.recursive,
+		umask:        c.Umask.FileMode(),
+		preApplyFunc: preApplyFunc,
+	}); err != nil {
 		return err
 	}
 	return c.writeOutputString(sb.String())

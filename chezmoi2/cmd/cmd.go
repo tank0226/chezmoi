@@ -29,11 +29,6 @@ const (
 	persistentStateModeReadWrite     = "read-write"
 )
 
-const (
-	nonRecursive = false
-	recursive    = true
-)
-
 var noArgs = []string(nil)
 
 // An ErrExitCode indicates the the main program should exit with the given

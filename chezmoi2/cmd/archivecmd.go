@@ -57,7 +57,11 @@ func (c *Config) runArchiveCmd(cmd *cobra.Command, args []string) error {
 	default:
 		return fmt.Errorf("%s: invalid format", c.archive.format)
 	}
-	if err := c.applyArgs(archiveSystem, "", args, c.archive.include, c.archive.recursive, os.ModePerm, nil); err != nil {
+	if err := c.applyArgs(archiveSystem, "", args, applyArgsOptions{
+		include:   c.archive.include,
+		recursive: c.archive.recursive,
+		umask:     os.ModePerm,
+	}); err != nil {
 		return err
 	}
 	if err := archiveSystem.Close(); err != nil {

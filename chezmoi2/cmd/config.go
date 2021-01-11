@@ -301,16 +301,23 @@ func (c *Config) addTemplateFunc(key string, value interface{}) {
 	c.templateFuncs[key] = value
 }
 
-func (c *Config) applyArgs(targetSystem chezmoi.System, targetDirAbsPath chezmoi.AbsPath, args []string, include *chezmoi.IncludeSet, recursive bool, umask os.FileMode, preApplyFunc chezmoi.PreApplyFunc) error {
+type applyArgsOptions struct {
+	include      *chezmoi.IncludeSet
+	recursive    bool
+	umask        os.FileMode
+	preApplyFunc chezmoi.PreApplyFunc
+}
+
+func (c *Config) applyArgs(targetSystem chezmoi.System, targetDirAbsPath chezmoi.AbsPath, args []string, options applyArgsOptions) error {
 	s, err := c.sourceState()
 	if err != nil {
 		return err
 	}
 
 	applyOptions := chezmoi.ApplyOptions{
-		Include:      include,
-		PreApplyFunc: preApplyFunc,
-		Umask:        umask,
+		Include:      options.include,
+		PreApplyFunc: options.preApplyFunc,
+		Umask:        options.umask,
 	}
 
 	var targetRelPaths chezmoi.RelPaths
@@ -319,7 +326,7 @@ func (c *Config) applyArgs(targetSystem chezmoi.System, targetDirAbsPath chezmoi
 	} else {
 		targetRelPaths, err = c.targetRelPaths(s, args, targetRelPathsOptions{
 			mustBeInSourceState: true,
-			recursive:           recursive,
+			recursive:           options.recursive,
 		})
 		if err != nil {
 			return err
@@ -350,6 +357,31 @@ func (c *Config) cmdOutput(dirAbsPath chezmoi.AbsPath, name string, args []strin
 		cmd.Dir = string(dirRawAbsPath)
 	}
 	return c.baseSystem.IdempotentCmdOutput(cmd)
+}
+
+func (c *Config) defaultPreApplyFunc(targetRelPath chezmoi.RelPath, targetEntryState, lastWrittenEntryState, actualEntryState *chezmoi.EntryState) error {
+	switch {
+	case c.force:
+		return nil
+	case lastWrittenEntryState == nil:
+		return nil
+	case lastWrittenEntryState.Equivalent(actualEntryState, c.Umask.FileMode()):
+		return nil
+	}
+	// LATER add merge option
+	switch choice, err := c.prompt(fmt.Sprintf("%s has changed since chezmoi last wrote it, overwrite", targetRelPath), "ynqa"); {
+	case err != nil:
+		return err
+	case choice == 'a':
+		c.force = true
+		return nil
+	case choice == 'n':
+		return chezmoi.Skip
+	case choice == 'q':
+		return ErrExitCode(1)
+	default:
+		return nil
+	}
 }
 
 func (c *Config) defaultTemplateData() map[string]interface{} {
@@ -970,31 +1002,6 @@ func (c *Config) persistentStateFile() chezmoi.AbsPath {
 		}
 	}
 	return defaultConfigFile(c.fs, c.bds).Dir().Join(persistentStateFilename)
-}
-
-func (c *Config) preApply(targetRelPath chezmoi.RelPath, targetEntryState, lastWrittenEntryState, actualEntryState *chezmoi.EntryState) error {
-	switch {
-	case c.force:
-		return nil
-	case lastWrittenEntryState == nil:
-		return nil
-	case lastWrittenEntryState.Equivalent(actualEntryState, c.Umask.FileMode()):
-		return nil
-	}
-	// LATER add merge option
-	switch choice, err := c.prompt(fmt.Sprintf("%s has changed since chezmoi last wrote it, overwrite", targetRelPath), "ynqa"); {
-	case err != nil:
-		return err
-	case choice == 'a':
-		c.force = true
-		return nil
-	case choice == 'n':
-		return chezmoi.Skip
-	case choice == 'q':
-		return ErrExitCode(1)
-	default:
-		return nil
-	}
 }
 
 func (c *Config) prompt(s, choices string) (byte, error) {
