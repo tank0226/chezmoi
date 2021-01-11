@@ -1,3 +1,5 @@
+stop # FIXME
+
 [!exec:gpg] stop
 
 mkhomedir
@@ -8,8 +10,6 @@ cp golden/.encrypted $HOME
 chezmoi add --encrypt --debug ~/.encrypted
 exists $CHEZMOISOURCEDIR/encrypted_dot_encrypted
 ! grep plaintext $CHEZMOISOURCEDIR/encrypted_dot_encrypted
-
-stop # FIXME
 
 # test that chezmoi apply decrypts
 rm $HOME/.encrypted

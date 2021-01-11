@@ -1,0 +1,49 @@
+=== RUN   TestScript
+=== RUN   TestScript/gpg
+=== PAUSE TestScript/gpg
+=== CONT  TestScript/gpg
+{"level":"debug","path":"/usr/bin/gpg","args":["gpg","--batch","--homedir","/tmp/chezmoi-gpg-test212634978","--no-tty","--passphrase","chezmoi-test-passphrase","--pinentry-mode","loopback","--quick-generate-key","chezmoi-test-gpg-key"],"combinedOutput":"gpg: keybox '/tmp/chezmoi-gpg-test212634978/pubring.kbx' created...","time":"2021-01-11T21:08:49+01:00","message":"CombinedOutput"}
+    testscript.go:382: 
+        WORK=$WORK
+        PATH=$WORK/bin:/snap/bin:/home/twp/bin:/home/twp/.vscode-server/bin/ea3859d4ba2f3e577a159bc91e3074c5d85c0523/bin:/snap/bin:/home/twp/bin:/home/twp/.vscode-server/bin/ea3859d4ba2f3e577a159bc91e3074c5d85c0523/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/games:/usr/local/games:/snap/bin
+        HOME=$WORK/home/user
+        TMPDIR=$WORK/tmp
+        devnull=/dev/null
+        /=/
+        :=:
+        exe=
+        CHEZMOICONFIGDIR=$WORK/home/user/.config/chezmoi
+        CHEZMOISOURCEDIR=$WORK/home/user/.local/share/chezmoi
+        EDITOR=$WORK/bin/editor
+        SHELL=$WORK/bin/shell
+        
+        > [!exec:gpg] stop
+        > mkhomedir
+        > mkgpgconfig
+        # test that chezmoi add --encrypt encrypts (0.356s)
+        > cp golden/.encrypted $HOME
+        > chezmoi add --encrypt --debug ~/.encrypted
+        [stderr]
+        2021-01-11T21:08:50+01:00 DBG Stat error="stat $WORK/home/user/.config/chezmoi/chezmoistate.boltdb: no such file or directory" name=$WORK/home/user/.config/chezmoi/chezmoistate.boltdb
+        2021-01-11T21:08:50+01:00 DBG Mkdir error="mkdir $WORK/home/user/.config/chezmoi: file exists" name=$WORK/home/user/.config/chezmoi perm=511
+        2021-01-11T21:08:50+01:00 DBG Stat name=$WORK/home/user/.config/chezmoi
+        2021-01-11T21:08:50+01:00 DBG Mkdir error="mkdir $WORK/home/user/.local/share/chezmoi: no such file or directory" name=$WORK/home/user/.local/share/chezmoi perm=511
+        2021-01-11T21:08:50+01:00 DBG Mkdir error="mkdir $WORK/home/user/.local/share: no such file or directory" name=$WORK/home/user/.local/share perm=511
+        2021-01-11T21:08:50+01:00 DBG Mkdir name=$WORK/home/user/.local perm=511
+        2021-01-11T21:08:50+01:00 DBG Mkdir name=$WORK/home/user/.local/share perm=511
+        2021-01-11T21:08:50+01:00 DBG Mkdir name=$WORK/home/user/.local/share/chezmoi perm=511
+        2021-01-11T21:08:50+01:00 DBG Lstat name=$WORK/home/user/.local/share/chezmoi
+        2021-01-11T21:08:50+01:00 DBG ReadFile data="plaintext\n" filename=$WORK/home/user/.encrypted
+        2021-01-11T21:08:50+01:00 DBG Output args=["gpg","--armor","--encrypt","--recipient","317C9BD2E147FC14","--homedir","/tmp/chezmoi-gpg-test212634978","--no-tty","--passphrase","chezmoi-test-passphrase","--pinentry-mode","loopback"] output="-----BEGIN PGP MESSAGE-----\n\nhQGMA/9sTzz9HdBhAQwAr9lEEmOUDpbPb2N..." path=/usr/bin/gpg
+        2021-01-11T21:08:50+01:00 DBG Encrypt ciphertext="-----BEGIN PGP MESSAGE-----\n\nhQGMA/9sTzz9HdBhAQwAr9lEEmOUDpbPb2N..." plaintext="plaintext\n"
+        2021-01-11T21:08:50+01:00 DBG Output args=["gpg","--decrypt","--homedir","/tmp/chezmoi-gpg-test212634978","--no-tty","--passphrase","chezmoi-test-passphrase","--pinentry-mode","loopback"] output= path=/usr/bin/gpg
+        2021-01-11T21:08:50+01:00 DBG Encrypt ciphertext="-----BEGIN PGP MESSAGE-----\n\nhQGMA/9sTzz9HdBhAQwAr9lEEmOUDpbPb2N..." plaintext=
+        chezmoi: encrypt-decrypt round trip failed, contents="plaintext\n", encryptedContents="-----BEGIN PGP MESSAGE-----\n\nhQGMA/9sTzz9HdBhAQwAr9lEEmOUDpbPb2N4gH20js20JKbOSkEsfy3GWd8pjZrb\njl7RNRrZaWGWiSp3RJ7gYPTxdlOcFr52nyRLtAu3tyhFMVQ1wKOAimKLEKU8sKbI\np3X11QkYUxiHZBVmUG+qwvYm23AaaEkpt/+Zgk9AA9XRbK8ajhAax9ioKhEoNe1f\niIz4ucxYfAzMWTw3rcaGvGJCDumjZKPhnPBDXKZoz5NB/FCL/oxw0Vepg2uf9SGi\n4ryMc1dTYNDF+BbnoEdD4wfCc5CtfBSJ5e/j2eJFQF57fIeufO+FfMpKwUqIrZYx\new11iscGXlwHQQd9hUYFCvxTEWNPlGc3OjCTdCOq4py/NFZ+IhQO2T4IeL3gScnG\n5J7GwW6xKrzoks4IggMI3bE7Gc7wY1De6wMw1HRbXm8mJSR0LYvbxdr9WZlhYWaG\ndCPn2t7XzOF7QpJ5ItZsYpq+1K5WHNrTIAzZ5HcE+vXcuXNItM/RFkc2IGIT6nCc\nu2ZMdolErHMOyXpiMBae0jsBrZr4djcbgXz9RJxRtpxTH3SNlN0hUyqG4DovCKY3\nvMOKJp978UkJI7/NxXwWyToMJpCSBme7eAG1IQ==\n=73ZX\n-----END PGP MESSAGE-----\n", decryptedContents=""
+        [exit status 1]
+        FAIL: testdata/scripts/gpg.txt:8: unexpected command failure
+        
+--- FAIL: TestScript (0.00s)
+    --- FAIL: TestScript/gpg (3.55s)
+FAIL
+FAIL	github.com/twpayne/chezmoi/chezmoi2	3.582s
+FAIL

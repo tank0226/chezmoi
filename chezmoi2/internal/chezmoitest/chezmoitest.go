@@ -70,25 +70,26 @@ func JoinLines(lines ...string) string {
 }
 
 // GPGGenerateKey generates and returns a GPG key in homeDir.
-func GPGGenerateKey(homeDir string) (string, error) {
+func GPGGenerateKey(homeDir string) (key string, passphrase string, err error) {
+	passphrase = "chezmoi-test-passphrase"
 	cmd := exec.Command(
 		"gpg",
 		"--batch",
 		"--homedir", homeDir,
 		"--no-tty",
-		"--passphrase", "chezmoi-test-passphrase",
+		"--passphrase", passphrase,
 		"--pinentry-mode", "loopback",
 		"--quick-generate-key", "chezmoi-test-gpg-key",
 	)
 	output, err := chezmoilog.LogCmdCombinedOutput(log.Logger, cmd)
 	if err != nil {
-		return "", err
+		return "", "", err
 	}
 	submatch := gpgKeyMarkedAsUltimatelyTrustedRx.FindSubmatch(output)
 	if submatch == nil {
-		return "", fmt.Errorf("key not found in %q", output)
+		return "", "", fmt.Errorf("key not found in %q", output)
 	}
-	return string(submatch[1]), nil
+	return string(submatch[1]), passphrase, nil
 }
 
 // HomeDir returns the home directory.

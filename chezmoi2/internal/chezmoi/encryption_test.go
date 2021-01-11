@@ -48,10 +48,11 @@ func (t *xorEncryption) xorWithKey(input []byte) []byte {
 func testEncryptionDecryptToFile(t *testing.T, encryption Encryption) {
 	t.Helper()
 	t.Run("DecryptToFile", func(t *testing.T) {
-		expectedPlaintext := []byte("plaintext")
+		expectedPlaintext := []byte("plaintext\n")
 
 		actualCiphertext, err := encryption.Encrypt(expectedPlaintext)
 		require.NoError(t, err)
+		require.NotEmpty(t, actualCiphertext)
 		assert.NotEqual(t, expectedPlaintext, actualCiphertext)
 
 		tempDir, err := ioutil.TempDir("", "chezmoi-test-encryption")
@@ -65,6 +66,7 @@ func testEncryptionDecryptToFile(t *testing.T, encryption Encryption) {
 
 		actualPlaintext, err := ioutil.ReadFile(filename)
 		require.NoError(t, err)
+		require.NotEmpty(t, actualPlaintext)
 		assert.Equal(t, expectedPlaintext, actualPlaintext)
 	})
 }
@@ -72,14 +74,16 @@ func testEncryptionDecryptToFile(t *testing.T, encryption Encryption) {
 func testEncryptionEncryptDecrypt(t *testing.T, encryption Encryption) {
 	t.Helper()
 	t.Run("EncryptDecrypt", func(t *testing.T) {
-		expectedPlaintext := []byte("plaintext")
+		expectedPlaintext := []byte("plaintext\n")
 
 		actualCiphertext, err := encryption.Encrypt(expectedPlaintext)
 		require.NoError(t, err)
+		require.NotEmpty(t, actualCiphertext)
 		assert.NotEqual(t, expectedPlaintext, actualCiphertext)
 
 		actualPlaintext, err := encryption.Decrypt(actualCiphertext)
 		require.NoError(t, err)
+		require.NotEmpty(t, actualPlaintext)
 		assert.Equal(t, expectedPlaintext, actualPlaintext)
 	})
 }
@@ -87,7 +91,7 @@ func testEncryptionEncryptDecrypt(t *testing.T, encryption Encryption) {
 func testEncryptionEncryptFile(t *testing.T, encryption Encryption) {
 	t.Helper()
 	t.Run("EncryptFile", func(t *testing.T) {
-		expectedPlaintext := []byte("plaintext")
+		expectedPlaintext := []byte("plaintext\n")
 
 		tempDir, err := ioutil.TempDir("", "chezmoi-test-encryption")
 		require.NoError(t, err)
@@ -99,10 +103,12 @@ func testEncryptionEncryptFile(t *testing.T, encryption Encryption) {
 
 		actualCiphertext, err := encryption.EncryptFile(filename)
 		require.NoError(t, err)
+		require.NotEmpty(t, actualCiphertext)
 		assert.NotEqual(t, expectedPlaintext, actualCiphertext)
 
 		actualPlaintext, err := encryption.Decrypt(actualCiphertext)
 		require.NoError(t, err)
+		require.NotEmpty(t, actualPlaintext)
 		assert.Equal(t, expectedPlaintext, actualPlaintext)
 	})
 }

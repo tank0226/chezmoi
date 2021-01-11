@@ -911,10 +911,19 @@ func (s *SourceState) sourceStateEntry(actualStateEntry ActualStateEntry, destAb
 			return nil, nil
 		}
 		if options.Encrypt {
-			contents, err = s.encryption.Encrypt(contents)
+			// FIXME remove roundtrip check
+			encryptedContents, err := s.encryption.Encrypt(contents)
 			if err != nil {
 				return nil, err
 			}
+			decryptedContents, err := s.encryption.Decrypt(encryptedContents)
+			if err != nil {
+				return nil, err
+			}
+			if !bytes.Equal(contents, decryptedContents) {
+				return nil, fmt.Errorf("encrypt-decrypt round trip failed, contents=%q, encryptedContents=%q, decryptedContents=%q", contents, encryptedContents, decryptedContents)
+			}
+			contents = encryptedContents
 		}
 		lazyContents := &lazyContents{
 			contents: contents,

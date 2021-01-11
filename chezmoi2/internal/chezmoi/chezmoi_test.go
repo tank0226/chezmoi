@@ -10,6 +10,9 @@ import (
 
 //nolint:gochecknoinits
 func init() {
-	log.Logger = log.Output(zerolog.ConsoleWriter{Out: os.Stderr})
+	log.Logger = log.Output(zerolog.ConsoleWriter{
+		Out:     os.Stderr,
+		NoColor: true,
+	})
 	zerolog.ErrorStackMarshaler = pkgerrors.MarshalStack
 }

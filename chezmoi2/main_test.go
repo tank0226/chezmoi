@@ -241,7 +241,7 @@ func cmdMkGPGConfig(ts *testscript.TestScript, neg bool, args []string) {
 		ts.Check(os.Chmod(gpgHomeDir, 0o700))
 	}
 
-	key, err := chezmoitest.GPGGenerateKey(gpgHomeDir)
+	key, passphrase, err := chezmoitest.GPGGenerateKey(gpgHomeDir)
 	ts.Check(err)
 
 	configFile := filepath.Join(ts.Getenv("HOME"), ".config", "chezmoi", "chezmoi.toml")
@@ -252,11 +252,11 @@ func cmdMkGPGConfig(ts *testscript.TestScript, neg bool, args []string) {
 		`  args = [`,
 		`    "--homedir", %q,`,
 		`    "--no-tty",`,
-		`    "--passphrase", "chezmoi-test-passphrase",`,
+		`    "--passphrase", %q,`,
 		`    "--pinentry-mode", "loopback",`,
 		`  ]`,
 		`  recipient = %q`,
-	), gpgHomeDir, key)), 0o666))
+	), gpgHomeDir, passphrase, key)), 0o666))
 }
 
 // cmdMkHomeDir makes and populates a home directory.
