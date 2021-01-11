@@ -29,7 +29,7 @@ func (t *GPGEncryption) Decrypt(ciphertext []byte) ([]byte, error) {
 // DecryptToFile implements Encryption.DecryptToFile.
 func (t *GPGEncryption) DecryptToFile(filename string, ciphertext []byte) error {
 	args := append(append([]string{
-		"--batch",
+		// "--batch",
 		"--decrypt",
 		"--output", filename,
 		"--yes",
@@ -48,7 +48,7 @@ func (t *GPGEncryption) Encrypt(plaintext []byte) ([]byte, error) {
 // EncryptFile implements Encryption.EncryptFile.
 func (t *GPGEncryption) EncryptFile(filename string) (ciphertext []byte, err error) {
 	args := append(append(t.encryptArgs(),
-		"--batch",
+		// "--batch",
 		"--output", filename,
 		"--yes",
 	), t.Args...)
