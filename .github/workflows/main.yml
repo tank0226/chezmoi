@@ -28,6 +28,11 @@ jobs:
         key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
         restore-keys: |
           ${{ runner.os }}-go-
+    - name: Install age
+      run: |
+        git clone https://github.com/FiloSottile/age
+        cd age
+        go install ./cmd/...
     - name: Checkout
       uses: actions/checkout@v2
     - name: Build
@@ -35,7 +40,7 @@ jobs:
     - name: Run
       run: go run . --version
     - name: Test
-      run: go test -race ./...
+      run: go test -race -v ./...
   test-release:
     runs-on: ubuntu-18.04
     steps:
