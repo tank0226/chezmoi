@@ -97,16 +97,11 @@ func FirstFewBytes(data []byte) []byte {
 // LogCmdCombinedOutput calls cmd.CombinedOutput, logs the result, and returns the result.
 func LogCmdCombinedOutput(logger zerolog.Logger, cmd *exec.Cmd) ([]byte, error) {
 	combinedOutput, err := cmd.CombinedOutput()
-	logCombinedOutput := combinedOutput
-	if err == nil {
-		logCombinedOutput = FirstFewBytes(combinedOutput)
-	}
 	logger.Debug().
 		EmbedObject(OSExecCmdLogObject{Cmd: cmd}).
 		Err(err).
 		EmbedObject(OSExecExitErrorLogObject{Err: err}).
-		// Bytes("combinedOutput", FirstFewBytes(combinedOutput)).
-		Bytes("combinedOutput", logCombinedOutput).
+		Bytes("combinedOutput", FirstFewBytes(combinedOutput)).
 		Msg("CombinedOutput")
 	return combinedOutput, err
 }
