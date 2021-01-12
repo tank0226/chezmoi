@@ -34,7 +34,7 @@ jobs:
         cd age
         go install ./cmd/...
     - name: Install GnuPG
-      if: ${{ matrix.os == "windows-latest" }}
+      if: ${{ runner.os == 'Windows' }}
       run: winget install GnuPG
     - name: Checkout
       uses: actions/checkout@v2
