@@ -1,4 +1,4 @@
-[windows] stop # go-git does not support file:// URLs on windows
+[windows] skip 'go-git does not support file:// URLs on windows'
 
 chmod 755 golden/git
 mkgitconfig

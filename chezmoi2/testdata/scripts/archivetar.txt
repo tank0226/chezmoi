@@ -1,4 +1,4 @@
-[!exec:tar] stop
+[!exec:tar] skip 'tar not found in $PATH'
 
 mksourcedir
 

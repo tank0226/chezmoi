@@ -14,7 +14,7 @@ import (
 
 func TestGPGEncryption(t *testing.T) {
 	// FIXME add symmetric test
-	command, err := exec.LookPath("gpg")
+	command, err := chezmoitest.GPGCommand()
 	if errors.Is(err, exec.ErrNotFound) {
 		t.Skip("gpg not found in $PATH")
 	}
@@ -26,7 +26,7 @@ func TestGPGEncryption(t *testing.T) {
 		require.NoError(t, os.RemoveAll(tempDir))
 	}()
 
-	key, passphrase, err := chezmoitest.GPGGenerateKey(tempDir)
+	key, passphrase, err := chezmoitest.GPGGenerateKey(command, tempDir)
 	require.NoError(t, err)
 
 	gpgEncryption := &GPGEncryption{

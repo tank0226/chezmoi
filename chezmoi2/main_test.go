@@ -63,6 +63,9 @@ func TestScript(t *testing.T) {
 			switch cond {
 			case "darwin":
 				return runtime.GOOS == "darwin", nil
+			case "gpg":
+				_, err := chezmoitest.GPGCommand()
+				return err == nil, nil
 			case "windows":
 				return runtime.GOOS == "windows", nil
 			default:
@@ -241,7 +244,10 @@ func cmdMkGPGConfig(ts *testscript.TestScript, neg bool, args []string) {
 		ts.Check(os.Chmod(gpgHomeDir, 0o700))
 	}
 
-	key, passphrase, err := chezmoitest.GPGGenerateKey(gpgHomeDir)
+	command, err := chezmoitest.GPGCommand()
+	ts.Check(err)
+
+	key, passphrase, err := chezmoitest.GPGGenerateKey(command, gpgHomeDir)
 	ts.Check(err)
 
 	configFile := filepath.Join(ts.Getenv("HOME"), ".config", "chezmoi", "chezmoi.toml")

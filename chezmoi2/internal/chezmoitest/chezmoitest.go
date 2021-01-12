@@ -64,17 +64,22 @@ func AGEGenerateKey(filename string) (publicKey, privateKeyFile string, err erro
 	return
 }
 
-// JoinLines joins lines with newlines.
-func JoinLines(lines ...string) string {
-	return strings.Join(lines, "\n") + "\n"
+// GPGCommand returns the GPG command, if it can be found.
+func GPGCommand() (string, error) {
+	if runtime.GOOS == "windows" {
+		if command, err := exec.LookPath("gpg2"); err == nil {
+			return command, nil
+		}
+	}
+	return exec.LookPath("gpg")
 }
 
 // GPGGenerateKey generates and returns a GPG key in homeDir.
-func GPGGenerateKey(homeDir string) (key, passphrase string, err error) {
+func GPGGenerateKey(command, homeDir string) (key, passphrase string, err error) {
 	//nolint:gosec
 	passphrase = "chezmoi-test-gpg-passphrase"
 	cmd := exec.Command(
-		"gpg",
+		command,
 		"--batch",
 		"--homedir", homeDir,
 		"--no-tty",
@@ -101,6 +106,11 @@ func HomeDir() string {
 	default:
 		return "/home/user"
 	}
+}
+
+// JoinLines joins lines with newlines.
+func JoinLines(lines ...string) string {
+	return strings.Join(lines, "\n") + "\n"
 }
 
 // SkipUnlessGOOS calls t.Skip() if name does not match runtime.GOOS.

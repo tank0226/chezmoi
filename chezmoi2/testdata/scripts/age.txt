@@ -1,4 +1,4 @@
-[!exec:age] stop
+[!exec:age] skip 'age not found in $PATH'
 
 mkhomedir
 mkageconfig

@@ -1,4 +1,4 @@
-[!exec:unzip] stop
+[!exec:unzip] skip 'unzip not found in $PATH'
 
 mksourcedir
 
