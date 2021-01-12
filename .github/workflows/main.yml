@@ -34,7 +34,7 @@ jobs:
         cd age
         go install ./cmd/...
     - name: Install Gpg4win
-      if: ${{ runner.os }} == "Windows"
+      if: runner.os == "Windows"
       run: choco install gpg4win
     - name: Checkout
       uses: actions/checkout@v2
