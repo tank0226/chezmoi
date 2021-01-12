@@ -14,6 +14,11 @@ import (
 
 func TestGPGEncryption(t *testing.T) {
 	// FIXME add symmetric test
+
+	if chezmoitest.GitHubActionsOnWindows() {
+		t.Skip("gpg is broken on Windows in GitHub Actions")
+	}
+
 	command, err := chezmoitest.GPGCommand()
 	if errors.Is(err, exec.ErrNotFound) {
 		t.Skip("gpg not found in $PATH")

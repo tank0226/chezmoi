@@ -63,8 +63,8 @@ func TestScript(t *testing.T) {
 			switch cond {
 			case "darwin":
 				return runtime.GOOS == "darwin", nil
-			case "githubactions":
-				return os.Getenv("GITHUB_ACTIONS") == "true", nil
+			case "githubactionsonwindows":
+				return chezmoitest.GitHubActionsOnWindows(), nil
 			case "windows":
 				return runtime.GOOS == "windows", nil
 			default:

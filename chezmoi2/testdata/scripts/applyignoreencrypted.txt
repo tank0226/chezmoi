@@ -1,5 +1,5 @@
 [!exec:gpg] skip 'gpg not found in $PATH'
-[githubactions] skip 'gpg on GitHub Actions is broken'
+[githubactionsonwindows] skip 'gpg is broken in GitHub Actions on Windows'
 
 mkhomedir
 mkgpgconfig
