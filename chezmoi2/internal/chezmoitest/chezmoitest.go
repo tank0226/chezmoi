@@ -66,11 +66,6 @@ func AGEGenerateKey(filename string) (publicKey, privateKeyFile string, err erro
 
 // GPGCommand returns the GPG command, if it can be found.
 func GPGCommand() (string, error) {
-	if runtime.GOOS == "windows" {
-		if command, err := exec.LookPath("gpg2"); err == nil {
-			return command, nil
-		}
-	}
 	return exec.LookPath("gpg")
 }
 
