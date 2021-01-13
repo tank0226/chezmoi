@@ -44,4 +44,5 @@ Config file:
 - use `gpg.recipient` instead of `gpgRecipient`
 - rename `genericSecret` to `secret`
 - rename `homedir` to `homeDir`
-- FIXME add `encryption` (currently `age` or `gpg`)
+- add `encryption` (currently `age` or `gpg`)
+- apply `--ignore-encrypted`

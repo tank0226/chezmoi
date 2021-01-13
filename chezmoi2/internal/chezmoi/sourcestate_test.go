@@ -475,7 +475,7 @@ func TestSourceStateAdd(t *testing.T) {
 					require.NoError(t, vfst.NewBuilder().Build(system.UnderlyingFS(), tc.extraRoot))
 				}
 
-				s := NewSourceState(
+				sourceState := NewSourceState(
 					WithDestDir("/home/user"),
 					WithSourceDir("/home/user/.local/share/chezmoi"),
 					WithSystem(system),
@@ -483,14 +483,14 @@ func TestSourceStateAdd(t *testing.T) {
 						"variable": "value",
 					}),
 				)
-				require.NoError(t, s.Read())
-				require.NoError(t, s.evaluateAll())
+				require.NoError(t, sourceState.Read())
+				require.NoError(t, sourceState.evaluateAll())
 
 				destAbsPathInfos := make(map[AbsPath]os.FileInfo)
 				for _, destAbsPath := range tc.destAbsPaths {
-					require.NoError(t, s.AddDestAbsPathInfos(destAbsPathInfos, system, destAbsPath, nil))
+					require.NoError(t, sourceState.AddDestAbsPathInfos(destAbsPathInfos, system, destAbsPath, nil))
 				}
-				require.NoError(t, s.Add(system, persistentState, destAbsPathInfos, &tc.addOptions))
+				require.NoError(t, sourceState.Add(system, persistentState, destAbsPathInfos, &tc.addOptions))
 
 				vfst.RunTests(t, fs, "", tc.tests...)
 			})
@@ -704,10 +704,10 @@ func TestSourceStateApplyAll(t *testing.T) {
 					WithSystem(system),
 				}
 				sourceStateOptions = append(sourceStateOptions, tc.sourceStateOptions...)
-				s := NewSourceState(sourceStateOptions...)
-				require.NoError(t, s.Read())
-				require.NoError(t, s.evaluateAll())
-				require.NoError(t, s.applyAll(system, persistentState, "/home/user", ApplyOptions{
+				sourceState := NewSourceState(sourceStateOptions...)
+				require.NoError(t, sourceState.Read())
+				require.NoError(t, sourceState.evaluateAll())
+				require.NoError(t, sourceState.applyAll(system, persistentState, "/home/user", ApplyOptions{
 					Umask: GetUmask(),
 				}))
 

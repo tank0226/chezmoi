@@ -29,7 +29,5 @@ exists $CHEZMOISOURCEDIR/.edited
 chezmoi edit $HOME${/}.dir
 exists $CHEZMOISOURCEDIR/dot_dir/.edited
 
-# FIXME --apply tests
-
 -- home/user/.local/share/chezmoi/run_script --
 #!/bin/sh
