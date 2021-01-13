@@ -13,8 +13,6 @@ import (
 )
 
 func TestGPGEncryption(t *testing.T) {
-	// FIXME add symmetric test
-
 	if chezmoitest.GitHubActionsOnWindows() {
 		t.Skip("gpg is broken on Windows in GitHub Actions")
 	}
@@ -34,18 +32,35 @@ func TestGPGEncryption(t *testing.T) {
 	key, passphrase, err := chezmoitest.GPGGenerateKey(command, tempDir)
 	require.NoError(t, err)
 
-	gpgEncryption := &GPGEncryption{
-		Command: command,
-		Args: []string{
-			"--homedir", tempDir,
-			"--no-tty",
-			"--passphrase", passphrase,
-			"--pinentry-mode", "loopback",
+	for _, tc := range []struct {
+		name      string
+		symmetric bool
+	}{
+		{
+			name:      "asymmetric",
+			symmetric: false,
 		},
-		Recipient: key,
-	}
+		{
+			name:      "symmetric",
+			symmetric: true,
+		},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			gpgEncryption := &GPGEncryption{
+				Command: command,
+				Args: []string{
+					"--homedir", tempDir,
+					"--no-tty",
+					"--passphrase", passphrase,
+					"--pinentry-mode", "loopback",
+				},
+				Recipient: key,
+				Symmetric: tc.symmetric,
+			}
 
-	testEncryptionDecryptToFile(t, gpgEncryption)
-	testEncryptionEncryptDecrypt(t, gpgEncryption)
-	testEncryptionEncryptFile(t, gpgEncryption)
+			testEncryptionDecryptToFile(t, gpgEncryption)
+			testEncryptionEncryptDecrypt(t, gpgEncryption)
+			testEncryptionEncryptFile(t, gpgEncryption)
+		})
+	}
 }
