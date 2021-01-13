@@ -33,12 +33,10 @@ jobs:
         git clone https://github.com/FiloSottile/age
         cd age
         go install ./cmd/...
-    - name: Install openssl
-      if: runner.os == 'Windows'
-      run: choco --no-progress install openssl
     - name: Install gpg4win
       if: runner.os == 'Windows'
-      run: choco --no-progress --yes install gpg4win
+      run: |
+        choco --no-progress --verbose install gpg4win
     - name: Checkout
       uses: actions/checkout@v2
     - name: Build
