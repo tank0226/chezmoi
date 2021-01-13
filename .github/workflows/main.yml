@@ -40,7 +40,7 @@ jobs:
     - name: Run
       run: go run . --version
     - name: Test
-      run: go test -race -v ./...
+      run: go test -race ./...
   test-release:
     runs-on: ubuntu-18.04
     steps:
