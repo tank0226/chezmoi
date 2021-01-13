@@ -35,7 +35,7 @@ jobs:
         go install ./cmd/...
     - name: Install GnuPG
       if: runner.os == 'Windows'
-      run: choco install --no-progress GnuPG
+      run: choco --no-progress --yes install GnuPG
     - name: Checkout
       uses: actions/checkout@v2
     - name: Build
