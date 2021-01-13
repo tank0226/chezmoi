@@ -33,9 +33,9 @@ jobs:
         git clone https://github.com/FiloSottile/age
         cd age
         go install ./cmd/...
-    - name: Install gpg4win
+    - name: Install GnuPG
       if: runner.os == 'Windows'
-      run: choco install --no-progress gpg4win
+      run: choco install --no-progress GnuPG
     - name: Checkout
       uses: actions/checkout@v2
     - name: Build
